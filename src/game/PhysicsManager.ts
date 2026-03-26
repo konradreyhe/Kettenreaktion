@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BODY_PROPERTIES } from '../constants/Physics';
+import { BODY_PROPERTIES, MAX_BODIES_MOBILE, MAX_BODIES_DESKTOP } from '../constants/Physics';
 import type { Level, StaticObject, ObjectType } from '../types/Level';
 import type { BodyOptions } from '../types/GameObject';
 
@@ -19,6 +19,11 @@ export class PhysicsManager {
     this.scene = scene;
   }
 
+  private get maxBodies(): number {
+    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    return isMobile ? MAX_BODIES_MOBILE : MAX_BODIES_DESKTOP;
+  }
+
   buildLevel(level: Level): void {
     this.clearLevel();
     this.buildFloor(level.world.width, level.world.height);
@@ -28,7 +33,9 @@ export class PhysicsManager {
       this.createStaticBody(obj);
     }
 
+    const bodyLimit = this.maxBodies;
     for (const obj of level.dynamicObjects) {
+      if (this.tracked.length >= bodyLimit) break;
       this.createDynamicSprite(obj.type, obj.x, obj.y);
     }
   }

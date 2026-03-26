@@ -15,6 +15,7 @@ import {
   MAX_SIMULATION_MS,
   NEAR_MISS_PX,
 } from '../constants/Game';
+import { MAX_BODIES_MOBILE, MAX_BODIES_DESKTOP } from '../constants/Physics';
 import type { Level } from '../types/Level';
 import type { ScoreResult } from '../types/GameState';
 
@@ -470,6 +471,19 @@ export class GameScene extends Phaser.Scene {
     this.isSimulating = false;
   }
 
+  /** Offset touch Y upward so the finger doesn't cover the placement point. */
+  private readonly TOUCH_OFFSET_Y = 30;
+
+  private isTouchDevice(): boolean {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+
+  /** Apply touch offset — shifts placement above finger on touch devices. */
+  private getAdjustedY(ptr: Phaser.Input.Pointer): number {
+    if (!ptr.wasTouch) return ptr.y;
+    return ptr.y - this.TOUCH_OFFSET_Y;
+  }
+
   private setupInput(): void {
     // Keyboard: ESC returns to menu
     this.input.keyboard?.on('keydown-ESC', () => {
@@ -483,8 +497,9 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive || !this.previewGhost) return;
 
-      if (this.isInZone(ptr.x, ptr.y)) {
-        this.previewGhost.setPosition(ptr.x, ptr.y);
+      const adjY = this.getAdjustedY(ptr);
+      if (this.isInZone(ptr.x, adjY)) {
+        this.previewGhost.setPosition(ptr.x, adjY);
         this.previewGhost.setVisible(true);
       } else {
         this.previewGhost.setVisible(false);
@@ -494,9 +509,11 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive) return;
       if (this.attempts >= MAX_ATTEMPTS) return;
-      if (!this.isInZone(ptr.x, ptr.y)) return;
 
-      this.placeAndSimulate(ptr.x, ptr.y);
+      const adjY = this.getAdjustedY(ptr);
+      if (!this.isInZone(ptr.x, adjY)) return;
+
+      this.placeAndSimulate(ptr.x, adjY);
     });
   }
 
