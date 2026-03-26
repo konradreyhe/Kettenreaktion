@@ -19,8 +19,17 @@ export class LevelLoader {
     }
 
     const seed = DailySystem.getTodaysSeed();
-    const index = DailySystem.getLevelIndex(seed, LEVEL_TEMPLATES.length);
-    const template = LEVEL_TEMPLATES[index];
+    const [minDiff, maxDiff] = DailySystem.getDailyDifficultyRange();
+
+    // Filter levels by today's difficulty range
+    const eligible = LEVEL_TEMPLATES.filter(
+      (t) => t.difficulty >= minDiff && t.difficulty <= maxDiff
+    );
+
+    // Fallback to all levels if no match (shouldn't happen with 90 levels)
+    const pool = eligible.length > 0 ? eligible : LEVEL_TEMPLATES;
+    const index = DailySystem.getLevelIndex(seed, pool.length);
+    const template = pool[index];
     return LevelLoader.applyVariations(template, seed);
   }
 

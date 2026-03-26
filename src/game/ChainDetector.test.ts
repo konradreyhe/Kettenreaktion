@@ -53,6 +53,30 @@ describe('ChainDetector', () => {
     expect(detector.getChainLength()).toBe(1);
   });
 
+  it('deduplicates same pair within 100ms window', () => {
+    const now = vi.spyOn(Date, 'now');
+
+    now.mockReturnValue(1000);
+    detector.onCollision([{ bodyA: makeBody(1), bodyB: makeBody(2) }]);
+
+    now.mockReturnValue(1050); // 50ms later, same pair
+    detector.onCollision([{ bodyA: makeBody(1), bodyB: makeBody(2) }]);
+
+    expect(detector.getChainLength()).toBe(1); // not double-counted
+  });
+
+  it('counts same pair again after dedup window expires', () => {
+    const now = vi.spyOn(Date, 'now');
+
+    now.mockReturnValue(1000);
+    detector.onCollision([{ bodyA: makeBody(1), bodyB: makeBody(2) }]);
+
+    now.mockReturnValue(1200); // 200ms later, past 100ms dedup window
+    detector.onCollision([{ bodyA: makeBody(1), bodyB: makeBody(2) }]);
+
+    expect(detector.getChainLength()).toBe(2);
+  });
+
   it('resets fully', () => {
     vi.spyOn(Date, 'now').mockReturnValue(1000);
     detector.onCollision([{ bodyA: makeBody(1), bodyB: makeBody(2) }]);

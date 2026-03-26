@@ -19,6 +19,25 @@ export class DailySystem {
     return Math.floor((x - Math.floor(x)) * totalLevels);
   }
 
+  /**
+   * Returns the target difficulty range for today based on day of week (UTC).
+   * Mon=1-2, Tue-Thu=2-3, Fri=3-4, Sat=2-3, Sun=4-5
+   */
+  static getDailyDifficultyRange(): [number, number] {
+    const now = new Date();
+    const day = now.getUTCDay(); // 0=Sun, 1=Mon, ...
+    switch (day) {
+      case 1: return [1, 2]; // Monday: easy
+      case 2:
+      case 3:
+      case 4: return [2, 3]; // Tue-Thu: medium
+      case 5: return [3, 4]; // Friday: hard
+      case 6: return [2, 3]; // Saturday: medium
+      case 0: return [4, 5]; // Sunday: challenge
+      default: return [1, 5];
+    }
+  }
+
   /** Returns the puzzle number (days since launch + 1). */
   static getPuzzleNumber(): number {
     const now = new Date();
