@@ -48,7 +48,7 @@ export interface SeedVariation {
 export interface Level {
   id: string;
   name: string;
-  difficulty: 1 | 2 | 3 | 4 | 5;
+  difficulty: number;
   theme: 'wood' | 'stone' | 'metal';
   world: { width: number; height: number };
   placementZone: PlacementZone;

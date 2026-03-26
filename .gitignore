@@ -6,3 +6,5 @@ dist/
 Thumbs.db
 test-*.png
 test-*.jpg
+
+.vercel

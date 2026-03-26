@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ShareManager } from './ShareManager';
 
 describe('ShareManager', () => {
-  it('generates emoji result with correct puzzle number', () => {
+  it('generates result with correct puzzle number', () => {
     const result = ShareManager.generateEmojiResult({
       puzzleNumber: 42,
       score: 1240,
@@ -10,13 +10,15 @@ describe('ShareManager', () => {
       chainLength: 4,
       streak: 7,
       solved: true,
+      targetsHit: 2,
+      totalTargets: 3,
     });
 
     expect(result).toContain('#42');
     expect(result).toContain('1.240');
-    expect(result).toContain('2/3');
-    expect(result).toContain('7 Tage');
+    expect(result).toContain('7 Tage Streak');
     expect(result).toContain('kettenpuzzle.com');
+    expect(result).toContain('2/3');
   });
 
   it('shows no streak line when streak is 0 or 1', () => {
@@ -27,27 +29,29 @@ describe('ShareManager', () => {
       chainLength: 1,
       streak: 1,
       solved: true,
+      targetsHit: 1,
+      totalTargets: 1,
     });
 
     expect(result).not.toContain('Streak');
   });
 
-  it('caps chain icons at 6', () => {
+  it('shows target hit visualization', () => {
     const result = ShareManager.generateEmojiResult({
       puzzleNumber: 1,
-      score: 500,
+      score: 200,
       attempts: 1,
-      chainLength: 20,
+      chainLength: 3,
       streak: 0,
       solved: true,
+      targetsHit: 2,
+      totalTargets: 3,
     });
 
-    // Count chain emojis - should be max 6
-    const chainLine = result.split('\n').find((l) => l.includes('Kette'));
-    expect(chainLine).toBeDefined();
+    expect(result).toContain('2/3');
   });
 
-  it('shows dash for zero chain', () => {
+  it('shows attempt dots', () => {
     const result = ShareManager.generateEmojiResult({
       puzzleNumber: 1,
       score: 0,
@@ -55,8 +59,11 @@ describe('ShareManager', () => {
       chainLength: 0,
       streak: 0,
       solved: false,
+      targetsHit: 0,
+      totalTargets: 1,
     });
 
-    expect(result).toContain('-');
+    expect(result).toContain('Versuche:');
+    expect(result).toContain('0/1');
   });
 });

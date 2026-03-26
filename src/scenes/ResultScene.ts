@@ -166,6 +166,8 @@ export class ResultScene extends Phaser.Scene {
         chainLength: data.chainLength,
         streak,
         solved: data.solved,
+        targetsHit: data.targetsHit,
+        totalTargets: data.totalTargets,
       });
 
       try {

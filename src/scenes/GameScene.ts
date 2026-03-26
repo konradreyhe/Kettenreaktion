@@ -104,6 +104,83 @@ export class GameScene extends Phaser.Scene {
     this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
 
     this.cameras.main.fadeIn(300, 26, 26, 46);
+
+    // Level intro overlay
+    this.showLevelIntro();
+  }
+
+  private showLevelIntro(): void {
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2;
+
+    const overlay = this.add
+      .rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e, 0.85)
+      .setDepth(200);
+
+    const levelName = this.add
+      .text(cx, cy - 30, this.level.name, {
+        fontSize: '28px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(201)
+      .setScale(0);
+
+    const diffStars = '\u2605'.repeat(this.level.difficulty) +
+      '\u2606'.repeat(5 - this.level.difficulty);
+    const diffText = this.add
+      .text(cx, cy + 15, diffStars, {
+        fontSize: '20px',
+        color: '#ffaa44',
+      })
+      .setOrigin(0.5)
+      .setDepth(201)
+      .setAlpha(0);
+
+    const hint = this.add
+      .text(cx, cy + 50, 'Klicke in die gruene Zone', {
+        fontSize: '13px',
+        color: '#888899',
+      })
+      .setOrigin(0.5)
+      .setDepth(201)
+      .setAlpha(0);
+
+    // Animate in
+    this.tweens.add({
+      targets: levelName,
+      scaleX: 1, scaleY: 1,
+      duration: 400,
+      ease: 'Back.easeOut',
+    });
+    this.tweens.add({
+      targets: diffText,
+      alpha: 1,
+      delay: 200,
+      duration: 300,
+    });
+    this.tweens.add({
+      targets: hint,
+      alpha: 1,
+      delay: 400,
+      duration: 300,
+    });
+
+    // Fade out after 1.5s
+    this.time.delayedCall(1800, () => {
+      this.tweens.add({
+        targets: [overlay, levelName, diffText, hint],
+        alpha: 0,
+        duration: 400,
+        onComplete: () => {
+          overlay.destroy();
+          levelName.destroy();
+          diffText.destroy();
+          hint.destroy();
+        },
+      });
+    });
   }
 
   update(): void {
