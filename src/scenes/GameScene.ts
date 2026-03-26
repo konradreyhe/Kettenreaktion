@@ -160,8 +160,27 @@ export class GameScene extends Phaser.Scene {
       .setDepth(201)
       .setAlpha(0);
 
+    // Object type + target info
+    const objectNames: Record<string, string> = {
+      ball: 'Kugel', weight: 'Gewicht', crate: 'Kiste', domino: 'Domino',
+    };
+    const allowed = this.level.placementZone.allowedObjects
+      .map((t) => objectNames[t] ?? t)
+      .join(' / ');
+    const targetCount = this.level.targets.length;
+    const infoLine = `${allowed}  \u2022  ${targetCount} Stern${targetCount > 1 ? 'e' : ''}`;
+
+    const info = this.add
+      .text(cx, cy + 45, infoLine, {
+        fontSize: '12px',
+        color: '#6688aa',
+      })
+      .setOrigin(0.5)
+      .setDepth(201)
+      .setAlpha(0);
+
     const hint = this.add
-      .text(cx, cy + 50, 'Klicke in die gruene Zone', {
+      .text(cx, cy + 70, 'Klicke in die gruene Zone', {
         fontSize: '13px',
         color: '#888899',
       })
@@ -183,22 +202,29 @@ export class GameScene extends Phaser.Scene {
       duration: 300,
     });
     this.tweens.add({
+      targets: info,
+      alpha: 1,
+      delay: 350,
+      duration: 300,
+    });
+    this.tweens.add({
       targets: hint,
       alpha: 1,
-      delay: 400,
+      delay: 500,
       duration: 300,
     });
 
-    // Fade out after 1.5s
-    this.time.delayedCall(1800, () => {
+    // Fade out after 2s
+    this.time.delayedCall(2200, () => {
       this.tweens.add({
-        targets: [overlay, levelName, diffText, hint],
+        targets: [overlay, levelName, diffText, info, hint],
         alpha: 0,
         duration: 400,
         onComplete: () => {
           overlay.destroy();
           levelName.destroy();
           diffText.destroy();
+          info.destroy();
           hint.destroy();
           this.introActive = false;
         },
