@@ -6,13 +6,22 @@ import { LevelLoader } from '../game/LevelLoader';
 import { DailySystem } from '../systems/DailySystem';
 import { HUD } from '../ui/HUD';
 import {
-  GAME_WIDTH,
-  GAME_HEIGHT,
   MAX_ATTEMPTS,
   MAX_SIMULATION_MS,
+  NEAR_MISS_PX,
 } from '../constants/Game';
 import type { Level } from '../types/Level';
 import type { ScoreResult } from '../types/GameState';
+
+interface TargetEntry {
+  id: string;
+  sprite: Phaser.GameObjects.Arc;
+  body: MatterJS.BodyType;
+  hit: boolean;
+  x: number;
+  y: number;
+  points: number;
+}
 
 /** Core gameplay scene — placement, simulation, scoring. */
 export class GameScene extends Phaser.Scene {
@@ -26,12 +35,17 @@ export class GameScene extends Phaser.Scene {
   private simulationStartTime = 0;
   private bestScore: ScoreResult | null = null;
   private bestChainLength = 0;
+  private totalTargetsHitBest = 0;
 
-  private previewGhost: Phaser.GameObjects.Sprite | null = null;
+  private previewGhost: Phaser.GameObjects.Arc | null = null;
   private placementZoneRect: Phaser.GameObjects.Rectangle | null = null;
-  private targetSprites: Phaser.GameObjects.Sprite[] = [];
-  private targetBodies: MatterJS.BodyType[] = [];
+  private placementZoneBorder: Phaser.GameObjects.Rectangle | null = null;
+  private targets: TargetEntry[] = [];
   private targetsHit = 0;
+  private placedSprite: Phaser.Physics.Matter.Sprite | null = null;
+
+  // Particles
+  private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -41,6 +55,7 @@ export class GameScene extends Phaser.Scene {
     this.attempts = 0;
     this.bestScore = null;
     this.bestChainLength = 0;
+    this.totalTargetsHitBest = 0;
 
     this.physicsManager = new PhysicsManager(this);
     this.chainDetector = new ChainDetector();
@@ -48,12 +63,18 @@ export class GameScene extends Phaser.Scene {
 
     this.level = LevelLoader.loadToday();
 
+    // Create particle texture
+    this.createParticleTexture();
+
     this.setupLevel();
     this.setupInput();
     this.setupCollisionListener();
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
     this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
+
+    // Fade in
+    this.cameras.main.fadeIn(300, 26, 26, 46);
   }
 
   update(): void {
@@ -62,7 +83,9 @@ export class GameScene extends Phaser.Scene {
     const elapsed = Date.now() - this.simulationStartTime;
     this.hud.updateChain(this.chainDetector.getChainLength());
 
-    // Check if all bodies are sleeping or timeout reached
+    // Minimum 1.5s before checking sleep (let physics settle)
+    if (elapsed < 1500) return;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const matterBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
     const allSleeping = matterBodies.every(
@@ -74,72 +97,128 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private createParticleTexture(): void {
+    if (this.textures.exists('particle')) return;
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    gfx.fillStyle(0xffffff);
+    gfx.fillCircle(4, 4, 4);
+    gfx.generateTexture('particle', 8, 8);
+    gfx.destroy();
+  }
+
   private setupLevel(): void {
-    // Clean previous state
-    this.targetSprites.forEach((s) => s.destroy());
-    this.targetSprites = [];
-    this.targetBodies = [];
+    // Clean previous
+    this.targets.forEach((t) => {
+      t.sprite.destroy();
+      this.matter.world.remove(t.body);
+    });
+    this.targets = [];
     this.targetsHit = 0;
     this.chainDetector.reset();
     this.previewGhost?.destroy();
     this.previewGhost = null;
     this.placementZoneRect?.destroy();
+    this.placementZoneBorder?.destroy();
+    this.placedSprite?.destroy();
+    this.placedSprite = null;
+    this.hitEmitter?.destroy();
+    this.hitEmitter = null;
 
-    // Build physics
+    // Build physics world
     this.physicsManager.buildLevel(this.level);
 
-    // Draw placement zone
+    // Placement zone — pulsing glow
     const zone = this.level.placementZone;
     this.placementZoneRect = this.add
       .rectangle(
         zone.x + zone.width / 2,
         zone.y + zone.height / 2,
         zone.width,
+        zone.height,
+        0x44ff44,
+        0.08
+      )
+      .setDepth(2);
+
+    this.placementZoneBorder = this.add
+      .rectangle(
+        zone.x + zone.width / 2,
+        zone.y + zone.height / 2,
+        zone.width,
         zone.height
       )
-      .setStrokeStyle(2, 0x44ff44, 0.6)
-      .setFillStyle(0x44ff44, 0.1);
+      .setStrokeStyle(2, 0x44ff44, 0.5)
+      .setFillStyle(0x000000, 0)
+      .setDepth(2);
 
-    // Draw targets
+    // Pulse animation on zone
+    this.tweens.add({
+      targets: this.placementZoneBorder,
+      alpha: { from: 0.4, to: 1 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Draw targets as glowing circles
     for (const target of this.level.targets) {
       const sprite = this.add
-        .sprite(target.x, target.y, target.type)
-        .setDisplaySize(20, 20);
-      this.targetSprites.push(sprite);
+        .circle(target.x, target.y, 12, 0xffdd00, 1)
+        .setDepth(15);
 
-      const body = this.matter.add.circle(target.x, target.y, 10, {
+      // Glow pulse
+      this.tweens.add({
+        targets: sprite,
+        scaleX: 1.2,
+        scaleY: 1.2,
+        duration: 600,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+
+      const body = this.matter.add.circle(target.x, target.y, 12, {
         isSensor: true,
         isStatic: true,
         label: `target_${target.id}`,
       });
-      this.targetBodies.push(body);
+
+      this.targets.push({
+        id: target.id,
+        sprite,
+        body,
+        hit: false,
+        x: target.x,
+        y: target.y,
+        points: target.points,
+      });
     }
 
-    // Draw static and dynamic objects as sprites
-    for (const obj of this.level.staticObjects) {
-      const height = obj.height ?? 20;
-      this.add
-        .rectangle(
-          obj.x + obj.width / 2,
-          obj.y + height / 2,
-          obj.width,
-          height,
-          0x666666
-        )
-        .setAngle(obj.angle ?? 0);
-    }
-
-    for (const obj of this.level.dynamicObjects) {
-      const size = this.getDisplaySize(obj.type);
-      this.add.sprite(obj.x, obj.y, obj.type).setDisplaySize(size.w, size.h);
-    }
-
-    // Create preview ghost
+    // Preview ghost
     const firstAllowed = this.level.placementZone.allowedObjects[0];
+    const ghostColor = firstAllowed === 'ball' ? 0xaaaaaa : 0x8b6914;
+    const ghostRadius = firstAllowed === 'ball' ? 12 : 10;
     this.previewGhost = this.add
-      .sprite(zone.x + zone.width / 2, zone.y + zone.height / 2, firstAllowed)
-      .setAlpha(0.5)
-      .setDisplaySize(24, 24);
+      .circle(
+        zone.x + zone.width / 2,
+        zone.y + zone.height / 2,
+        ghostRadius,
+        ghostColor,
+        0.4
+      )
+      .setDepth(20);
+
+    // Hit particle emitter
+    this.hitEmitter = this.add.particles(0, 0, 'particle', {
+      speed: { min: 50, max: 200 },
+      scale: { start: 1, end: 0 },
+      lifespan: 600,
+      tint: [0xffdd00, 0xff8800, 0xffff44],
+      emitting: false,
+      quantity: 12,
+    });
+    this.hitEmitter.setDepth(50);
 
     this.isSimulating = false;
   }
@@ -149,11 +228,14 @@ export class GameScene extends Phaser.Scene {
       if (this.isSimulating || !this.previewGhost) return;
 
       const zone = this.level.placementZone;
-      const clampedX = Phaser.Math.Clamp(ptr.x, zone.x, zone.x + zone.width);
-      const clampedY = Phaser.Math.Clamp(ptr.y, zone.y, zone.y + zone.height);
+      const inZone = this.isInZone(ptr.x, ptr.y);
 
-      this.previewGhost.setPosition(clampedX, clampedY);
-      this.previewGhost.setVisible(this.isInZone(ptr.x, ptr.y));
+      if (inZone) {
+        this.previewGhost.setPosition(ptr.x, ptr.y);
+        this.previewGhost.setVisible(true);
+      } else {
+        this.previewGhost.setVisible(false);
+      }
     });
 
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
@@ -171,34 +253,53 @@ export class GameScene extends Phaser.Scene {
       (_event: unknown, bodyA: MatterJS.BodyType, bodyB: MatterJS.BodyType) => {
         if (!this.isSimulating) return;
 
-        // Check for target hits
         this.checkTargetHit(bodyA, bodyB);
-
-        // Track chain
         this.chainDetector.onCollision([{ bodyA, bodyB }]);
       }
     );
   }
 
   private checkTargetHit(bodyA: MatterJS.BodyType, bodyB: MatterJS.BodyType): void {
-    for (let i = 0; i < this.targetBodies.length; i++) {
-      const targetBody = this.targetBodies[i];
-      if (bodyA === targetBody || bodyB === targetBody) {
-        const sprite = this.targetSprites[i];
-        if (sprite.alpha === 1) {
-          sprite.setAlpha(0.3);
-          this.targetsHit++;
-          this.hud.updateScore(this.targetsHit);
+    for (const target of this.targets) {
+      if (target.hit) continue;
 
-          // Hit effect
-          this.tweens.add({
-            targets: sprite,
-            scaleX: 1.5,
-            scaleY: 1.5,
-            duration: 200,
-            yoyo: true,
-          });
-        }
+      if (bodyA === target.body || bodyB === target.body) {
+        target.hit = true;
+        this.targetsHit++;
+        this.hud.updateScore(this.targetsHit);
+
+        // Particle burst
+        this.hitEmitter?.emitParticleAt(target.x, target.y);
+
+        // Target hit animation — flash and shrink
+        this.tweens.killTweensOf(target.sprite);
+        this.tweens.add({
+          targets: target.sprite,
+          scaleX: 2,
+          scaleY: 2,
+          alpha: 0,
+          duration: 400,
+          ease: 'Power2',
+        });
+
+        // Score popup
+        const popup = this.add
+          .text(target.x, target.y - 20, `+${target.points}`, {
+            fontSize: '16px',
+            color: '#ffdd00',
+            fontStyle: 'bold',
+          })
+          .setOrigin(0.5)
+          .setDepth(50);
+
+        this.tweens.add({
+          targets: popup,
+          y: target.y - 60,
+          alpha: 0,
+          duration: 800,
+          ease: 'Power2',
+          onComplete: () => popup.destroy(),
+        });
       }
     }
   }
@@ -209,11 +310,19 @@ export class GameScene extends Phaser.Scene {
     this.simulationStartTime = Date.now();
 
     this.previewGhost?.setVisible(false);
-    this.placementZoneRect?.setAlpha(0.2);
+    this.placementZoneBorder?.setAlpha(0.15);
+    this.placementZoneRect?.setAlpha(0.03);
+    if (this.placementZoneBorder) {
+      this.tweens.killTweensOf(this.placementZoneBorder);
+    }
 
-    // Place the object
+    // Place the object with a visual drop effect
     const objectType = this.level.placementZone.allowedObjects[0];
-    this.physicsManager.createDynamicBody(objectType, x, y);
+    this.placedSprite = this.physicsManager.createDynamicSprite(objectType, x, y);
+    this.placedSprite.setDepth(15);
+
+    // Brief flash on placement
+    this.cameras.main.flash(100, 100, 100, 150);
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
   }
@@ -224,6 +333,9 @@ export class GameScene extends Phaser.Scene {
     const elapsed = (Date.now() - this.simulationStartTime) / 1000;
     const chainLength = this.chainDetector.getChainLength();
 
+    // Check for near misses on unhit targets
+    this.checkNearMisses();
+
     const result = ScoreCalculator.calculate({
       targetsHit: this.targetsHit,
       totalTargets: this.level.targets.length,
@@ -232,28 +344,88 @@ export class GameScene extends Phaser.Scene {
       seconds: elapsed,
     });
 
-    // Track best
     if (!this.bestScore || result.total > this.bestScore.total) {
       this.bestScore = result;
       this.bestChainLength = chainLength;
+      this.totalTargetsHitBest = this.targetsHit;
     }
 
     const allTargetsHit = this.targetsHit >= this.level.targets.length;
 
     if (this.attempts >= MAX_ATTEMPTS || allTargetsHit) {
-      // Go to result screen
-      this.scene.start('ResultScene', {
-        score: this.bestScore,
-        chainLength: this.bestChainLength,
-        attempts: this.attempts,
-        solved: this.targetsHit > 0,
-        targetsHit: this.targetsHit,
-        totalTargets: this.level.targets.length,
+      // Fade out then go to results
+      this.cameras.main.fadeOut(400, 26, 26, 46);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('ResultScene', {
+          score: this.bestScore!,
+          chainLength: this.bestChainLength,
+          attempts: this.attempts,
+          solved: this.totalTargetsHitBest > 0,
+          targetsHit: this.totalTargetsHitBest,
+          totalTargets: this.level.targets.length,
+        });
       });
     } else {
-      // Reset for next attempt
-      this.setupLevel();
-      this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
+      // Flash "Versuch X/3" and reset
+      const retryText = this.add
+        .text(400, 300, `Versuch ${this.attempts}/${MAX_ATTEMPTS}`, {
+          fontSize: '24px',
+          color: '#ffffff',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+        .setDepth(100)
+        .setAlpha(0);
+
+      this.tweens.add({
+        targets: retryText,
+        alpha: 1,
+        duration: 300,
+        hold: 800,
+        yoyo: true,
+        onComplete: () => {
+          retryText.destroy();
+          this.setupLevel();
+          this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
+        },
+      });
+    }
+  }
+
+  private checkNearMisses(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const dynamicBodies = allBodies.filter((b) => !b.isStatic);
+
+    for (const target of this.targets) {
+      if (target.hit) continue;
+
+      for (const body of dynamicBodies) {
+        const dx = body.position.x - target.x;
+        const dy = body.position.y - target.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < NEAR_MISS_PX + 12) {
+          // Show "Knapp!" near-miss
+          const nearMiss = this.add
+            .text(target.x, target.y - 30, 'Knapp!', {
+              fontSize: '14px',
+              color: '#ff6644',
+              fontStyle: 'bold',
+            })
+            .setOrigin(0.5)
+            .setDepth(50);
+
+          this.tweens.add({
+            targets: nearMiss,
+            y: target.y - 60,
+            alpha: 0,
+            duration: 1200,
+            onComplete: () => nearMiss.destroy(),
+          });
+          break;
+        }
+      }
     }
   }
 
@@ -265,21 +437,6 @@ export class GameScene extends Phaser.Scene {
       y >= zone.y &&
       y <= zone.y + zone.height
     );
-  }
-
-  private getDisplaySize(type: string): { w: number; h: number } {
-    switch (type) {
-      case 'ball':
-        return { w: 24, h: 24 };
-      case 'domino':
-        return { w: 12, h: 48 };
-      case 'crate':
-        return { w: 40, h: 40 };
-      case 'weight':
-        return { w: 32, h: 32 };
-      default:
-        return { w: 24, h: 24 };
-    }
   }
 
   shutdown(): void {

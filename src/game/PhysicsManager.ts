@@ -1,12 +1,18 @@
 import Phaser from 'phaser';
 import { BODY_PROPERTIES } from '../constants/Physics';
-import type { Level, StaticObject, DynamicObject, ObjectType } from '../types/Level';
+import type { Level, StaticObject, ObjectType } from '../types/Level';
 import type { BodyOptions } from '../types/GameObject';
 
-/** Single source of truth for creating and managing Matter.js bodies. */
+interface TrackedObject {
+  sprite: Phaser.Physics.Matter.Sprite | Phaser.GameObjects.Rectangle;
+  body: MatterJS.BodyType;
+}
+
+/** Single source of truth for creating and managing physics-synced game objects. */
 export class PhysicsManager {
   private scene: Phaser.Scene;
-  private bodies: MatterJS.BodyType[] = [];
+  private tracked: TrackedObject[] = [];
+  private rawBodies: MatterJS.BodyType[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -16,102 +22,119 @@ export class PhysicsManager {
   buildLevel(level: Level): void {
     this.clearLevel();
     this.buildFloor(level.world.width, level.world.height);
+    this.buildWalls(level.world.width, level.world.height);
 
     for (const obj of level.staticObjects) {
       this.createStaticBody(obj);
     }
 
     for (const obj of level.dynamicObjects) {
-      this.createDynamicBody(obj.type, obj.x, obj.y);
+      this.createDynamicSprite(obj.type, obj.x, obj.y);
     }
   }
 
-  /** Create a dynamic physics body at the given position. */
-  createDynamicBody(
+  /** Create a dynamic Matter sprite — auto-syncs position + rotation. */
+  createDynamicSprite(
     type: ObjectType,
     x: number,
     y: number,
     overrides?: BodyOptions
-  ): MatterJS.BodyType {
+  ): Phaser.Physics.Matter.Sprite {
     const props = { ...BODY_PROPERTIES[type], ...overrides };
     const size = this.getSizeForType(type);
 
-    let body: MatterJS.BodyType;
+    const sprite = this.scene.matter.add.sprite(x, y, type, undefined, {
+      friction: props.friction,
+      frictionAir: props.frictionAir,
+      restitution: props.restitution,
+      density: props.density,
+      label: type,
+      shape: type === 'ball'
+        ? { type: 'circle', radius: size.width / 2 }
+        : undefined,
+    });
 
-    if (type === 'ball') {
-      body = this.scene.matter.add.circle(x, y, size.width / 2, {
-        friction: props.friction,
-        frictionAir: props.frictionAir,
-        restitution: props.restitution,
-        density: props.density,
-        label: type,
-      });
-    } else {
-      body = this.scene.matter.add.rectangle(
-        x,
-        y,
-        size.width,
-        size.height,
-        {
-          friction: props.friction,
-          frictionAir: props.frictionAir,
-          restitution: props.restitution,
-          density: props.density,
-          label: type,
-        }
-      );
-    }
+    sprite.setDisplaySize(size.width, size.height);
+    sprite.setDepth(10);
 
-    this.bodies.push(body);
-    return body;
+    this.tracked.push({ sprite, body: sprite.body as MatterJS.BodyType });
+    return sprite;
   }
 
-  /** Create a static body from a level object definition. */
-  private createStaticBody(obj: StaticObject): MatterJS.BodyType {
-    const props = BODY_PROPERTIES['static'];
+  /** Create a static body with a visual rectangle. */
+  private createStaticBody(obj: StaticObject): void {
     const height = obj.height ?? 20;
+    const cx = obj.x + obj.width / 2;
+    const cy = obj.y + height / 2;
+    const angleDeg = obj.angle ?? 0;
 
-    const body = this.scene.matter.add.rectangle(
-      obj.x + obj.width / 2,
-      obj.y + height / 2,
-      obj.width,
-      height,
-      {
-        isStatic: true,
-        friction: props.friction,
-        restitution: props.restitution,
-        angle: obj.angle ? Phaser.Math.DegToRad(obj.angle) : 0,
-        label: obj.type,
-      }
-    );
+    // Visual
+    const color = obj.type === 'ramp' ? 0x555577 : 0x556666;
+    const rect = this.scene.add
+      .rectangle(cx, cy, obj.width, height, color)
+      .setAngle(angleDeg)
+      .setDepth(5);
 
-    this.bodies.push(body);
-    return body;
+    // Physics
+    const body = this.scene.matter.add.rectangle(cx, cy, obj.width, height, {
+      isStatic: true,
+      friction: BODY_PROPERTIES['static'].friction ?? 0.5,
+      restitution: BODY_PROPERTIES['static'].restitution ?? 0.1,
+      angle: Phaser.Math.DegToRad(angleDeg),
+      label: obj.type,
+    });
+
+    this.tracked.push({ sprite: rect, body });
   }
 
-  /** Create the floor/ground body. */
-  private buildFloor(worldWidth: number, worldHeight: number): void {
-    const floor = this.scene.matter.add.rectangle(
-      worldWidth / 2,
-      worldHeight - 10,
-      worldWidth,
-      20,
-      {
-        isStatic: true,
-        friction: 0.5,
-        restitution: 0.1,
-        label: 'floor',
-      }
-    );
-    this.bodies.push(floor);
+  /** Floor body. */
+  private buildFloor(w: number, h: number): void {
+    const rect = this.scene.add
+      .rectangle(w / 2, h - 10, w, 20, 0x444466)
+      .setDepth(5);
+
+    const body = this.scene.matter.add.rectangle(w / 2, h - 10, w, 20, {
+      isStatic: true,
+      friction: 0.5,
+      restitution: 0.1,
+      label: 'floor',
+    });
+
+    this.tracked.push({ sprite: rect, body });
   }
 
-  /** Remove all bodies and clean up. */
+  /** Invisible walls to keep objects on-screen. */
+  private buildWalls(w: number, h: number): void {
+    const wallOpts = { isStatic: true, label: 'wall', friction: 0.3, restitution: 0.2 };
+
+    // Left wall
+    const left = this.scene.matter.add.rectangle(-10, h / 2, 20, h, wallOpts);
+    this.rawBodies.push(left);
+
+    // Right wall
+    const right = this.scene.matter.add.rectangle(w + 10, h / 2, 20, h, wallOpts);
+    this.rawBodies.push(right);
+
+    // Ceiling
+    const top = this.scene.matter.add.rectangle(w / 2, -10, w, 20, wallOpts);
+    this.rawBodies.push(top);
+  }
+
+  /** Remove all bodies and sprites. */
   clearLevel(): void {
-    for (const body of this.bodies) {
+    for (const obj of this.tracked) {
+      if (obj.sprite instanceof Phaser.Physics.Matter.Sprite) {
+        obj.sprite.destroy();
+      } else {
+        this.scene.matter.world.remove(obj.body);
+        obj.sprite.destroy();
+      }
+    }
+    for (const body of this.rawBodies) {
       this.scene.matter.world.remove(body);
     }
-    this.bodies = [];
+    this.tracked = [];
+    this.rawBodies = [];
   }
 
   /** Returns default pixel dimensions for an object type. */
