@@ -6,6 +6,8 @@ export interface PuzzleResult {
   attempts: number;
   solved: boolean;
   date: string;
+  /** Whether all attempts were used or puzzle was completed. */
+  completed?: boolean;
   /** Replay data for the best attempt (body positions per frame). */
   replay?: ReplayFrame[];
   /** Object type and placement position for the best attempt. */

@@ -65,9 +65,9 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Check if today's puzzle was already played
-    const alreadyPlayed = StorageManager.hasPuzzleBeenPlayed(puzzleNum);
-    const todayResult = alreadyPlayed ? StorageManager.getPuzzleResult(puzzleNum) : null;
+    // Check if today's puzzle was already completed
+    const todayResult = StorageManager.getPuzzleResult(puzzleNum);
+    const isCompleted = todayResult?.completed === true;
 
     if (todayResult) {
       const resultText = todayResult.solved ? 'Geschafft!' : 'Versucht';
@@ -79,19 +79,31 @@ export class MenuScene extends Phaser.Scene {
         .setOrigin(0.5).setDepth(10);
     }
 
-    // Play button
-    new Button(this, {
-      x: cx, y: 320, text: alreadyPlayed ? 'NOCHMAL SPIELEN' : 'SPIELEN',
-      width: 220, height: 52, fontSize: alreadyPlayed ? '16px' : '20px',
-      color: alreadyPlayed ? 0x2a3a55 : 0x3355aa,
-      hoverColor: alreadyPlayed ? 0x334466 : 0x4466cc,
-      onClick: () => {
-        this.cameras.main.fadeOut(300, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('GameScene');
-        });
-      },
-    });
+    if (isCompleted) {
+      // Completed — show disabled play button + countdown emphasis
+      new Button(this, {
+        x: cx, y: 320, text: 'ABGESCHLOSSEN',
+        width: 220, height: 52, fontSize: '16px',
+        color: 0x222233, hoverColor: 0x222233,
+        textColor: '#555577',
+        onClick: () => {}, // no-op
+      });
+    } else {
+      // Play button
+      const hasResult = todayResult !== null;
+      new Button(this, {
+        x: cx, y: 320, text: hasResult ? 'WEITER SPIELEN' : 'SPIELEN',
+        width: 220, height: 52, fontSize: hasResult ? '16px' : '20px',
+        color: hasResult ? 0x2a3a55 : 0x3355aa,
+        hoverColor: hasResult ? 0x334466 : 0x4466cc,
+        onClick: () => {
+          this.cameras.main.fadeOut(300, 26, 26, 46);
+          this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('GameScene');
+          });
+        },
+      });
+    }
 
     // Secondary buttons row
     new Button(this, {

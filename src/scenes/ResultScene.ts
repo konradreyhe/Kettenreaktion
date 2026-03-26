@@ -41,6 +41,7 @@ export class ResultScene extends Phaser.Scene {
         score: data.score.total,
         attempts: data.attempts,
         solved: data.solved,
+        completed: true,
         date: new Date().toISOString().split('T')[0],
         replay: data.replay,
         placement: data.placement,
