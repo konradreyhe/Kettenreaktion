@@ -1,0 +1,35 @@
+{
+  "name": "kettenreaktion",
+  "version": "1.0.0",
+  "description": "**Daily physics puzzle in the browser.**",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/konradreyhe/Kettenreaktion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/konradreyhe/Kettenreaktion/issues"
+  },
+  "homepage": "https://github.com/konradreyhe/Kettenreaktion#readme",
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@types/matter-js": "^0.19.8",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vite-plugin-static-copy": "^1.0.6",
+    "vitest": "^4.1.2"
+  }
+}
