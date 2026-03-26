@@ -25,9 +25,16 @@
       height: 100vh;
     }
   </style>
-  <script type="module" crossorigin src="/Kettenreaktion/assets/index-Cw0Y9zyN.js"></script>
+  <script type="module" crossorigin src="/Kettenreaktion/assets/index-CnxgGray.js"></script>
   <link rel="modulepreload" crossorigin href="/Kettenreaktion/assets/phaser-0RJB29YE.js">
 </head>
 <body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
