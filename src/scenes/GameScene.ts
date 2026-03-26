@@ -64,6 +64,7 @@ export class GameScene extends Phaser.Scene {
   private placementData: { type: string; x: number; y: number } | null = null;
   private bestReplayFrames: ReplayFrame[] = [];
   private bestPlacement: { type: string; x: number; y: number } | null = null;
+  private visibilityHandler: (() => void) | null = null;
 
   // Particles
   private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
@@ -123,6 +124,16 @@ export class GameScene extends Phaser.Scene {
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
     this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
+
+    // Pause physics when tab is hidden to prevent time accumulation
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        this.matter.world.pause();
+      } else {
+        this.matter.world.resume();
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
 
     this.cameras.main.fadeIn(300, 26, 26, 46);
 
@@ -1022,5 +1033,9 @@ export class GameScene extends Phaser.Scene {
     this.trailRenderer.destroy();
     for (const btn of this.selectorButtons) btn.destroy();
     this.selectorButtons = [];
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
   }
 }
