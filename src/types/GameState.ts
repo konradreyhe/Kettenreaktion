@@ -1,8 +1,17 @@
+/** A single frame of replay data: array of [x, y, angle] per body. */
+export type ReplayFrame = [number, number, number][];
+
 export interface PuzzleResult {
   score: number;
   attempts: number;
   solved: boolean;
   date: string;
+  /** Replay data for the best attempt (body positions per frame). */
+  replay?: ReplayFrame[];
+  /** Object type and placement position for the best attempt. */
+  placement?: { type: string; x: number; y: number };
+  /** Level ID for loading the correct level during replay. */
+  levelId?: string;
 }
 
 export interface GameStorage {

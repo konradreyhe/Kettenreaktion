@@ -4,7 +4,7 @@ import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
 import { Button } from '../ui/Button';
-import type { ScoreResult } from '../types/GameState';
+import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface ResultData {
   score: ScoreResult;
@@ -15,6 +15,9 @@ interface ResultData {
   totalTargets: number;
   isPractice?: boolean;
   practiceIndex?: number;
+  replay?: ReplayFrame[];
+  placement?: { type: string; x: number; y: number };
+  levelId?: string;
 }
 
 /** Displays final score, breakdown, sharing, and countdown. */
@@ -38,6 +41,9 @@ export class ResultScene extends Phaser.Scene {
         attempts: data.attempts,
         solved: data.solved,
         date: new Date().toISOString().split('T')[0],
+        replay: data.replay,
+        placement: data.placement,
+        levelId: data.levelId,
       });
     }
 

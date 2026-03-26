@@ -107,12 +107,33 @@ export class MenuScene extends Phaser.Scene {
 
     // How-To button
     new Button(this, {
-      x: cx, y: 435, text: 'Anleitung',
-      width: 130, height: 32, fontSize: '12px',
+      x: cx - 80, y: 435, text: 'Anleitung',
+      width: 120, height: 32, fontSize: '12px',
       color: 0x222233, hoverColor: 0x2a2a44,
       textColor: '#777799',
       onClick: () => this.scene.start('HowToScene'),
     });
+
+    // Yesterday's replay button (only if yesterday's puzzle has replay data)
+    const yesterdayNum = puzzleNum - 1;
+    const yesterdayResult = yesterdayNum > 0 ? StorageManager.getPuzzleResult(yesterdayNum) : null;
+    if (yesterdayResult?.replay && yesterdayResult.replay.length > 0) {
+      new Button(this, {
+        x: cx + 80, y: 435, text: 'Gestern',
+        width: 120, height: 32, fontSize: '12px',
+        color: 0x222233, hoverColor: 0x2a2a44,
+        textColor: '#777799',
+        onClick: () => {
+          this.cameras.main.fadeOut(200, 26, 26, 46);
+          this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('ReplayScene', {
+              puzzleNumber: yesterdayNum,
+              result: yesterdayResult,
+            });
+          });
+        },
+      });
+    }
 
     // Sound toggle
     let soundOn = true;

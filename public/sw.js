@@ -1,4 +1,5 @@
-const CACHE_NAME = 'kettenreaktion-v1';
+const CACHE_VERSION = 2;
+const CACHE_NAME = `kettenreaktion-v${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -26,8 +27,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Cache-first for assets, network-first for HTML
-  if (event.request.url.includes('/assets/')) {
+  const url = new URL(event.request.url);
+
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
+  // Hashed assets (Vite adds content hash) — cache forever
+  if (url.pathname.includes('/assets/') && url.pathname.match(/\.[a-f0-9]{8}\./)) {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
@@ -38,9 +44,25 @@ self.addEventListener('fetch', (event) => {
         });
       })
     );
-  } else {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
+    return;
+  }
+
+  // HTML and non-hashed resources — network-first with cache fallback
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Cache the fresh response
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+
+// Listen for update messages from the app
+self.addEventListener('message', (event) => {
+  if (event.data === 'skipWaiting') {
+    self.skipWaiting();
   }
 });

@@ -17,7 +17,7 @@ import {
 } from '../constants/Game';
 import { MAX_BODIES_MOBILE, MAX_BODIES_DESKTOP } from '../constants/Physics';
 import type { Level } from '../types/Level';
-import type { ScoreResult } from '../types/GameState';
+import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface TargetEntry {
   id: string;
@@ -57,6 +57,13 @@ export class GameScene extends Phaser.Scene {
   private placedSprite: Phaser.Physics.Matter.Sprite | null = null;
   private selectedObjectType: import('../types/Level').ObjectType = 'ball';
   private selectorButtons: Phaser.GameObjects.Container[] = [];
+
+  // Replay recording
+  private replayFrames: ReplayFrame[] = [];
+  private replayFrameCounter = 0;
+  private placementData: { type: string; x: number; y: number } | null = null;
+  private bestReplayFrames: ReplayFrame[] = [];
+  private bestPlacement: { type: string; x: number; y: number } | null = null;
 
   // Particles
   private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
@@ -204,6 +211,12 @@ export class GameScene extends Phaser.Scene {
     this.trailRenderer.update();
 
     if (!this.isSimulating) return;
+
+    // Record replay frame every 3rd update (~20fps at 60fps)
+    this.replayFrameCounter++;
+    if (this.replayFrameCounter % 3 === 0) {
+      this.recordReplayFrame();
+    }
 
     const elapsed = Date.now() - this.simulationStartTime;
     const chain = this.chainDetector.getChainLength();
@@ -679,9 +692,14 @@ export class GameScene extends Phaser.Scene {
       this.tweens.killTweensOf(this.placementZoneBorder);
     }
 
+    // Reset replay recording for this attempt
+    this.replayFrames = [];
+    this.replayFrameCounter = 0;
+
     // Place the player's object — with distinct glow
     AudioManager.playPlace();
     const objectType = this.selectedObjectType;
+    this.placementData = { type: objectType, x, y };
     this.placedSprite = this.physicsManager.createPlayerObject(objectType, x, y);
 
     // Hide selector during simulation
@@ -738,6 +756,9 @@ export class GameScene extends Phaser.Scene {
       this.bestScore = result;
       this.bestChainLength = chainLength;
       this.totalTargetsHitBest = this.targetsHit;
+      // Store replay of best attempt (capped at 300 frames to limit storage)
+      this.bestReplayFrames = this.replayFrames.slice(0, 300);
+      this.bestPlacement = this.placementData;
     }
 
     const allTargetsHit = this.targetsHit >= this.level.targets.length;
@@ -761,6 +782,9 @@ export class GameScene extends Phaser.Scene {
             totalTargets: this.level.targets.length,
             isPractice: this.isPractice,
             practiceIndex: this.practiceIndex,
+            replay: this.bestReplayFrames,
+            placement: this.bestPlacement,
+            levelId: this.level.id,
           });
         });
       });
@@ -876,6 +900,21 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  private recordReplayFrame(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const frame: ReplayFrame = [];
+    for (const body of allBodies) {
+      if (body.isStatic) continue;
+      frame.push([
+        Math.round(body.position.x * 10) / 10,
+        Math.round(body.position.y * 10) / 10,
+        Math.round(body.angle * 100) / 100,
+      ]);
+    }
+    this.replayFrames.push(frame);
   }
 
   private getObjectColor(type: import('../types/Level').ObjectType, _alpha?: number): number {

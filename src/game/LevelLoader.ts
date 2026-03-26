@@ -30,6 +30,12 @@ export class LevelLoader {
     return { ...LEVEL_TEMPLATES[clamped] };
   }
 
+  /** Load a level by its ID string. */
+  static loadById(id: string): Level | null {
+    const template = LEVEL_TEMPLATES.find((t) => t.id === id);
+    return template ? { ...template } : null;
+  }
+
   /** Get total number of level templates. */
   static getTemplateCount(): number {
     return LEVEL_TEMPLATES.length;
