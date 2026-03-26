@@ -65,11 +65,26 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
+    // Check if today's puzzle was already played
+    const alreadyPlayed = StorageManager.hasPuzzleBeenPlayed(puzzleNum);
+    const todayResult = alreadyPlayed ? StorageManager.getPuzzleResult(puzzleNum) : null;
+
+    if (todayResult) {
+      const resultText = todayResult.solved ? 'Geschafft!' : 'Versucht';
+      const resultColor = todayResult.solved ? '#44bb44' : '#aa6644';
+      this.add
+        .text(cx, 275, `${resultText}  ${todayResult.score.toLocaleString('de-DE')} Pkt`, {
+          fontSize: '13px', color: resultColor,
+        })
+        .setOrigin(0.5).setDepth(10);
+    }
+
     // Play button
     new Button(this, {
-      x: cx, y: 320, text: 'SPIELEN',
-      width: 220, height: 52, fontSize: '20px',
-      color: 0x3355aa, hoverColor: 0x4466cc,
+      x: cx, y: 320, text: alreadyPlayed ? 'NOCHMAL SPIELEN' : 'SPIELEN',
+      width: 220, height: 52, fontSize: alreadyPlayed ? '16px' : '20px',
+      color: alreadyPlayed ? 0x2a3a55 : 0x3355aa,
+      hoverColor: alreadyPlayed ? 0x334466 : 0x4466cc,
       onClick: () => {
         this.cameras.main.fadeOut(300, 26, 26, 46);
         this.cameras.main.once('camerafadeoutcomplete', () => {

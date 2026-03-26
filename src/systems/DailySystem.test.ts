@@ -48,4 +48,12 @@ describe('DailySystem', () => {
     expect(DailySystem.formatCountdown(0)).toBe('00:00:00');
     expect(DailySystem.formatCountdown(86400000)).toBe('24:00:00');
   });
+
+  it('returns valid difficulty range for all days', () => {
+    const range = DailySystem.getDailyDifficultyRange();
+    expect(range).toHaveLength(2);
+    expect(range[0]).toBeGreaterThanOrEqual(1);
+    expect(range[1]).toBeLessThanOrEqual(5);
+    expect(range[0]).toBeLessThanOrEqual(range[1]);
+  });
 });
