@@ -78,12 +78,39 @@ export class MenuScene extends Phaser.Scene {
       },
     });
 
+    // Secondary buttons row
+    new Button(this, {
+      x: cx - 100, y: 390, text: 'Uebung',
+      width: 130, height: 36, fontSize: '13px',
+      color: 0x2a3a44, hoverColor: 0x334455,
+      textColor: '#88aacc',
+      onClick: () => {
+        this.cameras.main.fadeOut(200, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('PracticeScene');
+        });
+      },
+    });
+
+    new Button(this, {
+      x: cx + 100, y: 390, text: 'Statistik',
+      width: 130, height: 36, fontSize: '13px',
+      color: 0x2a3a44, hoverColor: 0x334455,
+      textColor: '#88aacc',
+      onClick: () => {
+        this.cameras.main.fadeOut(200, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('StatsScene');
+        });
+      },
+    });
+
     // How-To button
     new Button(this, {
-      x: cx, y: 390, text: 'Anleitung',
-      width: 180, height: 38, fontSize: '14px',
-      color: 0x2a2a44, hoverColor: 0x333355,
-      textColor: '#9999bb',
+      x: cx, y: 435, text: 'Anleitung',
+      width: 130, height: 32, fontSize: '12px',
+      color: 0x222233, hoverColor: 0x2a2a44,
+      textColor: '#777799',
       onClick: () => this.scene.start('HowToScene'),
     });
 
@@ -105,7 +132,7 @@ export class MenuScene extends Phaser.Scene {
     const data = StorageManager.load();
     if (data.gamesPlayed > 0) {
       this.add
-        .text(cx, 440, `Spiele: ${data.gamesPlayed}  |  Bester: ${data.bestScore.toLocaleString('de-DE')}`, {
+        .text(cx, 478, `Spiele: ${data.gamesPlayed}  |  Bester: ${data.bestScore.toLocaleString('de-DE')}`, {
           fontSize: '11px', color: '#555577',
         })
         .setOrigin(0.5).setDepth(10);

@@ -4,6 +4,8 @@ import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
 import { HowToScene } from './scenes/HowToScene';
+import { PracticeScene } from './scenes/PracticeScene';
+import { StatsScene } from './scenes/StatsScene';
 import { GAME_WIDTH, GAME_HEIGHT, BG_COLOR } from './constants/Game';
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -25,7 +27,7 @@ const config: Phaser.Types.Core.GameConfig = {
       velocityIterations: 4,
     },
   },
-  scene: [BootScene, MenuScene, HowToScene, GameScene, ResultScene],
+  scene: [BootScene, MenuScene, HowToScene, PracticeScene, StatsScene, GameScene, ResultScene],
 };
 
 new Phaser.Game(config);

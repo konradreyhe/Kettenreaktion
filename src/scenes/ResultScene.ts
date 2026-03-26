@@ -13,6 +13,8 @@ interface ResultData {
   solved: boolean;
   targetsHit: number;
   totalTargets: number;
+  isPractice?: boolean;
+  practiceIndex?: number;
 }
 
 /** Displays final score, breakdown, sharing, and countdown. */
@@ -27,19 +29,24 @@ export class ResultScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(300, 26, 26, 46);
 
-    // Save result
-    StorageManager.recordPuzzle(puzzleNum, {
-      score: data.score.total,
-      attempts: data.attempts,
-      solved: data.solved,
-      date: new Date().toISOString().split('T')[0],
-    });
+    const isPractice = data.isPractice ?? false;
 
-    const streak = StorageManager.getStreak();
+    // Save result (daily mode only)
+    if (!isPractice) {
+      StorageManager.recordPuzzle(puzzleNum, {
+        score: data.score.total,
+        attempts: data.attempts,
+        solved: data.solved,
+        date: new Date().toISOString().split('T')[0],
+      });
+    }
+
+    const streak = isPractice ? 0 : StorageManager.getStreak();
 
     // Header
+    const headerText = isPractice ? 'Uebungsmodus' : `Kettenreaktion #${puzzleNum}`;
     this.add
-      .text(cx, 40, `Kettenreaktion #${puzzleNum}`, {
+      .text(cx, 40, headerText, {
         fontSize: '22px',
         color: '#8888cc',
       })
@@ -173,19 +180,53 @@ export class ResultScene extends Phaser.Scene {
       },
     });
 
-    // Menu button
-    new Button(this, {
-      x: cx, y: 478, text: 'Zum Menue',
-      width: 180, height: 38, fontSize: '14px',
-      color: 0x2a2a44, hoverColor: 0x333355,
-      textColor: '#9999bb',
-      onClick: () => {
-        this.cameras.main.fadeOut(300, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('MenuScene');
-        });
-      },
-    });
+    if (isPractice) {
+      // Practice mode: Replay + Next Level + Back
+      new Button(this, {
+        x: cx - 110, y: 478, text: 'Nochmal',
+        width: 130, height: 36, fontSize: '13px',
+        color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
+        onClick: () => {
+          this.scene.start('GameScene', { practiceIndex: data.practiceIndex });
+        },
+      });
+
+      new Button(this, {
+        x: cx + 110, y: 478, text: 'Naechstes',
+        width: 130, height: 36, fontSize: '13px',
+        color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
+        onClick: () => {
+          const next = ((data.practiceIndex ?? 0) + 1) % 90;
+          this.scene.start('GameScene', { practiceIndex: next });
+        },
+      });
+
+      new Button(this, {
+        x: cx, y: 525, text: 'Zurueck',
+        width: 120, height: 30, fontSize: '12px',
+        color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
+        onClick: () => {
+          this.cameras.main.fadeOut(200, 26, 26, 46);
+          this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('PracticeScene');
+          });
+        },
+      });
+    } else {
+      // Daily mode: Menu button
+      new Button(this, {
+        x: cx, y: 478, text: 'Zum Menue',
+        width: 180, height: 38, fontSize: '14px',
+        color: 0x2a2a44, hoverColor: 0x333355,
+        textColor: '#9999bb',
+        onClick: () => {
+          this.cameras.main.fadeOut(300, 26, 26, 46);
+          this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('MenuScene');
+          });
+        },
+      });
+    }
 
     // Countdown
     const countdownText = this.add

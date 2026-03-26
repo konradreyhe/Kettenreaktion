@@ -41,6 +41,8 @@ export class GameScene extends Phaser.Scene {
   private attempts = 0;
   private isSimulating = false;
   private introActive = false;
+  private isPractice = false;
+  private practiceIndex = 0;
   private simulationStartTime = 0;
   private bestScore: ScoreResult | null = null;
   private bestChainLength = 0;
@@ -68,6 +70,11 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
+  init(data?: { practiceIndex?: number }): void {
+    this.isPractice = data?.practiceIndex !== undefined;
+    this.practiceIndex = data?.practiceIndex ?? 0;
+  }
+
   create(): void {
     this.attempts = 0;
     this.bestScore = null;
@@ -80,7 +87,10 @@ export class GameScene extends Phaser.Scene {
     this.trailRenderer = new TrailRenderer(this);
     this.hud = new HUD(this);
 
-    this.level = LevelLoader.loadToday();
+    // Load level — practice mode uses specific index, daily uses seed
+    this.level = this.isPractice
+      ? LevelLoader.loadByIndex(this.practiceIndex)
+      : LevelLoader.loadToday();
 
     this.createTextures();
     this.drawBackgroundGrid();
@@ -461,6 +471,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupInput(): void {
+    // Keyboard: ESC returns to menu
+    this.input.keyboard?.on('keydown-ESC', () => {
+      const returnScene = this.isPractice ? 'PracticeScene' : 'MenuScene';
+      this.cameras.main.fadeOut(200, 26, 26, 46);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start(returnScene);
+      });
+    });
+
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive || !this.previewGhost) return;
 
@@ -712,6 +731,8 @@ export class GameScene extends Phaser.Scene {
             solved: this.totalTargetsHitBest > 0,
             targetsHit: this.totalTargetsHitBest,
             totalTargets: this.level.targets.length,
+            isPractice: this.isPractice,
+            practiceIndex: this.practiceIndex,
           });
         });
       });

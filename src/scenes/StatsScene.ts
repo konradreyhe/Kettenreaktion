@@ -1,0 +1,118 @@
+import Phaser from 'phaser';
+import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { StorageManager } from '../systems/StorageManager';
+import { Button } from '../ui/Button';
+
+/** Statistics screen with play history and achievements. */
+export class StatsScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'StatsScene' });
+  }
+
+  create(): void {
+    const cx = GAME_WIDTH / 2;
+    const data = StorageManager.load();
+
+    this.cameras.main.fadeIn(200, 26, 26, 46);
+
+    // Title
+    this.add
+      .text(cx, 35, 'Statistiken', {
+        fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    // Big stats
+    const stats = [
+      { label: 'Spiele', value: `${data.gamesPlayed}`, color: '#aaaacc' },
+      { label: 'Bester Score', value: `${data.bestScore.toLocaleString('de-DE')}`, color: '#ffdd44' },
+      { label: 'Gesamt-Score', value: `${data.totalScore.toLocaleString('de-DE')}`, color: '#88cc88' },
+      { label: 'Streak', value: `${data.streak} Tage`, color: '#ffaa44' },
+    ];
+
+    stats.forEach((s, i) => {
+      const bx = 100 + (i % 2) * 300;
+      const by = 90 + Math.floor(i / 2) * 70;
+
+      this.add
+        .text(bx, by, s.value, { fontSize: '28px', color: s.color, fontStyle: 'bold' })
+        .setOrigin(0, 0.5);
+
+      this.add
+        .text(bx, by + 20, s.label, { fontSize: '11px', color: '#666688' })
+        .setOrigin(0, 0.5);
+    });
+
+    // Divider
+    this.add.rectangle(cx, 220, 500, 1, 0x333366, 0.5);
+
+    // Recent puzzle history
+    this.add
+      .text(cx, 245, 'Letzte Puzzle', {
+        fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    const puzzleNums = Object.keys(data.puzzleHistory)
+      .map(Number)
+      .sort((a, b) => b - a)
+      .slice(0, 10);
+
+    if (puzzleNums.length === 0) {
+      this.add
+        .text(cx, 300, 'Noch keine Puzzle gespielt', {
+          fontSize: '13px', color: '#555577',
+        })
+        .setOrigin(0.5);
+    } else {
+      // Header
+      this.add.text(80, 275, 'Puzzle', { fontSize: '11px', color: '#666688' });
+      this.add.text(200, 275, 'Score', { fontSize: '11px', color: '#666688' });
+      this.add.text(320, 275, 'Versuche', { fontSize: '11px', color: '#666688' });
+      this.add.text(440, 275, 'Status', { fontSize: '11px', color: '#666688' });
+
+      puzzleNums.forEach((num, i) => {
+        const result = data.puzzleHistory[num];
+        const y = 300 + i * 24;
+
+        this.add.text(80, y, `#${num}`, { fontSize: '12px', color: '#aaaacc' });
+        this.add.text(200, y, `${result.score.toLocaleString('de-DE')}`, {
+          fontSize: '12px', color: '#ffdd44',
+        });
+        this.add.text(320, y, `${result.attempts}/3`, {
+          fontSize: '12px', color: '#aaaacc',
+        });
+        this.add.text(440, y, result.solved ? '\u2705' : '\u274C', {
+          fontSize: '12px', color: result.solved ? '#44ff44' : '#ff4444',
+        });
+      });
+    }
+
+    // Average score
+    if (puzzleNums.length > 0) {
+      const total = puzzleNums.reduce(
+        (sum, num) => sum + data.puzzleHistory[num].score, 0
+      );
+      const avg = Math.round(total / puzzleNums.length);
+
+      this.add
+        .text(cx, GAME_HEIGHT - 100, `Durchschnitt: ${avg.toLocaleString('de-DE')} Punkte`, {
+          fontSize: '13px', color: '#888899',
+        })
+        .setOrigin(0.5);
+    }
+
+    // Back button
+    new Button(this, {
+      x: cx, y: GAME_HEIGHT - 45, text: 'Zurueck',
+      width: 160, height: 36, fontSize: '13px',
+      color: 0x2a2a44, hoverColor: 0x333355, textColor: '#9999bb',
+      onClick: () => {
+        this.cameras.main.fadeOut(200, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('MenuScene');
+        });
+      },
+    });
+  }
+}
