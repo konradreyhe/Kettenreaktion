@@ -86,6 +86,16 @@ export class HowToScene extends Phaser.Scene {
         .setOrigin(1, 0.5);
     });
 
+    // Keyboard shortcuts
+    this.add
+      .rectangle(cx, GAME_HEIGHT - 100, 500, 1, 0x333366, 0.5);
+
+    this.add
+      .text(cx - 150, GAME_HEIGHT - 80, 'ESC: Zurueck  |  Pfeiltasten: Level wechseln (Uebung)', {
+        fontSize: '10px', color: '#555577',
+      })
+      .setOrigin(0, 0.5);
+
     // Back button
     new Button(this, {
       x: cx,
