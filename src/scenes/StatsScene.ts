@@ -22,11 +22,14 @@ export class StatsScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Computed stats
+    const computed = StorageManager.getComputedStats();
+
     // Big stats
     const stats = [
       { label: 'Spiele', value: `${data.gamesPlayed}`, color: '#aaaacc' },
       { label: 'Bester Score', value: `${data.bestScore.toLocaleString('de-DE')}`, color: '#ffdd44' },
-      { label: 'Gesamt-Score', value: `${data.totalScore.toLocaleString('de-DE')}`, color: '#88cc88' },
+      { label: 'Geloest', value: `${computed.totalSolved} (${computed.solveRate}%)`, color: '#88cc88' },
       { label: 'Streak', value: `${data.streak} Tage`, color: '#ffaa44' },
     ];
 
@@ -88,16 +91,17 @@ export class StatsScene extends Phaser.Scene {
       });
     }
 
-    // Average score
-    if (puzzleNums.length > 0) {
-      const total = puzzleNums.reduce(
-        (sum, num) => sum + data.puzzleHistory[num].score, 0
-      );
-      const avg = Math.round(total / puzzleNums.length);
+    // Bottom stats row
+    if (data.gamesPlayed > 0) {
+      const bottomStats = [
+        `Durchschnitt: ${computed.avgScore.toLocaleString('de-DE')}`,
+        `Gesamt: ${data.totalScore.toLocaleString('de-DE')}`,
+        `Rekord-Streak: ${computed.bestStreak}`,
+      ].join('  |  ');
 
       this.add
-        .text(cx, GAME_HEIGHT - 100, `Durchschnitt: ${avg.toLocaleString('de-DE')} Punkte`, {
-          fontSize: '13px', color: '#888899',
+        .text(cx, GAME_HEIGHT - 100, bottomStats, {
+          fontSize: '11px', color: '#666688',
         })
         .setOrigin(0.5);
     }

@@ -81,4 +81,72 @@ export class StorageManager {
     const data = StorageManager.load();
     return data.puzzleHistory[puzzleNumber] ?? null;
   }
+
+  /** Prune replay data from puzzles older than `keepDays` to save localStorage space. */
+  static pruneOldReplays(keepDays: number = 7): void {
+    const data = StorageManager.load();
+    const now = new Date();
+    let changed = false;
+
+    for (const [numStr, result] of Object.entries(data.puzzleHistory)) {
+      if (!result.replay) continue;
+
+      const puzzleDate = new Date(result.date);
+      const ageDays = (now.getTime() - puzzleDate.getTime()) / 86400000;
+      if (ageDays > keepDays) {
+        delete result.replay;
+        delete result.placement;
+        data.puzzleHistory[Number(numStr)] = result;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      StorageManager.save(data);
+    }
+  }
+
+  /** Get computed stats from puzzle history. */
+  static getComputedStats(): {
+    solveRate: number;
+    avgScore: number;
+    bestStreak: number;
+    totalSolved: number;
+  } {
+    const data = StorageManager.load();
+    const results = Object.values(data.puzzleHistory);
+
+    if (results.length === 0) {
+      return { solveRate: 0, avgScore: 0, bestStreak: 0, totalSolved: 0 };
+    }
+
+    const totalSolved = results.filter((r) => r.solved).length;
+    const solveRate = Math.round((totalSolved / results.length) * 100);
+    const avgScore = Math.round(
+      results.reduce((sum, r) => sum + r.score, 0) / results.length
+    );
+
+    // Calculate best streak from sorted puzzle dates
+    const sortedDates = results
+      .map((r) => r.date)
+      .filter(Boolean)
+      .sort();
+
+    let bestStreak = 0;
+    let currentStreak = 1;
+    for (let i = 1; i < sortedDates.length; i++) {
+      const prev = new Date(sortedDates[i - 1]);
+      const curr = new Date(sortedDates[i]);
+      const diff = (curr.getTime() - prev.getTime()) / 86400000;
+      if (Math.round(diff) === 1) {
+        currentStreak++;
+      } else if (Math.round(diff) > 1) {
+        bestStreak = Math.max(bestStreak, currentStreak);
+        currentStreak = 1;
+      }
+    }
+    bestStreak = Math.max(bestStreak, currentStreak);
+
+    return { solveRate, avgScore, bestStreak, totalSolved };
+  }
 }

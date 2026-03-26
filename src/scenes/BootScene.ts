@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { StorageManager } from '../systems/StorageManager';
 
 /** Preloads assets, generates all procedural textures. */
 export class BootScene extends Phaser.Scene {
@@ -13,6 +14,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Prune old replay data to prevent localStorage bloat
+    StorageManager.pruneOldReplays(7);
+
     this.time.delayedCall(600, () => {
       this.cameras.main.fadeOut(300, 26, 26, 46);
       this.cameras.main.once('camerafadeoutcomplete', () => {

@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
+import { LevelLoader } from '../game/LevelLoader';
 import { Button } from '../ui/Button';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
@@ -202,7 +203,7 @@ export class ResultScene extends Phaser.Scene {
         width: 130, height: 36, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
-          const next = ((data.practiceIndex ?? 0) + 1) % 90;
+          const next = ((data.practiceIndex ?? 0) + 1) % LevelLoader.getTemplateCount();
           this.scene.start('GameScene', { practiceIndex: next });
         },
       });

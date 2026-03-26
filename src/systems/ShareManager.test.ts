@@ -17,7 +17,7 @@ describe('ShareManager', () => {
     expect(result).toContain('#42');
     expect(result).toContain('1.240');
     expect(result).toContain('7 Tage Streak');
-    expect(result).toContain('kettenpuzzle.com');
+    expect(result).toContain('konradreyhe.github.io/Kettenreaktion');
     expect(result).toContain('2/3');
   });
 

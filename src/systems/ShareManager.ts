@@ -54,7 +54,7 @@ export class ShareManager {
       lines.push(`${FIRE} ${streak} Tage Streak`);
     }
 
-    lines.push('', 'kettenpuzzle.com');
+    lines.push('', 'konradreyhe.github.io/Kettenreaktion');
 
     return lines.join('\n');
   }
@@ -99,7 +99,7 @@ export class ShareManager {
     if (typeof navigator.share === 'function') {
       await navigator.share({
         text,
-        url: 'https://kettenpuzzle.com',
+        url: 'https://konradreyhe.github.io/Kettenreaktion/',
       });
     } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(text);
