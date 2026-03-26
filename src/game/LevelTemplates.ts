@@ -117,13 +117,14 @@ export const LEVEL_TEMPLATES: Level[] = [
     staticObjects: [
       { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
       { type: 'ramp', x: 60, y: 180, width: 300, angle: -12 },
-      { type: 'ramp', x: 500, y: 340, width: 250, angle: 12 },
+      { type: 'ramp', x: 500, y: 340, width: 250, angle: -12 },
       { type: 'platform', x: 320, y: 280, width: 80, height: 10 },
     ],
     dynamicObjects: [
       { id: 'd1', type: 'crate', x: 340, y: 255 },
       { id: 'd2', type: 'domino', x: 300, y: 555 },
       { id: 'd3', type: 'domino', x: 335, y: 555 },
+      { id: 'd4', type: 'domino', x: 670, y: 555 },
     ],
     targets: [
       { id: 't1', type: 'star', x: 260, y: 550, points: 100 },
@@ -247,6 +248,8 @@ export const LEVEL_TEMPLATES: Level[] = [
       { id: 'd2', type: 'ball', x: 450, y: 180 },
       { id: 'd3', type: 'domino', x: 200, y: 555 },
       { id: 'd4', type: 'domino', x: 600, y: 555 },
+      { id: 'd5', type: 'domino', x: 380, y: 555 },
+      { id: 'd6', type: 'domino', x: 420, y: 555 },
     ],
     targets: [
       { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
@@ -325,6 +328,7 @@ export const LEVEL_TEMPLATES: Level[] = [
     },
     staticObjects: [
       { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 100, y: 500, width: 150, angle: -10 },
     ],
     dynamicObjects: [
       { id: 'd1', type: 'domino', x: 250, y: 555 },
@@ -472,10 +476,12 @@ export const LEVEL_TEMPLATES: Level[] = [
       { id: 'd1', type: 'ball', x: 120, y: 160 },
       { id: 'd2', type: 'domino', x: 430, y: 325 },
       { id: 'd3', type: 'domino', x: 460, y: 325 },
+      { id: 'd4', type: 'domino', x: 300, y: 555 },
+      { id: 'd5', type: 'domino', x: 330, y: 555 },
     ],
     targets: [
       { id: 't1', type: 'star', x: 700, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 350, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 360, y: 555, points: 100 },
     ],
     seed_variations: {
       domino_x_offset: { min: -8, max: 8 },
@@ -495,9 +501,9 @@ export const LEVEL_TEMPLATES: Level[] = [
     staticObjects: [
       { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
       { type: 'ramp', x: 80, y: 150, width: 200, angle: -12 },
-      { type: 'platform', x: 280, y: 240, width: 20, height: 180 },
-      { type: 'platform', x: 310, y: 240, width: 20, height: 180 },
-      { type: 'ramp', x: 320, y: 420, width: 200, angle: -15 },
+      { type: 'platform', x: 260, y: 240, width: 20, height: 180 },
+      { type: 'platform', x: 320, y: 240, width: 20, height: 180 },
+      { type: 'ramp', x: 340, y: 420, width: 200, angle: -15 },
     ],
     dynamicObjects: [
       { id: 'd1', type: 'domino', x: 540, y: 555 },
@@ -666,12 +672,15 @@ export const LEVEL_TEMPLATES: Level[] = [
     placementZone: { x: 370, y: 30, width: 60, height: 60, allowedObjects: ['weight'] },
     staticObjects: [
       { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 350, y: 150, width: 100, height: 10 },
       { type: 'ramp', x: 250, y: 250, width: 150, angle: 20 },
       { type: 'ramp', x: 450, y: 250, width: 150, angle: -20 },
     ],
     dynamicObjects: [
-      { id: 'd1', type: 'ball', x: 200, y: 555 },
-      { id: 'd2', type: 'ball', x: 600, y: 555 },
+      { id: 'd1', type: 'ball', x: 370, y: 130 },
+      { id: 'd2', type: 'ball', x: 430, y: 130 },
+      { id: 'd3', type: 'domino', x: 130, y: 555 },
+      { id: 'd4', type: 'domino', x: 670, y: 555 },
     ],
     targets: [
       { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
@@ -739,9 +748,9 @@ export const LEVEL_TEMPLATES: Level[] = [
     staticObjects: [
       { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
       { type: 'ramp', x: 40, y: 130, width: 180, angle: -20 },
-      { type: 'platform', x: 220, y: 200, width: 15, height: 250 },
-      { type: 'platform', x: 245, y: 200, width: 15, height: 250 },
-      { type: 'platform', x: 260, y: 450, width: 200, height: 10 },
+      { type: 'platform', x: 200, y: 200, width: 15, height: 250 },
+      { type: 'platform', x: 255, y: 200, width: 15, height: 250 },
+      { type: 'platform', x: 270, y: 450, width: 200, height: 10 },
     ],
     dynamicObjects: [
       { id: 'd1', type: 'domino', x: 300, y: 425 },
