@@ -28,12 +28,11 @@ export class CameraFX {
     this.isSlowMo = true;
     this.slowMoTarget = speed;
 
+    // Only slow visual time, not physics engine (preserves determinism)
     this.scene.time.timeScale = speed;
-    this.scene.matter.world.engine.timing.timeScale = speed;
 
     this.scene.time.delayedCall(durationMs * speed, () => {
       this.scene.time.timeScale = 1;
-      this.scene.matter.world.engine.timing.timeScale = 1;
       this.isSlowMo = false;
     });
   }

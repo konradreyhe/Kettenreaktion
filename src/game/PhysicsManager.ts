@@ -13,6 +13,7 @@ export class PhysicsManager {
   private scene: Phaser.Scene;
   private tracked: TrackedObject[] = [];
   private rawBodies: MatterJS.BodyType[] = [];
+  private glowCleanups: (() => void)[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -72,19 +73,25 @@ export class PhysicsManager {
     // Cyan tint to distinguish player's object
     sprite.setTint(0x88ccff);
 
-    // Add glow ring behind
+    // Add glow ring behind — tracked so it's cleaned up properly
     const size = this.getSizeForType(type);
     const glow = this.scene.add
       .circle(x, y, size.width * 0.8, 0x44aaff, 0.25)
       .setDepth(14);
 
-    // Follow the sprite
-    this.scene.events.on('update', () => {
-      if (sprite.active) {
-        glow.setPosition(sprite.x, sprite.y);
-      } else {
+    // Follow the sprite via tracked update callback (cleaned up in clearLevel)
+    const updateFn = () => {
+      if (sprite.active && !sprite.body) {
         glow.destroy();
+        this.scene.events.off('update', updateFn);
+      } else if (sprite.active) {
+        glow.setPosition(sprite.x, sprite.y);
       }
+    };
+    this.scene.events.on('update', updateFn);
+    this.glowCleanups.push(() => {
+      glow.destroy();
+      this.scene.events.off('update', updateFn);
     });
 
     return sprite;
@@ -170,6 +177,12 @@ export class PhysicsManager {
   }
 
   clearLevel(): void {
+    // Clean up glow follow callbacks
+    for (const cleanup of this.glowCleanups) {
+      cleanup();
+    }
+    this.glowCleanups = [];
+
     for (const obj of this.tracked) {
       if (obj.sprite instanceof Phaser.Physics.Matter.Sprite) {
         obj.sprite.destroy();

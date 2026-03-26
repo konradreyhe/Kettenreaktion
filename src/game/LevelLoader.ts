@@ -1,17 +1,37 @@
 import type { Level } from '../types/Level';
 import { DailySystem } from '../systems/DailySystem';
+import { LEVEL_TEMPLATES as BATCH_1 } from './LevelTemplates';
+import { LEVEL_TEMPLATES_2 as BATCH_2 } from './LevelTemplates2';
 
-// Inline level templates until we have the full asset pipeline
-import { LEVEL_TEMPLATES } from './LevelTemplates';
+const LEVEL_TEMPLATES = [...BATCH_1, ...BATCH_2];
 
 /** Loads and prepares levels with seed-based variations. */
 export class LevelLoader {
-  /** Load today's level using the daily seed. */
+  /** Load today's level using the daily seed. Override with ?level=N URL param. */
   static loadToday(): Level {
+    // Debug: ?level=5 loads template index 5 directly
+    const params = new URLSearchParams(window.location.search);
+    const debugLevel = params.get('level');
+    if (debugLevel !== null) {
+      const idx = Math.max(0, Math.min(parseInt(debugLevel, 10), LEVEL_TEMPLATES.length - 1));
+      return { ...LEVEL_TEMPLATES[idx] };
+    }
+
     const seed = DailySystem.getTodaysSeed();
     const index = DailySystem.getLevelIndex(seed, LEVEL_TEMPLATES.length);
     const template = LEVEL_TEMPLATES[index];
     return LevelLoader.applyVariations(template, seed);
+  }
+
+  /** Load a specific level by index (for testing). */
+  static loadByIndex(index: number): Level {
+    const clamped = Math.max(0, Math.min(index, LEVEL_TEMPLATES.length - 1));
+    return { ...LEVEL_TEMPLATES[clamped] };
+  }
+
+  /** Get total number of level templates. */
+  static getTemplateCount(): number {
+    return LEVEL_TEMPLATES.length;
   }
 
   /** Apply seed-based variations to a level template. */
@@ -22,10 +42,9 @@ export class LevelLoader {
 
     for (const [key, range] of Object.entries(template.seed_variations)) {
       const hash = Math.sin(seed * 7919 + key.length * 104729) * 233280;
-      const t = hash - Math.floor(hash); // 0..1
+      const t = hash - Math.floor(hash);
       const offset = range.min + t * (range.max - range.min);
 
-      // Apply offset to matching dynamic object positions
       if (key.includes('_x_offset')) {
         for (const obj of level.dynamicObjects) {
           obj.x += offset;

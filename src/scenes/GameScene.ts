@@ -40,6 +40,7 @@ export class GameScene extends Phaser.Scene {
 
   private attempts = 0;
   private isSimulating = false;
+  private introActive = false;
   private simulationStartTime = 0;
   private bestScore: ScoreResult | null = null;
   private bestChainLength = 0;
@@ -110,6 +111,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showLevelIntro(): void {
+    this.introActive = true;
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
@@ -178,6 +180,7 @@ export class GameScene extends Phaser.Scene {
           levelName.destroy();
           diffText.destroy();
           hint.destroy();
+          this.introActive = false;
         },
       });
     });
@@ -381,7 +384,7 @@ export class GameScene extends Phaser.Scene {
       const sprite = this.add
         .sprite(target.x, target.y, 'star')
         .setDisplaySize(26, 26)
-        .setDepth(15) as unknown as Phaser.GameObjects.Arc;
+        .setDepth(15);
 
       this.tweens.add({
         targets: sprite,
@@ -459,7 +462,7 @@ export class GameScene extends Phaser.Scene {
 
   private setupInput(): void {
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
-      if (this.isSimulating || !this.previewGhost) return;
+      if (this.isSimulating || this.introActive || !this.previewGhost) return;
 
       if (this.isInZone(ptr.x, ptr.y)) {
         this.previewGhost.setPosition(ptr.x, ptr.y);
@@ -470,7 +473,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      if (this.isSimulating) return;
+      if (this.isSimulating || this.introActive) return;
       if (this.attempts >= MAX_ATTEMPTS) return;
       if (!this.isInZone(ptr.x, ptr.y)) return;
 
