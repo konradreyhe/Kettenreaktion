@@ -801,13 +801,42 @@ export class GameScene extends Phaser.Scene {
     const allTargetsHit = this.targetsHit >= this.level.targets.length;
 
     if (this.attempts >= MAX_ATTEMPTS || allTargetsHit) {
+      const isPerfect = allTargetsHit && this.attempts === 1;
+
       if (this.totalTargetsHitBest > 0) {
         AudioManager.playSuccess();
       } else {
         AudioManager.playFail();
       }
 
-      this.time.delayedCall(600, () => {
+      // "PERFEKT!" flash for first-attempt all-target solve
+      if (isPerfect) {
+        const perfectText = this.add
+          .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'PERFEKT!', {
+            fontSize: '48px', color: '#ffdd44', fontStyle: 'bold',
+          })
+          .setOrigin(0.5).setDepth(200).setScale(0).setAlpha(1);
+
+        this.tweens.add({
+          targets: perfectText,
+          scaleX: 1.2, scaleY: 1.2,
+          duration: 300,
+          ease: 'Back.easeOut',
+          onComplete: () => {
+            this.tweens.add({
+              targets: perfectText,
+              alpha: 0, scaleX: 1.5, scaleY: 1.5,
+              delay: 400,
+              duration: 300,
+              onComplete: () => perfectText.destroy(),
+            });
+          },
+        });
+
+        this.cameraFX.addTrauma(0.5);
+      }
+
+      this.time.delayedCall(isPerfect ? 1000 : 600, () => {
         this.cameras.main.fadeOut(500, 26, 26, 46);
         this.cameras.main.once('camerafadeoutcomplete', () => {
           this.scene.start('ResultScene', {
