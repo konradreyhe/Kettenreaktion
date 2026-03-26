@@ -55,6 +55,8 @@ export class GameScene extends Phaser.Scene {
   private targets: TargetEntry[] = [];
   private targetsHit = 0;
   private placedSprite: Phaser.Physics.Matter.Sprite | null = null;
+  private selectedObjectType: import('../types/Level').ObjectType = 'ball';
+  private selectorButtons: Phaser.GameObjects.Container[] = [];
 
   // Particles
   private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
@@ -426,9 +428,15 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
+    // Object type selector (when multiple types allowed)
+    this.selectedObjectType = this.level.placementZone.allowedObjects[0];
+    this.selectorButtons = [];
+    if (this.level.placementZone.allowedObjects.length > 1) {
+      this.createObjectSelector();
+    }
+
     // Preview ghost
-    const firstAllowed = this.level.placementZone.allowedObjects[0];
-    const ghostColor = firstAllowed === 'ball' ? 0xaaaaee : 0xccaa55;
+    const ghostColor = this.getObjectColor(this.selectedObjectType, 0.4);
     this.previewGhost = this.add
       .circle(
         zone.x + zone.width / 2,
@@ -673,8 +681,11 @@ export class GameScene extends Phaser.Scene {
 
     // Place the player's object — with distinct glow
     AudioManager.playPlace();
-    const objectType = this.level.placementZone.allowedObjects[0];
+    const objectType = this.selectedObjectType;
     this.placedSprite = this.physicsManager.createPlayerObject(objectType, x, y);
+
+    // Hide selector during simulation
+    for (const btn of this.selectorButtons) btn.setVisible(false);
 
     // Track the placed object for trail rendering
     this.trailRenderer.track(
@@ -867,6 +878,70 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private getObjectColor(type: import('../types/Level').ObjectType, _alpha?: number): number {
+    switch (type) {
+      case 'ball': return 0xaaaaee;
+      case 'weight': return 0xccaa55;
+      case 'crate': return 0xcc8844;
+      case 'domino': return 0xddcc88;
+      default: return 0xaaaaaa;
+    }
+  }
+
+  private createObjectSelector(): void {
+    const allowed = this.level.placementZone.allowedObjects;
+    const startX = GAME_WIDTH - 50;
+    const startY = 80;
+    const spacing = 50;
+
+    const label = this.add.text(startX, startY - 30, 'Objekt:', {
+      fontFamily: 'monospace', fontSize: '12px', color: '#aaaaaa',
+    }).setOrigin(0.5).setDepth(50);
+    const labelContainer = this.add.container(0, 0, [label]).setDepth(50);
+    this.selectorButtons.push(labelContainer);
+
+    allowed.forEach((type, i) => {
+      const y = startY + i * spacing;
+      const isSelected = type === this.selectedObjectType;
+
+      const bg = this.add.circle(startX, y, 18, isSelected ? 0x446644 : 0x333344, 0.8);
+      const icon = this.add.circle(startX, y, 10, this.getObjectColor(type), isSelected ? 1 : 0.5);
+      const nameText = this.add.text(startX, y + 22, type.charAt(0).toUpperCase() + type.slice(1), {
+        fontFamily: 'monospace', fontSize: '10px', color: '#cccccc',
+      }).setOrigin(0.5);
+
+      const container = this.add.container(0, 0, [bg, icon, nameText]).setDepth(50);
+      container.setSize(40, 40);
+
+      bg.setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => {
+          if (this.isSimulating) return;
+          this.selectedObjectType = type;
+          this.updateSelectorHighlight();
+          // Update ghost color
+          if (this.previewGhost) {
+            this.previewGhost.setFillStyle(this.getObjectColor(type), 0.4);
+          }
+        });
+
+      this.selectorButtons.push(container);
+    });
+  }
+
+  private updateSelectorHighlight(): void {
+    const allowed = this.level.placementZone.allowedObjects;
+    // Skip index 0 (label container), buttons start at index 1
+    for (let i = 0; i < allowed.length; i++) {
+      const container = this.selectorButtons[i + 1];
+      if (!container) continue;
+      const bg = container.list[0] as Phaser.GameObjects.Arc;
+      const icon = container.list[1] as Phaser.GameObjects.Arc;
+      const isSelected = allowed[i] === this.selectedObjectType;
+      bg.setFillStyle(isSelected ? 0x446644 : 0x333344, 0.8);
+      icon.setAlpha(isSelected ? 1 : 0.5);
+    }
+  }
+
   private isInZone(x: number, y: number): boolean {
     const zone = this.level.placementZone;
     return (
@@ -880,5 +955,7 @@ export class GameScene extends Phaser.Scene {
   shutdown(): void {
     this.physicsManager.clearLevel();
     this.trailRenderer.destroy();
+    for (const btn of this.selectorButtons) btn.destroy();
+    this.selectorButtons = [];
   }
 }
