@@ -289,4 +289,295 @@ export const LEVEL_TEMPLATES: Level[] = [
       ramp_angle_offset: { min: -2, max: 2 },
     },
   },
+
+  // ===== DIFFICULTY 1 — More Easy Levels =====
+  {
+    id: 'template_011',
+    name: 'Sanfter Fall',
+    difficulty: 1,
+    theme: 'wood',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 200, y: 50, width: 200, height: 100,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 250, y: 250, width: 180, angle: -10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 450, y: 555 },
+      { id: 'd2', type: 'domino', x: 485, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 540, y: 555, points: 100 },
+    ],
+  },
+  {
+    id: 'template_012',
+    name: 'Direkter Weg',
+    difficulty: 1,
+    theme: 'wood',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 50, y: 350, width: 120, height: 120,
+      allowedObjects: ['ball', 'weight'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 250, y: 555 },
+      { id: 'd2', type: 'domino', x: 285, y: 555 },
+      { id: 'd3', type: 'domino', x: 320, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 380, y: 555, points: 100 },
+    ],
+  },
+
+  // ===== DIFFICULTY 2 — More Medium Levels =====
+  {
+    id: 'template_013',
+    name: 'Zickzack',
+    difficulty: 2,
+    theme: 'stone',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 20, y: 30, width: 100, height: 80,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 50, y: 160, width: 250, angle: -18 },
+      { type: 'ramp', x: 350, y: 280, width: 250, angle: 18 },
+      { type: 'ramp', x: 150, y: 400, width: 250, angle: -18 },
+    ],
+    dynamicObjects: [],
+    targets: [
+      { id: 't1', type: 'star', x: 420, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      ramp_angle_offset: { min: -3, max: 3 },
+    },
+  },
+  {
+    id: 'template_014',
+    name: 'Brückenschlag',
+    difficulty: 2,
+    theme: 'wood',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 350, y: 30, width: 100, height: 80,
+      allowedObjects: ['weight'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 300, y: 200, width: 200, height: 12 },
+      { type: 'platform', x: 200, y: 400, width: 120, height: 12 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'ball', x: 380, y: 180 },
+      { id: 'd2', type: 'domino', x: 230, y: 375 },
+      { id: 'd3', type: 'domino', x: 265, y: 375 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 310, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      domino_x_offset: { min: -8, max: 8 },
+    },
+  },
+  {
+    id: 'template_015',
+    name: 'Doppelpack',
+    difficulty: 2,
+    theme: 'wood',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 370, y: 50, width: 60, height: 80,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 300, y: 200, width: 150, angle: 20 },
+      { type: 'ramp', x: 400, y: 200, width: 150, angle: -20 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 200, y: 555 },
+      { id: 'd2', type: 'domino', x: 600, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 150, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 650, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      ramp_angle_offset: { min: -4, max: 4 },
+    },
+  },
+
+  // ===== DIFFICULTY 3 — More Hard Levels =====
+  {
+    id: 'template_016',
+    name: 'Kettenexplosion',
+    difficulty: 3,
+    theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 20, y: 200, width: 60, height: 80,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 60, y: 330, width: 150, angle: -25 },
+      { type: 'platform', x: 250, y: 450, width: 80, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 220, y: 555 },
+      { id: 'd2', type: 'domino', x: 250, y: 555 },
+      { id: 'd3', type: 'domino', x: 280, y: 555 },
+      { id: 'd4', type: 'crate', x: 270, y: 425 },
+      { id: 'd5', type: 'domino', x: 350, y: 555 },
+      { id: 'd6', type: 'domino', x: 380, y: 555 },
+      { id: 'd7', type: 'domino', x: 410, y: 555 },
+      { id: 'd8', type: 'domino', x: 440, y: 555 },
+      { id: 'd9', type: 'domino', x: 470, y: 555 },
+      { id: 'd10', type: 'domino', x: 500, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 560, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      domino_x_offset: { min: -6, max: 6 },
+    },
+  },
+  {
+    id: 'template_017',
+    name: 'Hoch und Runter',
+    difficulty: 3,
+    theme: 'stone',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 20, y: 20, width: 80, height: 80,
+      allowedObjects: ['weight'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 80, y: 180, width: 120, height: 12 },
+      { type: 'ramp', x: 200, y: 280, width: 150, angle: -30 },
+      { type: 'platform', x: 400, y: 350, width: 100, height: 12 },
+      { type: 'ramp', x: 500, y: 450, width: 180, angle: -20 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'ball', x: 120, y: 160 },
+      { id: 'd2', type: 'domino', x: 430, y: 325 },
+      { id: 'd3', type: 'domino', x: 460, y: 325 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 700, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 350, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      domino_x_offset: { min: -8, max: 8 },
+      ramp_angle_offset: { min: -3, max: 3 },
+    },
+  },
+  {
+    id: 'template_018',
+    name: 'Engpass',
+    difficulty: 3,
+    theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 50, y: 30, width: 100, height: 60,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 80, y: 150, width: 200, angle: -12 },
+      { type: 'platform', x: 280, y: 240, width: 20, height: 180 },
+      { type: 'platform', x: 310, y: 240, width: 20, height: 180 },
+      { type: 'ramp', x: 320, y: 420, width: 200, angle: -15 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 540, y: 555 },
+      { id: 'd2', type: 'domino', x: 570, y: 555 },
+      { id: 'd3', type: 'domino', x: 600, y: 555 },
+      { id: 'd4', type: 'domino', x: 630, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      domino_x_offset: { min: -5, max: 5 },
+    },
+  },
+
+  // ===== DIFFICULTY 4 — Expert =====
+  {
+    id: 'template_019',
+    name: 'Unmoeglich?',
+    difficulty: 4,
+    theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 380, y: 30, width: 40, height: 40,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 350, y: 150, width: 100, height: 10 },
+      { type: 'ramp', x: 200, y: 250, width: 150, angle: 25 },
+      { type: 'ramp', x: 450, y: 250, width: 150, angle: -25 },
+      { type: 'platform', x: 350, y: 380, width: 60, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'ball', x: 380, y: 130 },
+      { id: 'd2', type: 'domino', x: 100, y: 555 },
+      { id: 'd3', type: 'domino', x: 700, y: 555 },
+      { id: 'd4', type: 'crate', x: 370, y: 355 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 50, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't3', type: 'star', x: 750, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      domino_x_offset: { min: -5, max: 5 },
+    },
+  },
+  {
+    id: 'template_020',
+    name: 'Meisterstück',
+    difficulty: 4,
+    theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: {
+      x: 10, y: 50, width: 60, height: 50,
+      allowedObjects: ['ball'],
+    },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 30, y: 150, width: 180, angle: -22 },
+      { type: 'platform', x: 210, y: 260, width: 40, height: 10 },
+      { type: 'ramp', x: 250, y: 260, width: 120, angle: -35 },
+      { type: 'platform', x: 400, y: 200, width: 80, height: 10 },
+      { type: 'ramp', x: 480, y: 200, width: 100, angle: 15 },
+      { type: 'platform', x: 580, y: 320, width: 60, height: 10 },
+      { type: 'ramp', x: 640, y: 420, width: 140, angle: -20 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 225, y: 240 },
+      { id: 'd2', type: 'ball', x: 420, y: 180 },
+      { id: 'd3', type: 'domino', x: 600, y: 295 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 750, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+    ],
+    seed_variations: {
+      domino_x_offset: { min: -4, max: 4 },
+      ramp_angle_offset: { min: -2, max: 2 },
+    },
+  },
 ];

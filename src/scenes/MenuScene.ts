@@ -148,6 +148,24 @@ export class MenuScene extends Phaser.Scene {
     howBtn.on('pointerout', () => howBtn.setFillStyle(0x2a2a44));
     howBtn.on('pointerdown', () => this.scene.start('HowToScene'));
 
+    // Sound toggle
+    let soundOn = true;
+    const soundBtn = this.add
+      .text(GAME_WIDTH - 20, 20, 'Sound: AN', {
+        fontSize: '12px',
+        color: '#666688',
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10);
+
+    soundBtn.on('pointerdown', () => {
+      soundOn = !soundOn;
+      AudioManager.setEnabled(soundOn);
+      soundBtn.setText(soundOn ? 'Sound: AN' : 'Sound: AUS');
+      soundBtn.setColor(soundOn ? '#666688' : '#884444');
+    });
+
     // Stats
     const data = StorageManager.load();
     if (data.gamesPlayed > 0) {

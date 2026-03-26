@@ -3,6 +3,8 @@ import { PhysicsManager } from '../game/PhysicsManager';
 import { ChainDetector } from '../game/ChainDetector';
 import { ScoreCalculator } from '../game/ScoreCalculator';
 import { LevelLoader } from '../game/LevelLoader';
+import { CameraFX } from '../game/CameraFX';
+import { TrailRenderer } from '../game/TrailRenderer';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { HUD } from '../ui/HUD';
@@ -19,6 +21,7 @@ import type { ScoreResult } from '../types/GameState';
 interface TargetEntry {
   id: string;
   sprite: Phaser.GameObjects.Arc;
+  glow: Phaser.GameObjects.Arc;
   body: MatterJS.BodyType;
   hit: boolean;
   x: number;
@@ -31,6 +34,8 @@ export class GameScene extends Phaser.Scene {
   private level!: Level;
   private physicsManager!: PhysicsManager;
   private chainDetector!: ChainDetector;
+  private cameraFX!: CameraFX;
+  private trailRenderer!: TrailRenderer;
   private hud!: HUD;
 
   private attempts = 0;
@@ -49,6 +54,14 @@ export class GameScene extends Phaser.Scene {
 
   // Particles
   private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+  private sparkEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+  private dustEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+
+  // Vignette
+  private vignette: Phaser.GameObjects.Graphics | null = null;
+
+  // Chain counter display (big center number)
+  private chainDisplay: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -62,34 +75,60 @@ export class GameScene extends Phaser.Scene {
 
     this.physicsManager = new PhysicsManager(this);
     this.chainDetector = new ChainDetector();
+    this.cameraFX = new CameraFX(this);
+    this.trailRenderer = new TrailRenderer(this);
     this.hud = new HUD(this);
 
     this.level = LevelLoader.loadToday();
 
-    // Create particle texture
-    this.createParticleTexture();
-
-    // Background grid
+    this.createTextures();
     this.drawBackgroundGrid();
+    this.drawVignette();
 
     this.setupLevel();
     this.setupInput();
     this.setupCollisionListener();
 
+    // Chain counter (hidden until chain starts)
+    this.chainDisplay = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
+        fontSize: '72px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setDepth(60);
+
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
     this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
 
-    // Fade in
     this.cameras.main.fadeIn(300, 26, 26, 46);
   }
 
   update(): void {
+    this.cameraFX.update();
+    this.trailRenderer.update();
+
     if (!this.isSimulating) return;
 
     const elapsed = Date.now() - this.simulationStartTime;
-    this.hud.updateChain(this.chainDetector.getChainLength());
+    const chain = this.chainDetector.getChainLength();
+    this.hud.updateChain(chain);
 
-    // Minimum 1.5s before checking sleep (let physics settle)
+    // Big center chain counter during simulation
+    if (chain >= 3 && this.chainDisplay) {
+      this.chainDisplay.setText(`${chain}`);
+      if (this.chainDisplay.alpha === 0) {
+        this.tweens.add({
+          targets: this.chainDisplay,
+          alpha: 0.15,
+          duration: 200,
+        });
+      }
+    }
+
+    // Minimum 1.5s before checking sleep
     if (elapsed < 1500) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,19 +142,65 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private createParticleTexture(): void {
-    if (this.textures.exists('particle')) return;
-    const gfx = this.make.graphics({ x: 0, y: 0 });
-    gfx.fillStyle(0xffffff);
-    gfx.fillCircle(4, 4, 4);
-    gfx.generateTexture('particle', 8, 8);
-    gfx.destroy();
+  private createTextures(): void {
+    if (!this.textures.exists('particle')) {
+      const gfx = this.make.graphics({ x: 0, y: 0 });
+      gfx.fillStyle(0xffffff);
+      gfx.fillCircle(4, 4, 4);
+      gfx.generateTexture('particle', 8, 8);
+      gfx.destroy();
+    }
+
+    if (!this.textures.exists('spark')) {
+      const gfx = this.make.graphics({ x: 0, y: 0 });
+      gfx.fillStyle(0xffffff);
+      gfx.fillRect(0, 0, 3, 3);
+      gfx.generateTexture('spark', 3, 3);
+      gfx.destroy();
+    }
+  }
+
+  private drawBackgroundGrid(): void {
+    const gfx = this.add.graphics().setDepth(0).setAlpha(0.06);
+    gfx.lineStyle(1, 0x4444aa);
+
+    for (let x = 0; x <= GAME_WIDTH; x += 40) {
+      gfx.moveTo(x, 0);
+      gfx.lineTo(x, GAME_HEIGHT);
+    }
+    for (let y = 0; y <= GAME_HEIGHT; y += 40) {
+      gfx.moveTo(0, y);
+      gfx.lineTo(GAME_WIDTH, y);
+    }
+    gfx.strokePath();
+  }
+
+  private drawVignette(): void {
+    this.vignette = this.add.graphics().setDepth(90).setAlpha(0.4);
+    const w = GAME_WIDTH;
+    const h = GAME_HEIGHT;
+
+    // Top and bottom gradient bars
+    for (let i = 0; i < 40; i++) {
+      const alpha = (40 - i) / 40;
+      this.vignette.fillStyle(0x000000, alpha * 0.3);
+      this.vignette.fillRect(0, i, w, 1);
+      this.vignette.fillRect(0, h - i, w, 1);
+    }
+    // Left and right
+    for (let i = 0; i < 30; i++) {
+      const alpha = (30 - i) / 30;
+      this.vignette.fillStyle(0x000000, alpha * 0.2);
+      this.vignette.fillRect(i, 0, 1, h);
+      this.vignette.fillRect(w - i, 0, 1, h);
+    }
   }
 
   private setupLevel(): void {
     // Clean previous
     this.targets.forEach((t) => {
       t.sprite.destroy();
+      t.glow.destroy();
       this.matter.world.remove(t.body);
     });
     this.targets = [];
@@ -128,12 +213,18 @@ export class GameScene extends Phaser.Scene {
     this.placedSprite?.destroy();
     this.placedSprite = null;
     this.hitEmitter?.destroy();
-    this.hitEmitter = null;
+    this.sparkEmitter?.destroy();
+    this.dustEmitter?.destroy();
+    this.trailRenderer.clear();
+    if (this.chainDisplay) {
+      this.chainDisplay.setAlpha(0);
+      this.chainDisplay.setText('');
+    }
 
     // Build physics world
     this.physicsManager.buildLevel(this.level);
 
-    // Placement zone — pulsing glow
+    // Placement zone
     const zone = this.level.placementZone;
     this.placementZoneRect = this.add
       .rectangle(
@@ -142,7 +233,7 @@ export class GameScene extends Phaser.Scene {
         zone.width,
         zone.height,
         0x44ff44,
-        0.08
+        0.06
       )
       .setDepth(2);
 
@@ -157,31 +248,47 @@ export class GameScene extends Phaser.Scene {
       .setFillStyle(0x000000, 0)
       .setDepth(2);
 
-    // Pulse animation on zone
     this.tweens.add({
       targets: this.placementZoneBorder,
-      alpha: { from: 0.4, to: 1 },
-      duration: 800,
+      alpha: { from: 0.3, to: 0.8 },
+      duration: 900,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
 
-    // Draw targets as glowing circles
+    // Targets with glow halo
     for (const target of this.level.targets) {
-      const sprite = this.add
-        .circle(target.x, target.y, 12, 0xffdd00, 1)
-        .setDepth(15);
+      // Outer glow
+      const glow = this.add
+        .circle(target.x, target.y, 18, 0xffdd00, 0.15)
+        .setDepth(14);
 
-      // Glow pulse
       this.tweens.add({
-        targets: sprite,
-        scaleX: 1.2,
-        scaleY: 1.2,
-        duration: 600,
+        targets: glow,
+        scaleX: 1.4,
+        scaleY: 1.4,
+        alpha: 0.05,
+        duration: 700,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
+      });
+
+      // Inner star
+      const sprite = this.add
+        .circle(target.x, target.y, 10, 0xffdd00, 1)
+        .setDepth(15);
+
+      this.tweens.add({
+        targets: sprite,
+        scaleX: 1.1,
+        scaleY: 1.1,
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+        delay: 200,
       });
 
       const body = this.matter.add.circle(target.x, target.y, 12, {
@@ -193,6 +300,7 @@ export class GameScene extends Phaser.Scene {
       this.targets.push({
         id: target.id,
         sprite,
+        glow,
         body,
         hit: false,
         x: target.x,
@@ -203,28 +311,45 @@ export class GameScene extends Phaser.Scene {
 
     // Preview ghost
     const firstAllowed = this.level.placementZone.allowedObjects[0];
-    const ghostColor = firstAllowed === 'ball' ? 0xaaaaaa : 0x8b6914;
-    const ghostRadius = firstAllowed === 'ball' ? 12 : 10;
+    const ghostColor = firstAllowed === 'ball' ? 0xaaaaee : 0xccaa55;
     this.previewGhost = this.add
       .circle(
         zone.x + zone.width / 2,
         zone.y + zone.height / 2,
-        ghostRadius,
+        12,
         ghostColor,
         0.4
       )
       .setDepth(20);
 
-    // Hit particle emitter
+    // Particle emitters
     this.hitEmitter = this.add.particles(0, 0, 'particle', {
-      speed: { min: 50, max: 200 },
-      scale: { start: 1, end: 0 },
-      lifespan: 600,
-      tint: [0xffdd00, 0xff8800, 0xffff44],
+      speed: { min: 80, max: 250 },
+      scale: { start: 1.2, end: 0 },
+      lifespan: 700,
+      tint: [0xffdd00, 0xff8800, 0xffff44, 0xffffff],
       emitting: false,
-      quantity: 12,
-    });
-    this.hitEmitter.setDepth(50);
+      quantity: 16,
+    }).setDepth(50);
+
+    this.sparkEmitter = this.add.particles(0, 0, 'spark', {
+      speed: { min: 30, max: 120 },
+      scale: { start: 1, end: 0 },
+      lifespan: 300,
+      tint: [0xffffff, 0xccccff, 0xaaaadd],
+      emitting: false,
+      quantity: 6,
+    }).setDepth(45);
+
+    this.dustEmitter = this.add.particles(0, 0, 'particle', {
+      speed: { min: 10, max: 40 },
+      scale: { start: 0.8, end: 0 },
+      lifespan: 500,
+      tint: [0x888899, 0x666677],
+      emitting: false,
+      quantity: 4,
+      alpha: { start: 0.4, end: 0 },
+    }).setDepth(40);
 
     this.isSimulating = false;
   }
@@ -233,10 +358,7 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || !this.previewGhost) return;
 
-      const zone = this.level.placementZone;
-      const inZone = this.isInZone(ptr.x, ptr.y);
-
-      if (inZone) {
+      if (this.isInZone(ptr.x, ptr.y)) {
         this.previewGhost.setPosition(ptr.x, ptr.y);
         this.previewGhost.setVisible(true);
       } else {
@@ -265,14 +387,61 @@ export class GameScene extends Phaser.Scene {
         this.chainDetector.onCollision([{ bodyA, bodyB }]);
         const newChain = this.chainDetector.getChainLength();
 
-        // Audio feedback for chain building
-        if (newChain > prevChain) {
-          AudioManager.playChainUp(newChain);
-        } else if (!bodyA.isStatic && !bodyB.isStatic) {
-          AudioManager.playImpact(newChain);
+        // Collision FX (only dynamic-to-dynamic)
+        if (!bodyA.isStatic && !bodyB.isStatic) {
+          const cx = (bodyA.position.x + bodyB.position.x) / 2;
+          const cy = (bodyA.position.y + bodyB.position.y) / 2;
+
+          // Collision velocity
+          const dvx = bodyA.velocity.x - bodyB.velocity.x;
+          const dvy = bodyA.velocity.y - bodyB.velocity.y;
+          const impactSpeed = Math.sqrt(dvx * dvx + dvy * dvy);
+
+          // Spark particles at collision point
+          if (impactSpeed > 1.5) {
+            this.sparkEmitter?.emitParticleAt(cx, cy);
+          }
+
+          // Screen shake proportional to impact
+          if (impactSpeed > 3) {
+            this.cameraFX.addTrauma(Math.min(0.3, impactSpeed * 0.04));
+          }
+
+          // Squash & stretch on both bodies' sprites
+          this.squashBody(bodyA);
+          this.squashBody(bodyB);
+
+          // Audio
+          if (newChain > prevChain) {
+            AudioManager.playChainUp(newChain);
+          } else {
+            AudioManager.playImpact(newChain);
+          }
+        }
+
+        // Dust on floor impacts
+        if (bodyA.label === 'floor' || bodyB.label === 'floor') {
+          const other = bodyA.label === 'floor' ? bodyB : bodyA;
+          this.dustEmitter?.emitParticleAt(other.position.x, other.position.y);
         }
       }
     );
+  }
+
+  /** Apply squash & stretch to a body's sprite. */
+  private squashBody(body: MatterJS.BodyType): void {
+    // Find the Phaser game object associated with this body
+    const gameObject = (body as any).gameObject;
+    if (!gameObject || !gameObject.scene) return;
+
+    this.tweens.add({
+      targets: gameObject,
+      scaleX: 1.25,
+      scaleY: 0.75,
+      duration: 50,
+      yoyo: true,
+      ease: 'Quad.easeOut',
+    });
   }
 
   private checkTargetHit(bodyA: MatterJS.BodyType, bodyB: MatterJS.BodyType): void {
@@ -284,37 +453,64 @@ export class GameScene extends Phaser.Scene {
         this.targetsHit++;
         this.hud.updateScore(this.targetsHit);
 
-        // Sound + particle burst
+        // Audio
         AudioManager.playTargetHit(this.targetsHit - 1);
+
+        // BIG screen shake + slow-mo for target hit
+        this.cameraFX.addTrauma(0.4);
+        this.cameraFX.slowMotion(0.25, 500);
+
+        // Particle burst
         this.hitEmitter?.emitParticleAt(target.x, target.y);
 
-        // Target hit animation — flash and shrink
+        // Flash the whole screen briefly
+        this.cameras.main.flash(150, 255, 220, 50);
+
+        // Target hit animation
         this.tweens.killTweensOf(target.sprite);
+        this.tweens.killTweensOf(target.glow);
+
         this.tweens.add({
           targets: target.sprite,
-          scaleX: 2,
-          scaleY: 2,
+          scaleX: 3,
+          scaleY: 3,
           alpha: 0,
-          duration: 400,
-          ease: 'Power2',
+          duration: 500,
+          ease: 'Power3',
         });
 
-        // Score popup
+        this.tweens.add({
+          targets: target.glow,
+          scaleX: 4,
+          scaleY: 4,
+          alpha: 0,
+          duration: 600,
+        });
+
+        // Score popup with scale-in
         const popup = this.add
-          .text(target.x, target.y - 20, `+${target.points}`, {
-            fontSize: '16px',
+          .text(target.x, target.y - 15, `+${target.points}`, {
+            fontSize: '22px',
             color: '#ffdd00',
             fontStyle: 'bold',
           })
           .setOrigin(0.5)
-          .setDepth(50);
+          .setDepth(55)
+          .setScale(0);
 
         this.tweens.add({
           targets: popup,
-          y: target.y - 60,
+          scaleX: 1,
+          scaleY: 1,
+          y: target.y - 55,
+          duration: 400,
+          ease: 'Back.easeOut',
+        });
+        this.tweens.add({
+          targets: popup,
           alpha: 0,
-          duration: 800,
-          ease: 'Power2',
+          delay: 500,
+          duration: 400,
           onComplete: () => popup.destroy(),
         });
       }
@@ -327,8 +523,8 @@ export class GameScene extends Phaser.Scene {
     this.simulationStartTime = Date.now();
 
     this.previewGhost?.setVisible(false);
-    this.placementZoneBorder?.setAlpha(0.15);
-    this.placementZoneRect?.setAlpha(0.03);
+    this.placementZoneBorder?.setAlpha(0.1);
+    this.placementZoneRect?.setAlpha(0.02);
     if (this.placementZoneBorder) {
       this.tweens.killTweensOf(this.placementZoneBorder);
     }
@@ -339,8 +535,24 @@ export class GameScene extends Phaser.Scene {
     this.placedSprite = this.physicsManager.createDynamicSprite(objectType, x, y);
     this.placedSprite.setDepth(15);
 
-    // Brief flash on placement
-    this.cameras.main.flash(100, 100, 100, 150);
+    // Track the placed object for trail rendering
+    this.trailRenderer.track(
+      this.placedSprite.body as MatterJS.BodyType,
+      objectType === 'ball' ? 0x8888ff : 0xddaa44
+    );
+
+    // Also track all dynamic objects
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    for (const body of allBodies) {
+      if (!body.isStatic && body !== this.placedSprite.body) {
+        this.trailRenderer.track(body, 0x8888aa);
+      }
+    }
+
+    // Flash + micro shake on placement
+    this.cameras.main.flash(80, 100, 100, 180);
+    this.cameraFX.addTrauma(0.1);
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
   }
@@ -348,10 +560,18 @@ export class GameScene extends Phaser.Scene {
   private endSimulation(): void {
     this.isSimulating = false;
 
+    // Hide chain display
+    if (this.chainDisplay) {
+      this.tweens.add({
+        targets: this.chainDisplay,
+        alpha: 0,
+        duration: 300,
+      });
+    }
+
     const elapsed = (Date.now() - this.simulationStartTime) / 1000;
     const chainLength = this.chainDetector.getChainLength();
 
-    // Check for near misses on unhit targets
     this.checkNearMisses();
 
     const result = ScoreCalculator.calculate({
@@ -371,48 +591,88 @@ export class GameScene extends Phaser.Scene {
     const allTargetsHit = this.targetsHit >= this.level.targets.length;
 
     if (this.attempts >= MAX_ATTEMPTS || allTargetsHit) {
-      // Play success/fail jingle
       if (this.totalTargetsHitBest > 0) {
         AudioManager.playSuccess();
       } else {
         AudioManager.playFail();
       }
 
-      // Fade out then go to results
-      this.cameras.main.fadeOut(400, 26, 26, 46);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('ResultScene', {
-          score: this.bestScore!,
-          chainLength: this.bestChainLength,
-          attempts: this.attempts,
-          solved: this.totalTargetsHitBest > 0,
-          targetsHit: this.totalTargetsHitBest,
-          totalTargets: this.level.targets.length,
+      this.time.delayedCall(600, () => {
+        this.cameras.main.fadeOut(500, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('ResultScene', {
+            score: this.bestScore!,
+            chainLength: this.bestChainLength,
+            attempts: this.attempts,
+            solved: this.totalTargetsHitBest > 0,
+            targetsHit: this.totalTargetsHitBest,
+            totalTargets: this.level.targets.length,
+          });
         });
       });
     } else {
-      // Flash "Versuch X/3" and reset
+      // Retry overlay
+      const overlay = this.add
+        .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e, 0)
+        .setDepth(95);
+
       const retryText = this.add
-        .text(400, 300, `Versuch ${this.attempts}/${MAX_ATTEMPTS}`, {
-          fontSize: '24px',
+        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `Versuch ${this.attempts}/${MAX_ATTEMPTS}`, {
+          fontSize: '28px',
           color: '#ffffff',
           fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+        .setDepth(100)
+        .setAlpha(0)
+        .setScale(0.5);
+
+      const subText = this.add
+        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35, this.targetsHit > 0
+          ? `${this.targetsHit} Stern${this.targetsHit > 1 ? 'e' : ''} getroffen!`
+          : 'Versuche es nochmal!', {
+          fontSize: '14px',
+          color: this.targetsHit > 0 ? '#ffdd44' : '#aa6666',
         })
         .setOrigin(0.5)
         .setDepth(100)
         .setAlpha(0);
 
       this.tweens.add({
+        targets: overlay,
+        fillAlpha: 0.6,
+        duration: 200,
+      });
+
+      this.tweens.add({
         targets: retryText,
         alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
         duration: 300,
-        hold: 800,
-        yoyo: true,
-        onComplete: () => {
-          retryText.destroy();
-          this.setupLevel();
-          this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
-        },
+        ease: 'Back.easeOut',
+      });
+
+      this.tweens.add({
+        targets: subText,
+        alpha: 1,
+        delay: 200,
+        duration: 300,
+      });
+
+      this.time.delayedCall(1500, () => {
+        this.tweens.add({
+          targets: [overlay, retryText, subText],
+          alpha: 0,
+          duration: 300,
+          onComplete: () => {
+            overlay.destroy();
+            retryText.destroy();
+            subText.destroy();
+            this.setupLevel();
+            this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
+          },
+        });
       });
     }
   }
@@ -430,22 +690,32 @@ export class GameScene extends Phaser.Scene {
         const dy = body.position.y - target.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < NEAR_MISS_PX + 12) {
-          // Show "Knapp!" near-miss
+        if (dist < NEAR_MISS_PX + 15) {
+          AudioManager.playImpact(0);
+
           const nearMiss = this.add
-            .text(target.x, target.y - 30, 'Knapp!', {
-              fontSize: '14px',
+            .text(target.x, target.y - 25, 'Knapp!', {
+              fontSize: '16px',
               color: '#ff6644',
               fontStyle: 'bold',
             })
             .setOrigin(0.5)
-            .setDepth(50);
+            .setDepth(55)
+            .setScale(0);
 
           this.tweens.add({
             targets: nearMiss,
-            y: target.y - 60,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 200,
+            ease: 'Back.easeOut',
+          });
+          this.tweens.add({
+            targets: nearMiss,
+            y: target.y - 65,
             alpha: 0,
-            duration: 1200,
+            delay: 300,
+            duration: 900,
             onComplete: () => nearMiss.destroy(),
           });
           break;
@@ -464,22 +734,8 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  private drawBackgroundGrid(): void {
-    const gfx = this.add.graphics().setDepth(0).setAlpha(0.08);
-    gfx.lineStyle(1, 0x4444aa);
-
-    for (let x = 0; x <= GAME_WIDTH; x += 40) {
-      gfx.moveTo(x, 0);
-      gfx.lineTo(x, GAME_HEIGHT);
-    }
-    for (let y = 0; y <= GAME_HEIGHT; y += 40) {
-      gfx.moveTo(0, y);
-      gfx.lineTo(GAME_WIDTH, y);
-    }
-    gfx.strokePath();
-  }
-
   shutdown(): void {
     this.physicsManager.clearLevel();
+    this.trailRenderer.destroy();
   }
 }
