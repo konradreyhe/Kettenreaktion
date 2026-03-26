@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
+import { AudioManager } from '../systems/AudioManager';
 
 /** Start screen with play button, streak, and puzzle info. */
 export class MenuScene extends Phaser.Scene {
@@ -120,6 +121,8 @@ export class MenuScene extends Phaser.Scene {
       playBtnText.setScale(1);
     });
     playBtnBg.on('pointerdown', () => {
+      AudioManager.init(); // Unlock audio on first user gesture
+      AudioManager.playClick();
       this.cameras.main.fadeOut(300, 26, 26, 46);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.start('GameScene');
