@@ -20,7 +20,7 @@ import type { ScoreResult } from '../types/GameState';
 
 interface TargetEntry {
   id: string;
-  sprite: Phaser.GameObjects.Arc;
+  sprite: Phaser.GameObjects.GameObject;
   glow: Phaser.GameObjects.Arc;
   body: MatterJS.BodyType;
   hit: boolean;
@@ -237,6 +237,28 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private applyThemeTint(): void {
+    const theme = this.level.theme;
+    let tintColor = 0x1a1a2e; // default
+
+    switch (theme) {
+      case 'wood':
+        tintColor = 0x1e1a14; // warm dark brown
+        break;
+      case 'stone':
+        tintColor = 0x181c22; // cool dark blue-grey
+        break;
+      case 'metal':
+        tintColor = 0x141418; // near-black with purple hint
+        break;
+    }
+
+    // Subtle full-screen color overlay
+    this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, tintColor, 0.3)
+      .setDepth(1);
+  }
+
   private drawBackgroundGrid(): void {
     const gfx = this.add.graphics().setDepth(0).setAlpha(0.06);
     gfx.lineStyle(1, 0x4444aa);
@@ -334,7 +356,10 @@ export class GameScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Targets with glow halo
+    // Theme-based background tint
+    this.applyThemeTint();
+
+    // Targets with star texture and glow halo
     for (const target of this.level.targets) {
       // Outer glow
       const glow = this.add
@@ -352,10 +377,11 @@ export class GameScene extends Phaser.Scene {
         ease: 'Sine.easeInOut',
       });
 
-      // Inner star
+      // Star sprite
       const sprite = this.add
-        .circle(target.x, target.y, 10, 0xffdd00, 1)
-        .setDepth(15);
+        .sprite(target.x, target.y, 'star')
+        .setDisplaySize(26, 26)
+        .setDepth(15) as unknown as Phaser.GameObjects.Arc;
 
       this.tweens.add({
         targets: sprite,
@@ -606,11 +632,10 @@ export class GameScene extends Phaser.Scene {
       this.tweens.killTweensOf(this.placementZoneBorder);
     }
 
-    // Place the object
+    // Place the player's object — with distinct glow
     AudioManager.playPlace();
     const objectType = this.level.placementZone.allowedObjects[0];
-    this.placedSprite = this.physicsManager.createDynamicSprite(objectType, x, y);
-    this.placedSprite.setDepth(15);
+    this.placedSprite = this.physicsManager.createPlayerObject(objectType, x, y);
 
     // Track the placed object for trail rendering
     this.trailRenderer.track(

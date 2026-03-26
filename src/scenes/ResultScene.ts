@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
+import { Button } from '../ui/Button';
 import type { ScoreResult } from '../types/GameState';
 
 interface ResultData {
@@ -144,65 +145,46 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // Share button
-    const shareBtnBg = this.add
-      .rectangle(cx, 420, 220, 44, 0x338833)
-      .setStrokeStyle(2, 0x55aa55)
-      .setInteractive({ useHandCursor: true });
-
-    const shareBtnText = this.add
-      .text(cx, 420, 'Ergebnis teilen', {
-        fontSize: '16px',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5);
-
-    shareBtnBg.on('pointerover', () => shareBtnBg.setFillStyle(0x44aa44));
-    shareBtnBg.on('pointerout', () => shareBtnBg.setFillStyle(0x338833));
-    shareBtnBg.on('pointerdown', async () => {
-      const text = ShareManager.generateEmojiResult({
-        puzzleNumber: puzzleNum,
-        score: data.score.total,
-        attempts: data.attempts,
-        chainLength: data.chainLength,
-        streak,
-        solved: data.solved,
-        targetsHit: data.targetsHit,
-        totalTargets: data.totalTargets,
-      });
-
-      try {
-        await ShareManager.share(text);
-        shareBtnText.setText('Kopiert!');
-        shareBtnBg.setFillStyle(0x226622);
-        this.time.delayedCall(2000, () => {
-          shareBtnText.setText('Ergebnis teilen');
-          shareBtnBg.setFillStyle(0x338833);
+    const shareButton = new Button(this, {
+      x: cx, y: 420, text: 'Ergebnis teilen',
+      width: 220, height: 44, fontSize: '16px',
+      color: 0x338833, hoverColor: 0x44aa44,
+      onClick: async () => {
+        const text = ShareManager.generateEmojiResult({
+          puzzleNumber: puzzleNum,
+          score: data.score.total,
+          attempts: data.attempts,
+          chainLength: data.chainLength,
+          streak,
+          solved: data.solved,
+          targetsHit: data.targetsHit,
+          totalTargets: data.totalTargets,
         });
-      } catch {
-        // Share cancelled
-      }
+
+        try {
+          await ShareManager.share(text);
+          shareButton.setText('Kopiert!');
+          this.time.delayedCall(2000, () => {
+            shareButton.setText('Ergebnis teilen');
+          });
+        } catch {
+          // Share cancelled
+        }
+      },
     });
 
     // Menu button
-    const menuBtn = this.add
-      .rectangle(cx, 478, 180, 38, 0x2a2a44)
-      .setStrokeStyle(1, 0x444466)
-      .setInteractive({ useHandCursor: true });
-
-    this.add
-      .text(cx, 478, 'Zum Menue', {
-        fontSize: '14px',
-        color: '#9999bb',
-      })
-      .setOrigin(0.5);
-
-    menuBtn.on('pointerover', () => menuBtn.setFillStyle(0x333355));
-    menuBtn.on('pointerout', () => menuBtn.setFillStyle(0x2a2a44));
-    menuBtn.on('pointerdown', () => {
-      this.cameras.main.fadeOut(300, 26, 26, 46);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('MenuScene');
-      });
+    new Button(this, {
+      x: cx, y: 478, text: 'Zum Menue',
+      width: 180, height: 38, fontSize: '14px',
+      color: 0x2a2a44, hoverColor: 0x333355,
+      textColor: '#9999bb',
+      onClick: () => {
+        this.cameras.main.fadeOut(300, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('MenuScene');
+        });
+      },
     });
 
     // Countdown
