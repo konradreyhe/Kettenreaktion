@@ -211,8 +211,23 @@ export class ResultScene extends Phaser.Scene {
         },
       });
 
+      // Challenge button
+      const challengeBtn = new Button(this, {
+        x: cx, y: 525, text: 'Freund herausfordern',
+        width: 170, height: 30, fontSize: '11px',
+        color: 0x443355, hoverColor: 0x554466, textColor: '#bb88dd',
+        onClick: async () => {
+          const url = `${window.location.origin}${window.location.pathname}?challenge=${data.practiceIndex ?? 0}`;
+          try {
+            await navigator.clipboard.writeText(url);
+            challengeBtn.setText('Link kopiert!');
+            this.time.delayedCall(2000, () => challengeBtn.setText('Freund herausfordern'));
+          } catch { /* ignore */ }
+        },
+      });
+
       new Button(this, {
-        x: cx, y: 525, text: 'Zurueck',
+        x: cx, y: 560, text: 'Zurueck',
         width: 120, height: 30, fontSize: '12px',
         color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
         onClick: () => {
@@ -223,7 +238,7 @@ export class ResultScene extends Phaser.Scene {
         },
       });
     } else {
-      // Daily mode: Menu button
+      // Daily mode: Menu + Challenge
       new Button(this, {
         x: cx, y: 478, text: 'Zum Menue',
         width: 180, height: 38, fontSize: '14px',

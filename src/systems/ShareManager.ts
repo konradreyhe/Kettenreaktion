@@ -51,7 +51,7 @@ export class ShareManager {
     ];
 
     if (streak > 1) {
-      lines.push(`${FIRE} ${streak} Tage Streak`);
+      lines.push(`${FIRE} ${streak} ${streak === 1 ? 'Tag' : 'Tage'} Streak`);
     }
 
     lines.push('', 'konradreyhe.github.io/Kettenreaktion');

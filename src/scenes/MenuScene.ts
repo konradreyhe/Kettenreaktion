@@ -15,6 +15,19 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     const cx = GAME_WIDTH / 2;
 
+    // Handle challenge URL parameter
+    const params = new URLSearchParams(window.location.search);
+    const challengeParam = params.get('challenge');
+    if (challengeParam !== null) {
+      const levelIndex = parseInt(challengeParam, 10);
+      if (!isNaN(levelIndex) && levelIndex >= 0) {
+        // Clear the URL param so refreshing doesn't restart
+        window.history.replaceState({}, '', window.location.pathname);
+        this.scene.start('GameScene', { practiceIndex: levelIndex });
+        return;
+      }
+    }
+
     this.cameras.main.fadeIn(300, 26, 26, 46);
     this.createBackgroundParticles();
 
