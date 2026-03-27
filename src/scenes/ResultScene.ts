@@ -35,6 +35,8 @@ export class ResultScene extends Phaser.Scene {
     this.cameras.main.fadeIn(300, 26, 26, 46);
 
     const isPractice = data.isPractice ?? false;
+    const previousBest = StorageManager.load().bestScore;
+    const isNewBest = !isPractice && data.score.total > previousBest;
 
     // Save result (daily mode only)
     if (!isPractice) {
@@ -125,9 +127,9 @@ export class ResultScene extends Phaser.Scene {
     // Divider
     this.add.rectangle(cx, 270, 260, 2, 0x4444aa, 0.4);
 
-    // Total score — big reveal
+    // Total score — big reveal with counter animation
     const totalScore = this.add
-      .text(cx, 300, `${data.score.total.toLocaleString('de-DE')}`, {
+      .text(cx, 300, '0', {
         fontSize: '44px',
         color: '#ffdd44',
         fontStyle: 'bold',
@@ -142,6 +144,7 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Scale in first, then count up
     this.tweens.add({
       targets: totalScore,
       scaleX: 1,
@@ -149,6 +152,35 @@ export class ResultScene extends Phaser.Scene {
       delay: 1000,
       duration: 500,
       ease: 'Back.easeOut',
+      onComplete: () => {
+        // Counter animation: tick from 0 to final score
+        const target = data.score.total;
+        const duration = Math.min(1200, Math.max(400, target * 0.8));
+        this.tweens.addCounter({
+          from: 0,
+          to: target,
+          duration,
+          ease: 'Cubic.easeOut',
+          onUpdate: (tween) => {
+            const val = Math.floor(tween.getValue() ?? 0);
+            totalScore.setText(val.toLocaleString('de-DE'));
+          },
+          onComplete: () => {
+            if (isNewBest) {
+              const bestText = this.add
+                .text(cx, 280, 'Neuer Rekord!', {
+                  fontSize: '12px', color: '#ff8844', fontStyle: 'bold',
+                })
+                .setOrigin(0.5).setScale(0);
+              this.tweens.add({
+                targets: bestText,
+                scaleX: 1, scaleY: 1,
+                duration: 300, ease: 'Back.easeOut',
+              });
+            }
+          },
+        });
+      },
     });
 
     // Streak
