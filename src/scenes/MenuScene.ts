@@ -78,7 +78,7 @@ export class MenuScene extends Phaser.Scene {
     const streak = StorageManager.getStreak();
     if (streak > 0) {
       const streakText = this.add
-        .text(cx, 250, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${StorageManager.getJokers() > 0 ? ` \u{1F0CF}${StorageManager.getJokers()}` : ''}`, {
+        .text(cx, 260, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${StorageManager.getJokers() > 0 ? ` \u{1F0CF}${StorageManager.getJokers()}` : ''}`, {
           fontSize: '16px', color: '#ffaa44',
         })
         .setOrigin(0.5).setDepth(10);
@@ -88,6 +88,16 @@ export class MenuScene extends Phaser.Scene {
         duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
       });
     }
+
+    // Today's difficulty stars
+    const [minDiff, maxDiff] = DailySystem.getDailyDifficultyRange();
+    const avgDiff = Math.round((minDiff + maxDiff) / 2);
+    const diffStars = '\u2605'.repeat(avgDiff) + '\u2606'.repeat(5 - avgDiff);
+    this.add
+      .text(cx, 240, diffStars, {
+        fontSize: '12px', color: '#ffaa44',
+      })
+      .setOrigin(0.5).setDepth(10);
 
     // Check if today's puzzle was already completed
     const todayResult = StorageManager.getPuzzleResult(puzzleNum);
@@ -99,7 +109,7 @@ export class MenuScene extends Phaser.Scene {
         ? (AccessibilityManager.isColorblind() ? '#6699cc' : '#44bb44')
         : '#aa6644';
       this.add
-        .text(cx, 275, `${resultText}  ${todayResult.score.toLocaleString('de-DE')} Pkt`, {
+        .text(cx, 285, `${resultText}  ${todayResult.score.toLocaleString('de-DE')} Pkt`, {
           fontSize: '13px', color: resultColor,
         })
         .setOrigin(0.5).setDepth(10);
