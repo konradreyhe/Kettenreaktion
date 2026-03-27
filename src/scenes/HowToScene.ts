@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 
@@ -16,10 +17,13 @@ export class HowToScene extends Phaser.Scene {
 
     // Title
     this.add
-      .text(cx, 40, 'So funktioniert es', {
-        fontSize: '24px',
-        color: '#ffffff',
+      .text(cx, 40, 'SO FUNKTIONIERT ES', {
+        fontFamily: FONT_TITLE,
+        fontSize: '18px',
+        color: COLOR.textBright,
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 3,
       })
       .setOrigin(0.5);
 
@@ -63,10 +67,13 @@ export class HowToScene extends Phaser.Scene {
       .rectangle(cx, 380, 500, 1, 0x333366, 0.5);
 
     this.add
-      .text(cx, 400, 'Punkte-System', {
-        fontSize: '16px',
-        color: '#ffffff',
+      .text(cx, 400, 'PUNKTE-SYSTEM', {
+        fontFamily: FONT_TITLE,
+        fontSize: '13px',
+        color: COLOR.textBright,
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 2,
       })
       .setOrigin(0.5);
 

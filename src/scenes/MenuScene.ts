@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { AudioManager } from '../systems/AudioManager';
@@ -34,20 +35,26 @@ export class MenuScene extends Phaser.Scene {
     // Title
     const title = this.add
       .text(cx, 95, 'KETTEN\nREAKTION', {
-        fontSize: '42px', color: '#ffffff', fontStyle: 'bold',
-        align: 'center', lineSpacing: 4,
+        fontFamily: FONT_TITLE,
+        fontSize: '36px', color: COLOR.textBright, fontStyle: 'bold',
+        align: 'center', lineSpacing: 8,
+        stroke: '#1a1a3e',
+        strokeThickness: 4,
+        shadow: TEXT_SHADOW,
       })
       .setOrigin(0.5).setScale(0).setDepth(10);
 
     this.tweens.add({
       targets: title, scaleX: 1, scaleY: 1,
-      duration: 500, ease: 'Back.easeOut',
+      duration: 600, ease: 'Back.easeOut',
     });
 
     // Subtitle
     const subtitle = this.add
-      .text(cx, 180, 'Taegliches Physik-Puzzle', {
-        fontSize: '13px', color: '#6666aa',
+      .text(cx, 185, 'Taegliches Physik-Puzzle', {
+        fontFamily: FONT_UI,
+        fontSize: '11px', color: COLOR.textMuted,
+        letterSpacing: 3,
       })
       .setOrigin(0.5).setAlpha(0).setDepth(10);
 
@@ -60,7 +67,10 @@ export class MenuScene extends Phaser.Scene {
     const puzzleNum = DailySystem.getPuzzleNumber();
     this.add
       .text(cx, 220, `Puzzle #${puzzleNum}`, {
-        fontSize: '18px', color: '#aaaaff',
+        fontFamily: FONT_UI,
+        fontSize: '16px', color: COLOR.primaryBright,
+        stroke: '#111133',
+        strokeThickness: 2,
       })
       .setOrigin(0.5).setDepth(10);
 

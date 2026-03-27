@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { FONT_TITLE, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { StorageManager } from '../systems/StorageManager';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 
@@ -35,16 +36,20 @@ export class BootScene extends Phaser.Scene {
 
     this.add
       .text(cx, cy - 40, 'KETTEN\nREAKTION', {
-        fontSize: '36px',
-        color: '#4466cc',
+        fontFamily: FONT_TITLE,
+        fontSize: '32px',
+        color: COLOR.primary,
         fontStyle: 'bold',
         align: 'center',
-        lineSpacing: 2,
+        lineSpacing: 6,
+        stroke: '#111133',
+        strokeThickness: 3,
+        shadow: TEXT_SHADOW,
       })
       .setOrigin(0.5);
 
     const dotsText = this.add
-      .text(cx, cy + 30, '.', { fontSize: '24px', color: '#555577' })
+      .text(cx, cy + 30, '.', { fontSize: '24px', color: COLOR.textDim })
       .setOrigin(0.5);
 
     let dots = 1;
@@ -53,9 +58,12 @@ export class BootScene extends Phaser.Scene {
       callback: () => { dots = (dots % 3) + 1; dotsText.setText('.'.repeat(dots)); },
     });
 
-    const barWidth = 200;
-    this.add.rectangle(cx, cy + 60, barWidth + 4, 8).setStrokeStyle(1, 0x333366);
-    const bar = this.add.rectangle(cx - barWidth / 2, cy + 60, 0, 6, 0x4466cc).setOrigin(0, 0.5);
+    const barWidth = 220;
+    // Bar track
+    this.add.rectangle(cx, cy + 60, barWidth + 4, 10, 0x111122)
+      .setStrokeStyle(1, 0x333366);
+    // Bar fill
+    const bar = this.add.rectangle(cx - barWidth / 2, cy + 60, 0, 8, 0x4488ff).setOrigin(0, 0.5);
     this.load.on('progress', (v: number) => { bar.width = barWidth * v; });
     this.load.on('complete', () => { bar.width = barWidth; });
   }

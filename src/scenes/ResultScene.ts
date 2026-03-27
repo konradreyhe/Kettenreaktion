@@ -5,6 +5,7 @@ import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
 import { LevelLoader } from '../game/LevelLoader';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
+import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { Button } from '../ui/Button';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
@@ -58,8 +59,11 @@ export class ResultScene extends Phaser.Scene {
     const headerText = isPractice ? 'Uebungsmodus' : `Kettenreaktion #${puzzleNum}`;
     this.add
       .text(cx, 40, headerText, {
-        fontSize: '22px',
-        color: '#8888cc',
+        fontFamily: FONT_UI,
+        fontSize: '18px',
+        color: COLOR.textMuted,
+        stroke: '#111122',
+        strokeThickness: 2,
       })
       .setOrigin(0.5);
 
@@ -68,9 +72,13 @@ export class ResultScene extends Phaser.Scene {
     const statusColor = data.solved ? AccessibilityManager.successHex : AccessibilityManager.failHex;
     const status = this.add
       .text(cx, 78, statusText, {
-        fontSize: '28px',
+        fontFamily: FONT_TITLE,
+        fontSize: '24px',
         color: statusColor,
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 3,
+        shadow: TEXT_SHADOW,
       })
       .setOrigin(0.5)
       .setScale(0);
@@ -130,17 +138,23 @@ export class ResultScene extends Phaser.Scene {
     // Total score — big reveal with counter animation
     const totalScore = this.add
       .text(cx, 300, '0', {
-        fontSize: '44px',
-        color: '#ffdd44',
+        fontFamily: FONT_TITLE,
+        fontSize: '40px',
+        color: COLOR.accent,
         fontStyle: 'bold',
+        stroke: '#332200',
+        strokeThickness: 4,
+        shadow: { offsetX: 0, offsetY: 0, color: '#ffdd4466', blur: 12, fill: false, stroke: true },
       })
       .setOrigin(0.5)
       .setScale(0);
 
     this.add
-      .text(cx, 338, 'Punkte', {
-        fontSize: '14px',
-        color: '#aa9944',
+      .text(cx, 340, 'PUNKTE', {
+        fontFamily: FONT_UI,
+        fontSize: '10px',
+        color: COLOR.accentDim,
+        letterSpacing: 4,
       })
       .setOrigin(0.5);
 

@@ -9,6 +9,7 @@ import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { HUD } from '../ui/HUD';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
+import { FONT_TITLE, COLOR, TEXT_SHADOW } from '../constants/Style';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
@@ -115,9 +116,13 @@ export class GameScene extends Phaser.Scene {
     // Chain counter (hidden until chain starts)
     this.chainDisplay = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
-        fontSize: '72px',
+        fontFamily: FONT_TITLE,
+        fontSize: '64px',
         color: '#ffffff',
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 6,
+        shadow: TEXT_SHADOW,
       })
       .setOrigin(0.5)
       .setAlpha(0)
@@ -158,9 +163,13 @@ export class GameScene extends Phaser.Scene {
 
     const levelName = this.add
       .text(cx, cy - 30, this.level.name, {
-        fontSize: '28px',
-        color: '#ffffff',
+        fontFamily: FONT_TITLE,
+        fontSize: '22px',
+        color: COLOR.textBright,
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 3,
+        shadow: TEXT_SHADOW,
       })
       .setOrigin(0.5)
       .setDepth(201)

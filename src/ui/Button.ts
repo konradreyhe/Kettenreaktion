@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONT_UI } from '../constants/Style';
 import { AudioManager } from '../systems/AudioManager';
 
 interface ButtonConfig {
@@ -49,9 +50,12 @@ export class Button {
     // Label
     this.label = scene.add
       .text(x, y, text, {
+        fontFamily: FONT_UI,
         fontSize,
         color: textColor,
         fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 1,
       })
       .setOrigin(0.5)
       .setDepth(depth + 1);

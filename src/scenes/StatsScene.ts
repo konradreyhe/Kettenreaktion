@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { StorageManager } from '../systems/StorageManager';
 import { Button } from '../ui/Button';
 
@@ -17,8 +18,10 @@ export class StatsScene extends Phaser.Scene {
 
     // Title
     this.add
-      .text(cx, 35, 'Statistiken', {
-        fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
+      .text(cx, 35, 'STATISTIKEN', {
+        fontFamily: FONT_TITLE,
+        fontSize: '20px', color: COLOR.textBright, fontStyle: 'bold',
+        stroke: '#111122', strokeThickness: 3,
       })
       .setOrigin(0.5);
 

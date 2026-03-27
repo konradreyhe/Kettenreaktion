@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../constants/Game';
+import { FONT_UI, COLOR } from '../constants/Style';
 
 /** In-game heads-up display with dark panel backing. */
 export class HUD {
@@ -12,47 +13,57 @@ export class HUD {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
 
-    // Dark panel behind HUD
+    // Dark panel behind HUD with gradient feel
     scene.add
-      .rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 50, 0x0a0a1a, 0.6)
+      .rectangle(GAME_WIDTH / 2, 0, GAME_WIDTH, 50, 0x0a0a1a, 0.7)
       .setOrigin(0.5, 0)
       .setDepth(99);
 
-    // Subtle bottom edge
+    // Bottom edge glow
     scene.add
-      .rectangle(GAME_WIDTH / 2, 50, GAME_WIDTH, 1, 0x333366, 0.3)
+      .rectangle(GAME_WIDTH / 2, 50, GAME_WIDTH, 2, 0x4466aa, 0.2)
       .setOrigin(0.5, 0.5)
       .setDepth(99);
 
     this.puzzleText = scene.add
       .text(GAME_WIDTH / 2, 10, '', {
-        fontSize: '11px',
-        color: '#7777aa',
+        fontFamily: FONT_UI,
+        fontSize: '10px',
+        color: COLOR.textMuted,
       })
       .setOrigin(0.5, 0)
       .setDepth(100);
 
     this.scoreText = scene.add
       .text(16, 14, 'Sterne: 0', {
-        fontSize: '14px',
-        color: '#ffdd44',
+        fontFamily: FONT_UI,
+        fontSize: '13px',
+        color: COLOR.accent,
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 2,
       })
       .setDepth(100);
 
     this.attemptsText = scene.add
       .text(GAME_WIDTH - 16, 14, 'Versuche: 0/3', {
-        fontSize: '14px',
+        fontFamily: FONT_UI,
+        fontSize: '13px',
         color: '#aaaacc',
+        stroke: '#111122',
+        strokeThickness: 1,
       })
       .setOrigin(1, 0)
       .setDepth(100);
 
     this.chainText = scene.add
       .text(16, 33, '', {
-        fontSize: '12px',
-        color: '#ff8844',
+        fontFamily: FONT_UI,
+        fontSize: '11px',
+        color: COLOR.chain,
         fontStyle: 'bold',
+        stroke: '#111122',
+        strokeThickness: 1,
       })
       .setDepth(100);
   }
