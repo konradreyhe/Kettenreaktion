@@ -33,6 +33,10 @@ export class StorageManager {
     return StorageManager.load().streak;
   }
 
+  static getJokers(): number {
+    return StorageManager.load().jokers ?? 0;
+  }
+
   static recordPuzzle(puzzleNumber: number, result: PuzzleResult): void {
     const data = StorageManager.load();
     const todayISO = new Date().toISOString().split('T')[0];
@@ -48,8 +52,18 @@ export class StorageManager {
       if (diffDays === 1 || diffDays === 2) {
         // 1 day = consecutive, 2 days = 1-day grace period (streak freeze)
         data.streak += 1;
+        // Award Joker every 7-day streak milestone (max 3)
+        if (data.streak > 0 && data.streak % 7 === 0) {
+          data.jokers = Math.min(3, (data.jokers ?? 0) + 1);
+        }
       } else if (diffDays > 2) {
-        data.streak = 1;
+        // Check if player has a Joker to save their streak
+        if ((data.jokers ?? 0) > 0) {
+          data.jokers = (data.jokers ?? 0) - 1;
+          data.streak += 1; // Streak saved!
+        } else {
+          data.streak = 1;
+        }
       }
       // diffDays === 0: same day, streak unchanged
     } else {

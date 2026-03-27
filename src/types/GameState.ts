@@ -23,6 +23,8 @@ export interface GameStorage {
   gamesPlayed: number;
   bestScore: number;
   puzzleHistory: Record<number, PuzzleResult>;
+  /** Joker tokens earned through streaks (max 3). */
+  jokers?: number;
 }
 
 export interface ScoreParams {

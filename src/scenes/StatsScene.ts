@@ -29,11 +29,13 @@ export class StatsScene extends Phaser.Scene {
     const computed = StorageManager.getComputedStats();
 
     // Big stats
+    const jokers = data.jokers ?? 0;
+    const streakVal = `${data.streak} ${data.streak === 1 ? 'Tag' : 'Tage'}${jokers > 0 ? ` (\u{1F0CF}${jokers})` : ''}`;
     const stats = [
       { label: 'Spiele', value: `${data.gamesPlayed}`, color: '#aaaacc' },
       { label: 'Bester Score', value: `${data.bestScore.toLocaleString('de-DE')}`, color: '#ffdd44' },
       { label: 'Geloest', value: `${computed.totalSolved} (${computed.solveRate}%)`, color: '#88cc88' },
-      { label: 'Streak', value: `${data.streak} ${data.streak === 1 ? 'Tag' : 'Tage'}`, color: '#ffaa44' },
+      { label: 'Streak', value: streakVal, color: '#ffaa44' },
     ];
 
     stats.forEach((s, i) => {

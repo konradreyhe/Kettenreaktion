@@ -78,7 +78,7 @@ export class MenuScene extends Phaser.Scene {
     const streak = StorageManager.getStreak();
     if (streak > 0) {
       const streakText = this.add
-        .text(cx, 250, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
+        .text(cx, 250, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${StorageManager.getJokers() > 0 ? ` \u{1F0CF}${StorageManager.getJokers()}` : ''}`, {
           fontSize: '16px', color: '#ffaa44',
         })
         .setOrigin(0.5).setDepth(10);
