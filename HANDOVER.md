@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 was a massive feature + polish pass. 15 commits pushed (total 45 in repo). Key highlights: professional visual overhaul with Orbitron font + Style system, colorblind mode, challenge URLs, chain reaction juice (hit stop, atmosphere shift, placement pop), legal compliance (Impressum + Datenschutz), og:image, score counter animation, streak grace period, ghost placement, and level repeat prevention. All 27 tests pass, typecheck clean.
+Session 3 was a massive feature + polish pass. 19 commits pushed (total 49 in repo). Transformed the game from amateur to professional: Orbitron font with text stroke/shadow across ALL scenes, centralized Style.ts, dot grid background, ghost glow ring, polished particles, sprite-based replays, enhanced confetti, colorblind mode, challenge URLs, chain juice (hit stop, atmosphere, placement pop), legal compliance (Impressum + Datenschutz), og:image, score counter animation, streak grace period, ghost placement, and level repeat prevention. All 27 tests pass, typecheck clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -34,6 +34,13 @@ Session 3 was a massive feature + polish pass. 15 commits pushed (total 45 in re
 - [x] Centralized Style.ts with brand colors, font constants, text effects
 - [x] Text stroke + shadow on all important text (titles, scores, chain counter)
 - [x] Updated og-image.jpg with new font/style
+- [x] Dot grid background (modern, fades from center)
+- [x] Ghost preview with stroke outline + pulsing glow ring
+- [x] Score popup, PERFEKT!, Knapp! all use Orbitron + stroke/shadow
+- [x] Retry overlay uses custom font + text effects
+- [x] ReplayScene uses actual sprites with rotation instead of dots
+- [x] StatsScene polished with Orbitron font + letter-spacing labels
+- [x] Enhanced confetti: dual shapes (rectangles + sparkle dots), 6 colors
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -66,7 +73,7 @@ Session 3 was a massive feature + polish pass. 15 commits pushed (total 45 in re
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `810883b` (HEAD) — everything works, 27 tests pass
+- Last known good state: commit `65797d4` (HEAD) — everything works, 27 tests pass
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
