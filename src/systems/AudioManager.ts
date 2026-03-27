@@ -63,26 +63,44 @@ export class AudioManager {
     osc.stop(ctx.currentTime + 0.2);
   }
 
-  /** Collision impact — pitch varies with chain count. */
+  /** Collision impact — crunch with pitch variation. */
   static playImpact(chainIndex: number): void {
     const ctx = AudioManager.getCtx();
     if (!ctx) return;
 
-    const basePitch = 150 + chainIndex * 30;
+    const basePitch = 150 + chainIndex * 25;
+    const now = ctx.currentTime;
 
+    // Noise burst for crunch feel
+    const bufferSize = ctx.sampleRate * 0.06;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.3;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const noiseGain = ctx.createGain();
+    noise.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noiseGain.gain.setValueAtTime(0.08, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    noise.start(now);
+
+    // Tonal component
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(basePitch, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(basePitch * 0.5, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.frequency.setValueAtTime(basePitch, now);
+    osc.frequency.exponentialRampToValueAtTime(basePitch * 0.4, now + 0.1);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.12);
+    osc.start(now);
+    osc.stop(now + 0.12);
   }
 
   /** Target hit — bright ascending chime. Pitch rises with each target. */
@@ -158,25 +176,49 @@ export class AudioManager {
     });
   }
 
-  /** Chain escalation — quick rising tone as chain builds. */
+  // Pentatonic scale frequencies (C major pentatonic, multiple octaves)
+  private static readonly PENTATONIC = [
+    262, 294, 330, 392, 440,   // C4 D4 E4 G4 A4
+    523, 587, 659, 784, 880,   // C5 D5 E5 G5 A5
+    1047, 1175, 1319, 1568, 1760, // C6 D6 E6 G6 A6
+  ];
+
+  /** Chain escalation — pentatonic scale notes that build a melody. */
   static playChainUp(chainLength: number): void {
     const ctx = AudioManager.getCtx();
     if (!ctx) return;
 
-    const freq = 300 + chainLength * 60;
+    const noteIndex = Math.min(chainLength - 1, AudioManager.PENTATONIC.length - 1);
+    const freq = AudioManager.PENTATONIC[noteIndex];
+    const now = ctx.currentTime;
 
+    // Main tone
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(freq * 1.3, ctx.currentTime + 0.06);
-    gain.gain.setValueAtTime(0.06, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+    const vol = Math.min(0.15, 0.06 + chainLength * 0.008);
+    gain.gain.setValueAtTime(vol, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.2);
+
+    // Harmonic overtone for richness
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq * 2, now);
+    gain2.gain.setValueAtTime(vol * 0.3, now);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc2.start(now);
+    osc2.stop(now + 0.15);
   }
 }

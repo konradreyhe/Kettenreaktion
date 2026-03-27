@@ -224,6 +224,7 @@ export class ResultScene extends Phaser.Scene {
           solved: data.solved,
           targetsHit: data.targetsHit,
           totalTargets: data.totalTargets,
+          title: StorageManager.getTitle(),
         });
 
         try {

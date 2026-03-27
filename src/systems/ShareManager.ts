@@ -16,6 +16,7 @@ export interface ShareParams {
   solved: boolean;
   targetsHit: number;
   totalTargets: number;
+  title?: string;
 }
 
 /** Generates share text and handles sharing via Web Share API / Clipboard. */
@@ -52,6 +53,10 @@ export class ShareManager {
 
     if (streak > 1) {
       lines.push(`${FIRE} ${streak} ${streak === 1 ? 'Tag' : 'Tage'} Streak`);
+    }
+
+    if (params.title) {
+      lines.push(`\u{1F3C6} ${params.title}`);
     }
 
     lines.push('', 'konradreyhe.github.io/Kettenreaktion');

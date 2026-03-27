@@ -150,4 +150,19 @@ export class StorageManager {
 
     return { solveRate, avgScore, bestStreak, totalSolved };
   }
+
+  /** Get player title based on games played and solve rate. */
+  static getTitle(): string {
+    const data = StorageManager.load();
+    const stats = StorageManager.getComputedStats();
+    const played = data.gamesPlayed;
+    const rate = stats.solveRate;
+
+    if (played >= 100 && rate >= 80) return 'Kettenlegende';
+    if (played >= 50 && rate >= 70) return 'Physik-Genie';
+    if (played >= 30 && rate >= 60) return 'Kettenmeister';
+    if (played >= 15 && rate >= 50) return 'Tueftler';
+    if (played >= 5) return 'Anfaenger';
+    return 'Neuling';
+  }
 }

@@ -100,6 +100,12 @@ export class GameScene extends Phaser.Scene {
     this.trailRenderer = new TrailRenderer(this);
     this.hud = new HUD(this);
 
+    // Gravity Flip Friday — invert gravity on Fridays (UTC)
+    const isFriday = new Date().getUTCDay() === 5;
+    if (isFriday && !this.isPractice) {
+      this.matter.world.setGravity(0, -1);
+    }
+
     // Load level — practice mode uses specific index, daily uses seed
     this.level = this.isPractice
       ? LevelLoader.loadByIndex(this.practiceIndex)
@@ -133,7 +139,14 @@ export class GameScene extends Phaser.Scene {
     if (this.isPractice) {
       this.hud.updateLabel(`Uebung: ${this.level.name}`);
     } else {
-      this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
+      const label = isFriday
+        ? `\u{1F504} Flip Friday #${DailySystem.getPuzzleNumber()}`
+        : undefined;
+      if (label) {
+        this.hud.updateLabel(label);
+      } else {
+        this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
+      }
     }
 
     // Pause physics when tab is hidden to prevent time accumulation
