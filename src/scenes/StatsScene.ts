@@ -41,11 +41,19 @@ export class StatsScene extends Phaser.Scene {
       const by = 90 + Math.floor(i / 2) * 70;
 
       this.add
-        .text(bx, by, s.value, { fontSize: '28px', color: s.color, fontStyle: 'bold' })
+        .text(bx, by, s.value, {
+          fontFamily: FONT_TITLE,
+          fontSize: '24px', color: s.color, fontStyle: 'bold',
+          stroke: '#111122', strokeThickness: 3,
+        })
         .setOrigin(0, 0.5);
 
       this.add
-        .text(bx, by + 20, s.label, { fontSize: '11px', color: '#666688' })
+        .text(bx, by + 22, s.label, {
+          fontFamily: FONT_UI,
+          fontSize: '9px', color: COLOR.textDim,
+          letterSpacing: 2,
+        })
         .setOrigin(0, 0.5);
     });
 
@@ -54,8 +62,10 @@ export class StatsScene extends Phaser.Scene {
 
     // Recent puzzle history
     this.add
-      .text(cx, 245, 'Letzte Puzzle', {
-        fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
+      .text(cx, 245, 'LETZTE PUZZLE', {
+        fontFamily: FONT_TITLE,
+        fontSize: '12px', color: COLOR.textBright, fontStyle: 'bold',
+        stroke: '#111122', strokeThickness: 2,
       })
       .setOrigin(0.5);
 
@@ -104,7 +114,8 @@ export class StatsScene extends Phaser.Scene {
 
       this.add
         .text(cx, GAME_HEIGHT - 100, bottomStats, {
-          fontSize: '11px', color: '#666688',
+          fontFamily: FONT_UI,
+          fontSize: '9px', color: COLOR.textDim,
         })
         .setOrigin(0.5);
     }
