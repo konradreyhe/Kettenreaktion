@@ -907,6 +907,9 @@ export class GameScene extends Phaser.Scene {
   private endSimulation(): void {
     this.isSimulating = false;
 
+    // Render photon trail art (velocity-colored paths)
+    this.trailRenderer.renderArt();
+
     // Reset background color
     this.cameras.main.setBackgroundColor(0x1a1a2e);
 
