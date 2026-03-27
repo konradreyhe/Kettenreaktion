@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 focused on visual playtesting via Playwright MCP and implementing quick-win features from the research docs. Visual playtest confirmed all screens work correctly on desktop and mobile. Fixed 8 bugs found during playtesting, added colorblind mode, challenge-a-friend URLs, hit stop effects, ghost placement indicator, Impressum (legal requirement), and enhanced chain reaction juice. 6 commits pushed (total 36 in repo). All 27 tests pass, typecheck clean. Research docs from yesterday committed (6 documents covering competitors, game juice, virality, tech, features, monetization).
+Session 3 focused on visual playtesting via Playwright MCP and implementing quick-win features from the research docs. Visual playtest confirmed all screens work correctly on desktop and mobile. Fixed 8 bugs found during playtesting, added colorblind mode, challenge-a-friend URLs, hit stop effects, ghost placement indicator, Impressum (legal requirement), og:image for social sharing, score counter animation, background atmosphere shift, placement pop animation, and "Neuer Rekord!" indicator. 9 commits pushed (total 39 in repo). All 27 tests pass, typecheck clean. Research docs committed (6 documents covering competitors, game juice, virality, tech, features, monetization).
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -20,6 +20,11 @@ Session 3 focused on visual playtesting via Playwright MCP and implementing quic
 - [x] Hit stop on chain milestones (physics pause at chains 6, 9, 12...)
 - [x] Reduced motion support: OS prefers-reduced-motion disables shake + hit stop
 - [x] Research docs committed (6 files in docs/research/)
+- [x] og:image for social sharing (1200x630 menu screenshot + meta tags)
+- [x] Placement pop animation (0→1 scale with Back.easeOut)
+- [x] Background atmosphere shift during chain reactions (warmer colors)
+- [x] Score counter animation (ticks up from 0, Cubic.easeOut)
+- [x] "Neuer Rekord!" badge when beating personal best score
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -52,7 +57,7 @@ Session 3 focused on visual playtesting via Playwright MCP and implementing quic
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `9a9b7f7` (HEAD) — everything works, 27 tests pass
+- Last known good state: commit `0389ccf` (HEAD) — everything works, 27 tests pass
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
@@ -64,9 +69,9 @@ Session 3 focused on visual playtesting via Playwright MCP and implementing quic
 
 ### Modified Files
 - `index.html` — favicon + apple-touch-icon links
-- `src/scenes/GameScene.ts` — practice HUD label, colorblind zone, ghost placement, hit stop, chain escalation, near-miss colors, reduced motion
+- `src/scenes/GameScene.ts` — practice HUD label, colorblind zone, ghost placement, hit stop, chain escalation, near-miss colors, reduced motion, placement pop, background atmosphere
 - `src/scenes/MenuScene.ts` — Impressum overlay, colorblind toggle, challenge URL handler, singular fix
-- `src/scenes/ResultScene.ts` — efficiency display fix, colorblind status colors, challenge button, singular fix
+- `src/scenes/ResultScene.ts` — efficiency display fix, colorblind status colors, challenge button, singular fix, score counter animation, new best indicator
 - `src/scenes/HowToScene.ts` — layout fix, colorblind zone text/icon
 - `src/scenes/StatsScene.ts` — singular fix
 - `src/scenes/BootScene.ts` — AccessibilityManager init
