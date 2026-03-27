@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 focused on visual playtesting via Playwright MCP and implementing quick-win features from the research docs. Visual playtest confirmed all screens work correctly on desktop and mobile. Fixed 8 bugs found during playtesting, added colorblind mode, challenge-a-friend URLs, hit stop effects, ghost placement indicator, Impressum (legal requirement), og:image for social sharing, score counter animation, background atmosphere shift, placement pop animation, and "Neuer Rekord!" indicator. 9 commits pushed (total 39 in repo). All 27 tests pass, typecheck clean. Research docs committed (6 documents covering competitors, game juice, virality, tech, features, monetization).
+Session 3 was a massive feature + polish pass driven by visual playtesting via Playwright MCP and quick-win features from research docs. 12 commits pushed (total 42 in repo). Fixed 8 bugs, added colorblind mode, challenge URLs, hit stop, ghost placement, Impressum + Datenschutz (legal), og:image, score counter animation, background atmosphere, placement pop, "Neuer Rekord!" badge, streak grace period, HUD target count, keyboard shortcuts, and level repeat prevention. All 27 tests pass, typecheck clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -25,6 +25,11 @@ Session 3 focused on visual playtesting via Playwright MCP and implementing quic
 - [x] Background atmosphere shift during chain reactions (warmer colors)
 - [x] Score counter animation (ticks up from 0, Cubic.easeOut)
 - [x] "Neuer Rekord!" badge when beating personal best score
+- [x] Datenschutzerklaerung (privacy policy) overlay
+- [x] Level repeat prevention (no same level two days in a row)
+- [x] Keyboard 1/2 keys to switch object type
+- [x] Streak 1-day grace period (missing one day doesn't break streak)
+- [x] HUD shows total target count (Sterne: 0/3)
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -57,7 +62,7 @@ Session 3 focused on visual playtesting via Playwright MCP and implementing quic
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `0389ccf` (HEAD) — everything works, 27 tests pass
+- Last known good state: commit `2f23c24` (HEAD) — everything works, 27 tests pass
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
