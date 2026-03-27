@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { LevelLoader } from '../game/LevelLoader';
+import { FONT_TITLE, FONT_UI } from '../constants/Style';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 import type { PuzzleResult, ReplayFrame } from '../types/GameState';
@@ -15,7 +16,7 @@ interface ReplayData {
 export class ReplayScene extends Phaser.Scene {
   private replayFrames: ReplayFrame[] = [];
   private frameIndex = 0;
-  private dots: Phaser.GameObjects.Arc[] = [];
+  private dots: Phaser.GameObjects.GameObject[] = [];
   private isPlaying = false;
   private playTimer: Phaser.Time.TimerEvent | null = null;
 
@@ -34,7 +35,9 @@ export class ReplayScene extends Phaser.Scene {
     // Header
     this.add
       .text(cx, 25, `Gestern: Puzzle #${data.puzzleNumber}`, {
-        fontSize: '18px', color: '#8888cc',
+        fontFamily: FONT_TITLE,
+        fontSize: '14px', color: '#8888cc',
+        stroke: '#111122', strokeThickness: 2,
       })
       .setOrigin(0.5).setDepth(50);
 
@@ -43,7 +46,9 @@ export class ReplayScene extends Phaser.Scene {
     const scoreColor = data.result.solved ? AccessibilityManager.successHex : AccessibilityManager.failHex;
     this.add
       .text(cx, 50, `${scoreText}  |  ${data.result.score.toLocaleString('de-DE')} Punkte`, {
-        fontSize: '12px', color: scoreColor,
+        fontFamily: FONT_UI,
+        fontSize: '11px', color: scoreColor,
+        stroke: '#111122', strokeThickness: 1,
       })
       .setOrigin(0.5).setDepth(50);
 
@@ -78,15 +83,25 @@ export class ReplayScene extends Phaser.Scene {
       })
       .setOrigin(0.5).setDepth(50);
 
-    // Create dots for dynamic bodies (from first frame)
+    // Create visual bodies from first frame
     if (this.replayFrames.length > 0) {
       const firstFrame = this.replayFrames[0];
+      const placementType = data.result.placement?.type ?? 'ball';
       for (let i = 0; i < firstFrame.length; i++) {
-        const [x, y] = firstFrame[i];
-        const isPlayer = i === firstFrame.length - 1; // Player object is last
-        const color = isPlayer ? 0x88ccff : 0xaaaacc;
-        const dot = this.add.circle(x, y, isPlayer ? 8 : 6, color, isPlayer ? 0.9 : 0.6)
-          .setDepth(30);
+        const [x, y, angle] = firstFrame[i];
+        const isPlayer = i === firstFrame.length - 1;
+
+        // Use actual textures for better look
+        let dot: Phaser.GameObjects.GameObject & { setPosition: (x: number, y: number) => void; setRotation?: (r: number) => void };
+        if (isPlayer) {
+          const tex = placementType === 'weight' ? 'weight' : 'ball';
+          const sprite = this.add.sprite(x, y, tex).setDepth(31).setRotation(angle);
+          dot = sprite;
+        } else {
+          // Other bodies — use domino texture or a generic shape
+          const sprite = this.add.sprite(x, y, 'domino').setDepth(30).setAlpha(0.7).setRotation(angle);
+          dot = sprite;
+        }
         this.dots.push(dot);
       }
     }
@@ -104,7 +119,11 @@ export class ReplayScene extends Phaser.Scene {
 
         const frame = this.replayFrames[this.frameIndex];
         for (let i = 0; i < Math.min(frame.length, this.dots.length); i++) {
-          this.dots[i].setPosition(frame[i][0], frame[i][1]);
+          const d = this.dots[i] as unknown as Phaser.GameObjects.Sprite;
+          d.setPosition(frame[i][0], frame[i][1]);
+          if (frame[i][2] !== undefined) {
+            d.setRotation(frame[i][2]);
+          }
         }
 
         // Update progress bar
