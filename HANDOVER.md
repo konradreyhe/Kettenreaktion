@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 was a massive feature + polish pass. 22 commits pushed (total 52 in repo). Transformed the game from amateur to professional: Orbitron font with text stroke/shadow across ALL scenes, centralized Style.ts, upgraded procedural textures (ball gradient, star glow, weight iron, floor tile, platform steel), dot grid background, ghost glow ring, star sparkle shimmer, sprite-based replays, enhanced confetti, colorblind mode, challenge URLs, chain juice (hit stop, atmosphere, placement pop), legal compliance (Impressum + Datenschutz), og:image, score counter animation, streak grace period, ghost placement, and level repeat prevention. All 27 tests pass, typecheck clean, build clean.
+Session 3 was a massive feature + polish + creative pass. 25 commits pushed (total 55 in repo). Transformed the game from amateur to professional: Orbitron font, Style system, upgraded textures, dot grid, ghost glow, star shimmer, sprite replays, enhanced confetti, colorblind mode, challenge URLs, chain juice, legal compliance, og:image, score animation. Creative brainstorm delivered: Sonic Chain (pentatonic collision audio), Gravity Flip Friday, Kettenmeister title system, Photon Trail Art (velocity-colored generative art). All 27 tests pass, typecheck clean, build clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -47,6 +47,10 @@ Session 3 was a massive feature + polish pass. 22 commits pushed (total 52 in re
 - [x] Weight texture: multi-layer iron with dual rings + industrial cross
 - [x] Platform texture: steel-grey with bevel highlights + shadow
 - [x] Star sparkle shimmer: orbiting white dot with pulsing alpha
+- [x] Sonic Chain: collision crunch with noise, pentatonic chain-up notes with harmonics
+- [x] Gravity Flip Friday: inverted gravity on Fridays, "Flip Friday" HUD badge
+- [x] Kettenmeister title system: 6 German ranks based on games + solve rate
+- [x] Photon Trail Art: velocity-colored physics trajectories as generative art
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -79,7 +83,7 @@ Session 3 was a massive feature + polish pass. 22 commits pushed (total 52 in re
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `cee81c4` (HEAD) — everything works, 27 tests pass, build clean
+- Last known good state: commit `62af558` (HEAD) — everything works, 27 tests pass, build clean
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
