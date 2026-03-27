@@ -322,24 +322,47 @@ export class ResultScene extends Phaser.Scene {
   }
 
   private createCelebrationParticles(): void {
+    // Generate two confetti shapes — rectangle + diamond
     if (!this.textures.exists('confetti')) {
       const gfx = this.make.graphics({ x: 0, y: 0 });
       gfx.fillStyle(0xffffff);
-      gfx.fillRect(0, 0, 6, 6);
-      gfx.generateTexture('confetti', 6, 6);
+      gfx.fillRect(0, 0, 8, 4);
+      gfx.generateTexture('confetti', 8, 4);
+      gfx.destroy();
+    }
+    if (!this.textures.exists('confetti_dot')) {
+      const gfx = this.make.graphics({ x: 0, y: 0 });
+      gfx.fillStyle(0xffffff);
+      gfx.fillCircle(3, 3, 3);
+      gfx.generateTexture('confetti_dot', 6, 6);
       gfx.destroy();
     }
 
+    // Main confetti stream
     this.add.particles(GAME_WIDTH / 2, -10, 'confetti', {
       x: { min: -GAME_WIDTH / 2, max: GAME_WIDTH / 2 },
-      speedY: { min: 50, max: 150 },
-      speedX: { min: -30, max: 30 },
-      scale: { min: 0.3, max: 0.8 },
+      speedY: { min: 60, max: 180 },
+      speedX: { min: -50, max: 50 },
+      scale: { min: 0.4, max: 1.0 },
       rotate: { min: 0, max: 360 },
-      lifespan: 3000,
-      frequency: 80,
-      quantity: 2,
-      tint: [0xffdd44, 0xff6644, 0x44ff44, 0x4488ff, 0xff44ff],
+      lifespan: 3500,
+      frequency: 60,
+      quantity: 3,
+      tint: [0xffdd44, 0xff5544, 0x44ee88, 0x4488ff, 0xff44cc, 0xffffff],
+      duration: 2500,
+    });
+
+    // Sparkle dots
+    this.add.particles(GAME_WIDTH / 2, -10, 'confetti_dot', {
+      x: { min: -GAME_WIDTH / 2, max: GAME_WIDTH / 2 },
+      speedY: { min: 40, max: 120 },
+      speedX: { min: -20, max: 20 },
+      scale: { start: 0.8, end: 0 },
+      alpha: { start: 1, end: 0.3 },
+      lifespan: 2000,
+      frequency: 120,
+      quantity: 1,
+      tint: [0xffffff, 0xffddaa],
       duration: 2000,
     });
   }
