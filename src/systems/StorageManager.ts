@@ -45,9 +45,10 @@ export class StorageManager {
         (today.getTime() - lastDate.getTime()) / 86400000
       );
 
-      if (diffDays === 1) {
+      if (diffDays === 1 || diffDays === 2) {
+        // 1 day = consecutive, 2 days = 1-day grace period (streak freeze)
         data.streak += 1;
-      } else if (diffDays > 1) {
+      } else if (diffDays > 2) {
         data.streak = 1;
       }
       // diffDays === 0: same day, streak unchanged

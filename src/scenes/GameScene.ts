@@ -124,6 +124,7 @@ export class GameScene extends Phaser.Scene {
       .setDepth(60);
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
+    this.hud.updateScore(0, this.level.targets.length);
     if (this.isPractice) {
       this.hud.updateLabel(`Uebung: ${this.level.name}`);
     } else {
@@ -717,7 +718,7 @@ export class GameScene extends Phaser.Scene {
       if (bodyA === target.body || bodyB === target.body) {
         target.hit = true;
         this.targetsHit++;
-        this.hud.updateScore(this.targetsHit);
+        this.hud.updateScore(this.targetsHit, this.level.targets.length);
 
         // Audio
         AudioManager.playTargetHit(this.targetsHit - 1);

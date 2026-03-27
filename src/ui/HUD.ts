@@ -57,8 +57,12 @@ export class HUD {
       .setDepth(100);
   }
 
-  updateScore(targetsHit: number): void {
-    this.scoreText.setText(`Sterne: ${targetsHit}`);
+  updateScore(targetsHit: number, totalTargets?: number): void {
+    if (totalTargets !== undefined) {
+      this.scoreText.setText(`Sterne: ${targetsHit}/${totalTargets}`);
+    } else {
+      this.scoreText.setText(`Sterne: ${targetsHit}`);
+    }
   }
 
   updateAttempts(current: number, max: number): void {
