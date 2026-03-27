@@ -31,4 +31,9 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, MenuScene, HowToScene, PracticeScene, StatsScene, GameScene, ResultScene, ReplayScene],
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// Expose for dev tools / automated testing
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__PHASER_GAME__ = game;
+}

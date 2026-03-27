@@ -5,6 +5,7 @@ import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
 import { LevelLoader } from '../game/LevelLoader';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
+import { ReplayExporter } from '../systems/ReplayExporter';
 import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { Button } from '../ui/Button';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
@@ -239,10 +240,43 @@ export class ResultScene extends Phaser.Scene {
       },
     });
 
+    // GIF replay export button
+    if (data.replay && data.replay.length > 0 && data.levelId) {
+      const level = LevelLoader.loadById(data.levelId);
+      if (level && data.placement) {
+        const gifBtn = new Button(this, {
+          x: cx, y: 455, text: 'GIF speichern',
+          width: 180, height: 34, fontSize: '12px',
+          color: 0x443366, hoverColor: 0x554477, textColor: '#bb99ee',
+          onClick: async () => {
+            gifBtn.setText('Erstelle GIF...');
+            // Yield to let the UI update before encoding
+            await new Promise((r) => setTimeout(r, 50));
+            try {
+              const blob = ReplayExporter.export({
+                replayFrames: data.replay!,
+                level,
+                placement: data.placement!,
+                puzzleNumber: puzzleNum,
+                score: data.score.total,
+                solved: data.solved,
+              });
+              const result = await ReplayExporter.share(blob, puzzleNum);
+              gifBtn.setText(result === 'shared' ? 'Geteilt!' : 'Gespeichert!');
+              this.time.delayedCall(2000, () => gifBtn.setText('GIF speichern'));
+            } catch {
+              gifBtn.setText('Fehler');
+              this.time.delayedCall(2000, () => gifBtn.setText('GIF speichern'));
+            }
+          },
+        });
+      }
+    }
+
     // WhatsApp share button (DACH market)
     if (typeof navigator.share !== 'function') {
       new Button(this, {
-        x: cx, y: 455, text: 'WhatsApp teilen',
+        x: cx, y: 490, text: 'WhatsApp teilen',
         width: 180, height: 34, fontSize: '12px',
         color: 0x25d366, hoverColor: 0x2ee67a, textColor: '#ffffff',
         onClick: () => {
@@ -265,7 +299,7 @@ export class ResultScene extends Phaser.Scene {
     if (isPractice) {
       // Practice mode: Replay + Next Level + Back
       new Button(this, {
-        x: cx - 110, y: 478, text: 'Nochmal',
+        x: cx - 110, y: 518, text: 'Nochmal',
         width: 130, height: 36, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
@@ -274,7 +308,7 @@ export class ResultScene extends Phaser.Scene {
       });
 
       new Button(this, {
-        x: cx + 110, y: 478, text: 'Naechstes',
+        x: cx + 110, y: 518, text: 'Naechstes',
         width: 130, height: 36, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
@@ -285,7 +319,7 @@ export class ResultScene extends Phaser.Scene {
 
       // Challenge button
       const challengeBtn = new Button(this, {
-        x: cx, y: 525, text: 'Freund herausfordern',
+        x: cx, y: 550, text: 'Freund herausfordern',
         width: 170, height: 30, fontSize: '11px',
         color: 0x443355, hoverColor: 0x554466, textColor: '#bb88dd',
         onClick: async () => {
@@ -299,7 +333,7 @@ export class ResultScene extends Phaser.Scene {
       });
 
       new Button(this, {
-        x: cx, y: 560, text: 'Zurueck',
+        x: cx, y: 575, text: 'Zurueck',
         width: 120, height: 30, fontSize: '12px',
         color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
         onClick: () => {
@@ -310,9 +344,9 @@ export class ResultScene extends Phaser.Scene {
         },
       });
     } else {
-      // Daily mode: Menu + Challenge
+      // Daily mode: Menu
       new Button(this, {
-        x: cx, y: 478, text: 'Zum Menue',
+        x: cx, y: 518, text: 'Zum Menue',
         width: 180, height: 38, fontSize: '14px',
         color: 0x2a2a44, hoverColor: 0x333355,
         textColor: '#9999bb',
