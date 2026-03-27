@@ -9,7 +9,7 @@ import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { HUD } from '../ui/HUD';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
-import { FONT_TITLE, COLOR, TEXT_SHADOW } from '../constants/Style';
+import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
@@ -359,18 +359,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawBackgroundGrid(): void {
-    const gfx = this.add.graphics().setDepth(0).setAlpha(0.06);
-    gfx.lineStyle(1, 0x4444aa);
+    const gfx = this.add.graphics().setDepth(0);
 
-    for (let x = 0; x <= GAME_WIDTH; x += 40) {
-      gfx.moveTo(x, 0);
-      gfx.lineTo(x, GAME_HEIGHT);
+    // Dot grid — modern, subtle, professional
+    for (let x = 20; x <= GAME_WIDTH; x += 40) {
+      for (let y = 60; y <= GAME_HEIGHT - 20; y += 40) {
+        const distFromCenter = Math.sqrt(
+          Math.pow(x - GAME_WIDTH / 2, 2) + Math.pow(y - GAME_HEIGHT / 2, 2)
+        );
+        const fade = Math.max(0, 1 - distFromCenter / 450);
+        gfx.fillStyle(0x4455aa, 0.04 + fade * 0.06);
+        gfx.fillCircle(x, y, 1);
+      }
     }
-    for (let y = 0; y <= GAME_HEIGHT; y += 40) {
-      gfx.moveTo(0, y);
-      gfx.lineTo(GAME_WIDTH, y);
-    }
-    gfx.strokePath();
   }
 
   private drawVignette(): void {
@@ -536,17 +537,33 @@ export class GameScene extends Phaser.Scene {
       this.createObjectSelector();
     }
 
-    // Preview ghost
+    // Preview ghost with outer glow ring
     const ghostColor = this.getObjectColor(this.selectedObjectType, 0.4);
+    const ghostCx = zone.x + zone.width / 2;
+    const ghostCy = zone.y + zone.height / 2;
+
+    // Outer glow ring
+    const ghostGlow = this.add
+      .circle(ghostCx, ghostCy, 18, ghostColor, 0.1)
+      .setDepth(19);
+    this.tweens.add({
+      targets: ghostGlow,
+      scaleX: 1.4, scaleY: 1.4, alpha: 0.02,
+      duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+
     this.previewGhost = this.add
-      .circle(
-        zone.x + zone.width / 2,
-        zone.y + zone.height / 2,
-        12,
-        ghostColor,
-        0.4
-      )
+      .circle(ghostCx, ghostCy, 12, ghostColor, 0.5)
+      .setStrokeStyle(1.5, 0xffffff, 0.3)
       .setDepth(20);
+
+    // Sync glow ring with ghost position
+    this.input.on('pointermove', () => {
+      if (this.previewGhost) {
+        ghostGlow.setPosition(this.previewGhost.x, this.previewGhost.y);
+        ghostGlow.setVisible(this.previewGhost.visible);
+      }
+    });
 
     // Particle emitters
     this.hitEmitter = this.add.particles(0, 0, 'particle', {
@@ -766,9 +783,13 @@ export class GameScene extends Phaser.Scene {
         // Score popup with scale-in
         const popup = this.add
           .text(target.x, target.y - 15, `+${target.points}`, {
-            fontSize: '22px',
-            color: '#ffdd00',
+            fontFamily: FONT_TITLE,
+            fontSize: '20px',
+            color: COLOR.star,
             fontStyle: 'bold',
+            stroke: '#332200',
+            strokeThickness: 3,
+            shadow: TEXT_SHADOW,
           })
           .setOrigin(0.5)
           .setDepth(55)
@@ -903,7 +924,10 @@ export class GameScene extends Phaser.Scene {
       if (isPerfect) {
         const perfectText = this.add
           .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'PERFEKT!', {
-            fontSize: '48px', color: '#ffdd44', fontStyle: 'bold',
+            fontFamily: FONT_TITLE,
+            fontSize: '42px', color: COLOR.accent, fontStyle: 'bold',
+            stroke: '#332200', strokeThickness: 5,
+            shadow: { offsetX: 0, offsetY: 0, color: '#ffdd4488', blur: 16, fill: false, stroke: true },
           })
           .setOrigin(0.5).setDepth(200).setScale(0).setAlpha(1);
 
@@ -952,9 +976,13 @@ export class GameScene extends Phaser.Scene {
 
       const retryText = this.add
         .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `Versuch ${this.attempts}/${MAX_ATTEMPTS}`, {
-          fontSize: '28px',
-          color: '#ffffff',
+          fontFamily: FONT_TITLE,
+          fontSize: '22px',
+          color: COLOR.textBright,
           fontStyle: 'bold',
+          stroke: '#111122',
+          strokeThickness: 3,
+          shadow: TEXT_SHADOW,
         })
         .setOrigin(0.5)
         .setDepth(100)
@@ -965,8 +993,11 @@ export class GameScene extends Phaser.Scene {
         .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35, this.targetsHit > 0
           ? `${this.targetsHit} Stern${this.targetsHit > 1 ? 'e' : ''} getroffen!`
           : 'Versuche es nochmal!', {
-          fontSize: '14px',
-          color: this.targetsHit > 0 ? '#ffdd44' : '#aa6666',
+          fontFamily: FONT_UI,
+          fontSize: '12px',
+          color: this.targetsHit > 0 ? COLOR.accent : '#aa6666',
+          stroke: '#111122',
+          strokeThickness: 1,
         })
         .setOrigin(0.5)
         .setDepth(100)
@@ -1029,9 +1060,12 @@ export class GameScene extends Phaser.Scene {
 
           const nearMiss = this.add
             .text(target.x, target.y - 25, 'Knapp!', {
-              fontSize: '16px',
+              fontFamily: FONT_TITLE,
+              fontSize: '14px',
               color: AccessibilityManager.nearMissHex,
               fontStyle: 'bold',
+              stroke: '#111122',
+              strokeThickness: 2,
             })
             .setOrigin(0.5)
             .setDepth(55)

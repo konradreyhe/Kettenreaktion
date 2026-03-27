@@ -110,14 +110,16 @@ export class ResultScene extends Phaser.Scene {
 
       const row = this.add
         .text(cx - 120, y, `${item.label}:  ${item.value}`, {
-          fontSize: '14px',
-          color: '#9999bb',
+          fontFamily: FONT_UI,
+          fontSize: '12px',
+          color: COLOR.textMuted,
         })
         .setAlpha(0);
 
       const scoreVal = this.add
         .text(cx + 120, y, `+${item.score}`, {
-          fontSize: '14px',
+          fontFamily: FONT_UI,
+          fontSize: '12px',
           color: item.score > 0 ? '#aaddaa' : '#666688',
         })
         .setOrigin(1, 0)
