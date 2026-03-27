@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 was a massive feature + polish pass. 19 commits pushed (total 49 in repo). Transformed the game from amateur to professional: Orbitron font with text stroke/shadow across ALL scenes, centralized Style.ts, dot grid background, ghost glow ring, polished particles, sprite-based replays, enhanced confetti, colorblind mode, challenge URLs, chain juice (hit stop, atmosphere, placement pop), legal compliance (Impressum + Datenschutz), og:image, score counter animation, streak grace period, ghost placement, and level repeat prevention. All 27 tests pass, typecheck clean.
+Session 3 was a massive feature + polish pass. 22 commits pushed (total 52 in repo). Transformed the game from amateur to professional: Orbitron font with text stroke/shadow across ALL scenes, centralized Style.ts, upgraded procedural textures (ball gradient, star glow, weight iron, floor tile, platform steel), dot grid background, ghost glow ring, star sparkle shimmer, sprite-based replays, enhanced confetti, colorblind mode, challenge URLs, chain juice (hit stop, atmosphere, placement pop), legal compliance (Impressum + Datenschutz), og:image, score counter animation, streak grace period, ghost placement, and level repeat prevention. All 27 tests pass, typecheck clean, build clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -41,6 +41,12 @@ Session 3 was a massive feature + polish pass. 19 commits pushed (total 49 in re
 - [x] ReplayScene uses actual sprites with rotation instead of dots
 - [x] StatsScene polished with Orbitron font + letter-spacing labels
 - [x] Enhanced confetti: dual shapes (rectangles + sparkle dots), 6 colors
+- [x] Upgraded ball texture: multi-layer gradient with specular + rim light
+- [x] New floor_tile texture: warm grey-green stripes, distinct from platforms
+- [x] Star texture: brighter gold with inner core + white hotspot
+- [x] Weight texture: multi-layer iron with dual rings + industrial cross
+- [x] Platform texture: steel-grey with bevel highlights + shadow
+- [x] Star sparkle shimmer: orbiting white dot with pulsing alpha
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -73,7 +79,7 @@ Session 3 was a massive feature + polish pass. 19 commits pushed (total 49 in re
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `65797d4` (HEAD) — everything works, 27 tests pass
+- Last known good state: commit `cee81c4` (HEAD) — everything works, 27 tests pass, build clean
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
