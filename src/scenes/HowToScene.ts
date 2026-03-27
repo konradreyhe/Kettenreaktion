@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 
 /** Tutorial screen with visual step-by-step guide. */
@@ -24,7 +25,7 @@ export class HowToScene extends Phaser.Scene {
 
     // Steps with icons
     const steps = [
-      { icon: '\u{1F7E2}', text: 'Platziere EINE Kugel in der gruenen Zone', color: '#44ff44' },
+      { icon: AccessibilityManager.isColorblind() ? '\u{1F535}' : '\u{1F7E2}', text: AccessibilityManager.isColorblind() ? 'Platziere EINE Kugel in der blauen Zone' : 'Platziere EINE Kugel in der gruenen Zone', color: AccessibilityManager.isColorblind() ? '#4488ff' : '#44ff44' },
       { icon: '\u{25B6}', text: 'Die Physik-Simulation startet automatisch', color: '#6688ff' },
       { icon: '\u{26D3}', text: 'Beobachte die Kettenreaktion!', color: '#ff8844' },
       { icon: '\u{2B50}', text: 'Triff die goldenen Sterne fuer Punkte', color: '#ffdd00' },

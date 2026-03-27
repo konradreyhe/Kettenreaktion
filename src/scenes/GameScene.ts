@@ -196,7 +196,7 @@ export class GameScene extends Phaser.Scene {
       .setAlpha(0);
 
     const hint = this.add
-      .text(cx, cy + 70, 'Klicke in die gruene Zone', {
+      .text(cx, cy + 70, AccessibilityManager.isColorblind() ? 'Klicke in die blaue Zone' : 'Klicke in die gruene Zone', {
         fontSize: '13px',
         color: '#888899',
       })
@@ -973,7 +973,7 @@ export class GameScene extends Phaser.Scene {
           const nearMiss = this.add
             .text(target.x, target.y - 25, 'Knapp!', {
               fontSize: '16px',
-              color: '#ff6644',
+              color: AccessibilityManager.nearMissHex,
               fontStyle: 'bold',
             })
             .setOrigin(0.5)

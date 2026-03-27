@@ -72,7 +72,9 @@ export class MenuScene extends Phaser.Scene {
 
     if (todayResult) {
       const resultText = todayResult.solved ? 'Geschafft!' : 'Versucht';
-      const resultColor = todayResult.solved ? '#44bb44' : '#aa6644';
+      const resultColor = todayResult.solved
+        ? (AccessibilityManager.isColorblind() ? '#6699cc' : '#44bb44')
+        : '#aa6644';
       this.add
         .text(cx, 275, `${resultText}  ${todayResult.score.toLocaleString('de-DE')} Pkt`, {
           fontSize: '13px', color: resultColor,

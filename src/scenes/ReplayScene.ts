@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { LevelLoader } from '../game/LevelLoader';
+import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 import type { PuzzleResult, ReplayFrame } from '../types/GameState';
 import type { Level } from '../types/Level';
@@ -39,7 +40,7 @@ export class ReplayScene extends Phaser.Scene {
 
     // Score info
     const scoreText = data.result.solved ? 'Geloest!' : 'Nicht geloest';
-    const scoreColor = data.result.solved ? '#44ff44' : '#ff6644';
+    const scoreColor = data.result.solved ? AccessibilityManager.successHex : AccessibilityManager.failHex;
     this.add
       .text(cx, 50, `${scoreText}  |  ${data.result.score.toLocaleString('de-DE')} Punkte`, {
         fontSize: '12px', color: scoreColor,
