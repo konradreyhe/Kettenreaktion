@@ -285,6 +285,15 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Background atmosphere shift with chain length
+    if (chain >= 2) {
+      const t = Math.min(1, chain / 15);
+      const r = Math.floor(26 + t * 20);  // 26 -> 46 (warmer)
+      const g = Math.floor(26 - t * 8);   // 26 -> 18 (less green)
+      const b = Math.floor(46 - t * 10);  // 46 -> 36 (less blue)
+      this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(r, g, b));
+    }
+
     // Minimum 1.5s before checking sleep
     if (elapsed < 1500) return;
 
@@ -798,15 +807,29 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Placement pop animation (0 → 1 scale)
+    this.placedSprite.setScale(0);
+    this.tweens.add({
+      targets: this.placedSprite,
+      scaleX: 1, scaleY: 1,
+      duration: 250,
+      ease: 'Back.easeOut',
+    });
+
     // Flash + micro shake on placement
     this.cameras.main.flash(80, 100, 100, 180);
-    this.cameraFX.addTrauma(0.1);
+    if (!AccessibilityManager.prefersReducedMotion()) {
+      this.cameraFX.addTrauma(0.1);
+    }
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
   }
 
   private endSimulation(): void {
     this.isSimulating = false;
+
+    // Reset background color
+    this.cameras.main.setBackgroundColor(0x1a1a2e);
 
     // Hide chain display
     if (this.chainDisplay) {
