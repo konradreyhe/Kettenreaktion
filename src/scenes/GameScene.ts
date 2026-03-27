@@ -340,8 +340,8 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(r, g, b));
     }
 
-    // Sample kinetic energy for seismograph
-    {
+    // Sample kinetic energy for seismograph (skip on mobile — too visually busy)
+    if (!this.isTouchDevice()) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allBods = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
       let energy = 0;
@@ -351,11 +351,15 @@ export class GameScene extends Phaser.Scene {
         }
       }
       this.energyHistory.push(energy);
+      // Cap history to prevent unbounded growth (last 5s at 60fps)
+      if (this.energyHistory.length > 300) {
+        this.energyHistory = this.energyHistory.slice(-300);
+      }
       this.drawEnergyGraph();
     }
 
-    // Progressive zoom camera — follow the action
-    if (!AccessibilityManager.prefersReducedMotion()) {
+    // Progressive zoom camera — follow the action (skip on mobile + reduced motion)
+    if (!AccessibilityManager.prefersReducedMotion() && !this.isTouchDevice()) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const activeBodies = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
       this.cameraFX.followAction(activeBodies, GAME_WIDTH, GAME_HEIGHT);

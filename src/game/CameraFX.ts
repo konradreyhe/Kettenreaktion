@@ -78,26 +78,23 @@ export class CameraFX {
     const active = bodies.filter((b) => !b.isStatic && !b.isSleeping);
     if (active.length === 0) return;
 
-    // Weighted centroid (faster bodies pull camera more)
+    // Weighted centroid + action spread in single pass
     let cx = 0, cy = 0, totalWeight = 0;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const b of active) {
       const speed = Math.sqrt(b.velocity.x ** 2 + b.velocity.y ** 2);
       const w = 1 + speed * 0.5;
       cx += b.position.x * w;
       cy += b.position.y * w;
       totalWeight += w;
-    }
-    cx /= totalWeight;
-    cy /= totalWeight;
-
-    // Calculate action spread
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const b of active) {
       minX = Math.min(minX, b.position.x);
       maxX = Math.max(maxX, b.position.x);
       minY = Math.min(minY, b.position.y);
       maxY = Math.max(maxY, b.position.y);
     }
+    cx /= totalWeight;
+    cy /= totalWeight;
+
     const spread = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
 
     // Target zoom: zoom in when action is concentrated, out when spread
