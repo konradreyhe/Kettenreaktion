@@ -63,6 +63,8 @@ export class GameScene extends Phaser.Scene {
   // Replay recording
   private replayFrames: ReplayFrame[] = [];
   private replayFrameCounter = 0;
+  private previousAttemptFrames: ReplayFrame[] = [];
+  private phantomDots: Phaser.GameObjects.Arc[] = [];
   private placementData: { type: string; x: number; y: number } | null = null;
   private bestReplayFrames: ReplayFrame[] = [];
   private bestPlacement: { type: string; x: number; y: number } | null = null;
@@ -277,6 +279,24 @@ export class GameScene extends Phaser.Scene {
 
     if (!this.isSimulating) return;
 
+    // Animate phantom replay of previous attempt
+    if (this.phantomDots.length > 0 && this.previousAttemptFrames.length > 0) {
+      const phantomIdx = Math.floor(this.replayFrameCounter / 3);
+      if (phantomIdx < this.previousAttemptFrames.length) {
+        const frame = this.previousAttemptFrames[phantomIdx];
+        for (let i = 0; i < Math.min(frame.length, this.phantomDots.length); i++) {
+          this.phantomDots[i].setPosition(frame[i][0], frame[i][1]);
+        }
+      } else {
+        // Phantom replay finished — fade out
+        this.phantomDots.forEach((d) => {
+          if (d.alpha > 0) {
+            this.tweens.add({ targets: d, alpha: 0, duration: 300 });
+          }
+        });
+      }
+    }
+
     // Record replay frame every 3rd update (~20fps at 60fps)
     this.replayFrameCounter++;
     if (this.replayFrameCounter % 3 === 0) {
@@ -315,6 +335,13 @@ export class GameScene extends Phaser.Scene {
       const g = Math.floor(26 - t * 8);   // 26 -> 18 (less green)
       const b = Math.floor(46 - t * 10);  // 46 -> 36 (less blue)
       this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(r, g, b));
+    }
+
+    // Progressive zoom camera — follow the action
+    if (!AccessibilityManager.prefersReducedMotion()) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const activeBodies = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
+      this.cameraFX.followAction(activeBodies, GAME_WIDTH, GAME_HEIGHT);
     }
 
     // Minimum 1.5s before checking sleep
@@ -858,6 +885,26 @@ export class GameScene extends Phaser.Scene {
       this.tweens.killTweensOf(this.placementZoneBorder);
     }
 
+    // Store previous attempt for phantom overlay
+    if (this.replayFrames.length > 0) {
+      this.previousAttemptFrames = this.replayFrames;
+    }
+
+    // Clean up old phantom dots
+    this.phantomDots.forEach((d) => d.destroy());
+    this.phantomDots = [];
+
+    // Create phantom dots from previous attempt
+    if (this.previousAttemptFrames.length > 0 && this.attempts > 1) {
+      const firstFrame = this.previousAttemptFrames[0];
+      for (let i = 0; i < firstFrame.length; i++) {
+        const dot = this.add
+          .circle(firstFrame[i][0], firstFrame[i][1], 5, 0xffffff, 0.12)
+          .setDepth(4);
+        this.phantomDots.push(dot);
+      }
+    }
+
     // Reset replay recording for this attempt
     this.replayFrames = [];
     this.replayFrameCounter = 0;
@@ -910,7 +957,8 @@ export class GameScene extends Phaser.Scene {
     // Render photon trail art (velocity-colored paths)
     this.trailRenderer.renderArt();
 
-    // Reset background color
+    // Reset camera and background
+    this.cameraFX.resetCamera();
     this.cameras.main.setBackgroundColor(0x1a1a2e);
 
     // Hide chain display
