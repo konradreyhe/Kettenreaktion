@@ -8,6 +8,7 @@ import { TrailRenderer } from '../game/TrailRenderer';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { HUD } from '../ui/HUD';
+import { AccessibilityManager } from '../systems/AccessibilityManager';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
@@ -402,15 +403,16 @@ export class GameScene extends Phaser.Scene {
     // Build physics world
     this.physicsManager.buildLevel(this.level);
 
-    // Placement zone
+    // Placement zone (colorblind-aware)
     const zone = this.level.placementZone;
+    const zoneColor = AccessibilityManager.zoneColor;
     this.placementZoneRect = this.add
       .rectangle(
         zone.x + zone.width / 2,
         zone.y + zone.height / 2,
         zone.width,
         zone.height,
-        0x44ff44,
+        zoneColor,
         0.06
       )
       .setDepth(2);
@@ -422,7 +424,7 @@ export class GameScene extends Phaser.Scene {
         zone.width,
         zone.height
       )
-      .setStrokeStyle(2, 0x44ff44, 0.5)
+      .setStrokeStyle(2, zoneColor, 0.5)
       .setFillStyle(0x000000, 0)
       .setDepth(2);
 
@@ -434,6 +436,23 @@ export class GameScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+
+    // Ghost of previous attempt placement
+    if (this.placementData && this.attempts > 0) {
+      const ghost = this.add
+        .circle(this.placementData.x, this.placementData.y, 8, 0xffffff, 0.12)
+        .setDepth(3);
+      const ghostX = this.add
+        .text(this.placementData.x, this.placementData.y, '\u00D7', {
+          fontSize: '14px', color: '#ffffff',
+        })
+        .setOrigin(0.5).setAlpha(0.2).setDepth(3);
+
+      // Fade out when simulation starts (cleaned up automatically on reset)
+      this.time.delayedCall(5000, () => {
+        this.tweens.add({ targets: [ghost, ghostX], alpha: 0, duration: 500 });
+      });
+    }
 
     // Theme-based background tint
     this.applyThemeTint();

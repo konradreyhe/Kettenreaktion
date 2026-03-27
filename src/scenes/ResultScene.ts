@@ -4,6 +4,7 @@ import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
 import { LevelLoader } from '../game/LevelLoader';
+import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
@@ -62,7 +63,7 @@ export class ResultScene extends Phaser.Scene {
 
     // Solved status with animation
     const statusText = data.solved ? 'Geschafft!' : 'Nicht geschafft';
-    const statusColor = data.solved ? '#44ff44' : '#ff6644';
+    const statusColor = data.solved ? AccessibilityManager.successHex : AccessibilityManager.failHex;
     const status = this.add
       .text(cx, 78, statusText, {
         fontSize: '28px',

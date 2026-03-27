@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { AudioManager } from '../systems/AudioManager';
+import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 
 /** Start screen with play button, streak, and puzzle info. */
@@ -174,6 +175,19 @@ export class MenuScene extends Phaser.Scene {
       soundOn = !soundOn;
       AudioManager.setEnabled(soundOn);
       soundBtn.setText(soundOn ? '\u{1F50A}' : '\u{1F507}');
+    });
+
+    // Colorblind toggle
+    const cbOn = AccessibilityManager.isColorblind();
+    const cbBtn = this.add
+      .text(GAME_WIDTH - 50, 20, '\u{1F441}', {
+        fontSize: '20px', color: cbOn ? '#4488ff' : '#666688',
+      })
+      .setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(10);
+
+    cbBtn.on('pointerdown', () => {
+      const enabled = AccessibilityManager.toggle();
+      cbBtn.setColor(enabled ? '#4488ff' : '#666688');
     });
 
     // Stats

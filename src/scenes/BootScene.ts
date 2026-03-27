@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { StorageManager } from '../systems/StorageManager';
+import { AccessibilityManager } from '../systems/AccessibilityManager';
 
 /** Preloads assets, generates all procedural textures. */
 export class BootScene extends Phaser.Scene {
@@ -14,6 +15,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Initialize accessibility settings
+    AccessibilityManager.init();
+
     // Prune old replay data to prevent localStorage bloat
     StorageManager.pruneOldReplays(7);
 
