@@ -245,9 +245,9 @@ export class ResultScene extends Phaser.Scene {
       const level = LevelLoader.loadById(data.levelId);
       if (level && data.placement) {
         const gifBtn = new Button(this, {
-          x: cx, y: 455, text: 'GIF speichern',
-          width: 180, height: 34, fontSize: '12px',
-          color: 0x443366, hoverColor: 0x554477, textColor: '#bb99ee',
+          x: cx, y: 460, text: 'Replay als GIF',
+          width: 220, height: 38, fontSize: '13px',
+          color: 0x2a3355, hoverColor: 0x3a4466, textColor: '#8899cc',
           onClick: async () => {
             gifBtn.setText('Erstelle GIF...');
             // Yield to let the UI update before encoding
@@ -297,10 +297,10 @@ export class ResultScene extends Phaser.Scene {
     }
 
     if (isPractice) {
-      // Practice mode: Replay + Next Level + Back
+      // Practice mode: Replay + Next Level
       new Button(this, {
-        x: cx - 110, y: 518, text: 'Nochmal',
-        width: 130, height: 36, fontSize: '13px',
+        x: cx - 110, y: 510, text: 'Nochmal',
+        width: 130, height: 34, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
           this.scene.start('GameScene', { practiceIndex: data.practiceIndex });
@@ -308,8 +308,8 @@ export class ResultScene extends Phaser.Scene {
       });
 
       new Button(this, {
-        x: cx + 110, y: 518, text: 'Naechstes',
-        width: 130, height: 36, fontSize: '13px',
+        x: cx + 110, y: 510, text: 'Naechstes',
+        width: 130, height: 34, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
           const next = ((data.practiceIndex ?? 0) + 1) % LevelLoader.getTemplateCount();
@@ -317,24 +317,24 @@ export class ResultScene extends Phaser.Scene {
         },
       });
 
-      // Challenge button
+      // Challenge + Back row
       const challengeBtn = new Button(this, {
-        x: cx, y: 550, text: 'Freund herausfordern',
-        width: 170, height: 30, fontSize: '11px',
+        x: cx - 80, y: 548, text: 'Herausfordern',
+        width: 140, height: 28, fontSize: '10px',
         color: 0x443355, hoverColor: 0x554466, textColor: '#bb88dd',
         onClick: async () => {
           const url = `${window.location.origin}${window.location.pathname}?challenge=${data.practiceIndex ?? 0}`;
           try {
             await navigator.clipboard.writeText(url);
-            challengeBtn.setText('Link kopiert!');
-            this.time.delayedCall(2000, () => challengeBtn.setText('Freund herausfordern'));
+            challengeBtn.setText('Kopiert!');
+            this.time.delayedCall(2000, () => challengeBtn.setText('Herausfordern'));
           } catch { /* ignore */ }
         },
       });
 
       new Button(this, {
-        x: cx, y: 575, text: 'Zurueck',
-        width: 120, height: 30, fontSize: '12px',
+        x: cx + 80, y: 548, text: 'Zurueck',
+        width: 100, height: 28, fontSize: '10px',
         color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
         onClick: () => {
           this.cameras.main.fadeOut(200, 26, 26, 46);
@@ -346,7 +346,7 @@ export class ResultScene extends Phaser.Scene {
     } else {
       // Daily mode: Menu
       new Button(this, {
-        x: cx, y: 518, text: 'Zum Menue',
+        x: cx, y: 510, text: 'Zum Menue',
         width: 180, height: 38, fontSize: '14px',
         color: 0x2a2a44, hoverColor: 0x333355,
         textColor: '#9999bb',
