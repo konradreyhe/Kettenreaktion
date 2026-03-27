@@ -635,7 +635,7 @@ export class GameScene extends Phaser.Scene {
           }
 
           // Screen shake proportional to impact + chain length
-          if (impactSpeed > 3) {
+          if (impactSpeed > 3 && !AccessibilityManager.prefersReducedMotion()) {
             const chainBoost = 1 + newChain * 0.08;
             this.cameraFX.addTrauma(Math.min(0.4, impactSpeed * 0.04 * chainBoost));
           }
@@ -643,6 +643,14 @@ export class GameScene extends Phaser.Scene {
           // Squash & stretch on both bodies' sprites
           this.squashBody(bodyA);
           this.squashBody(bodyB);
+
+          // Hit stop on chain milestones (brief physics pause for dramatic effect)
+          if (newChain > prevChain && newChain >= 5 && newChain % 3 === 0 && !AccessibilityManager.prefersReducedMotion()) {
+            this.matter.world.pause();
+            this.time.delayedCall(80, () => {
+              if (this.isSimulating) this.matter.world.resume();
+            });
+          }
 
           // Audio
           if (newChain > prevChain) {

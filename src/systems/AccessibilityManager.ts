@@ -1,11 +1,14 @@
 const CB_KEY = 'kettenreaktion_colorblind';
 
-/** Manages colorblind mode toggle. Uses blue/orange palette instead of red/green. */
+/** Manages colorblind mode toggle and reduced motion detection. */
 export class AccessibilityManager {
   private static colorblind = false;
+  private static reducedMotion = false;
 
   static init(): void {
     AccessibilityManager.colorblind = localStorage.getItem(CB_KEY) === '1';
+    AccessibilityManager.reducedMotion =
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   }
 
   static isColorblind(): boolean {
@@ -16,6 +19,11 @@ export class AccessibilityManager {
     AccessibilityManager.colorblind = !AccessibilityManager.colorblind;
     localStorage.setItem(CB_KEY, AccessibilityManager.colorblind ? '1' : '0');
     return AccessibilityManager.colorblind;
+  }
+
+  /** Whether the OS prefers reduced motion */
+  static prefersReducedMotion(): boolean {
+    return AccessibilityManager.reducedMotion;
   }
 
   /** Placement zone color — green or blue */
