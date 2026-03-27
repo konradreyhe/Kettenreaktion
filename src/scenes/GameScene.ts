@@ -70,6 +70,8 @@ export class GameScene extends Phaser.Scene {
   private bestReplayFrames: ReplayFrame[] = [];
   private bestPlacement: { type: string; x: number; y: number } | null = null;
   private visibilityHandler: (() => void) | null = null;
+  private energyHistory: number[] = [];
+  private energyGraph: Phaser.GameObjects.Graphics | null = null;
 
   // Particles
   private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
@@ -336,6 +338,20 @@ export class GameScene extends Phaser.Scene {
       const g = Math.floor(26 - t * 8);   // 26 -> 18 (less green)
       const b = Math.floor(46 - t * 10);  // 46 -> 36 (less blue)
       this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(r, g, b));
+    }
+
+    // Sample kinetic energy for seismograph
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const allBods = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
+      let energy = 0;
+      for (const b of allBods) {
+        if (!b.isStatic) {
+          energy += b.speed * b.speed * (b.mass ?? 1);
+        }
+      }
+      this.energyHistory.push(energy);
+      this.drawEnergyGraph();
     }
 
     // Progressive zoom camera — follow the action
@@ -913,9 +929,12 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Reset replay recording for this attempt
+    // Reset replay + energy for this attempt
     this.replayFrames = [];
     this.replayFrameCounter = 0;
+    this.energyHistory = [];
+    this.energyGraph?.destroy();
+    this.energyGraph = null;
 
     // Place the player's object — with distinct glow
     AudioManager.playPlace();
@@ -961,6 +980,16 @@ export class GameScene extends Phaser.Scene {
 
   private endSimulation(): void {
     this.isSimulating = false;
+
+    // Fade out energy graph
+    if (this.energyGraph) {
+      this.tweens.add({
+        targets: this.energyGraph,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => { this.energyGraph?.destroy(); this.energyGraph = null; },
+      });
+    }
 
     // Render photon trail art (velocity-colored paths)
     this.trailRenderer.renderArt();
@@ -1260,6 +1289,43 @@ export class GameScene extends Phaser.Scene {
       bg.setFillStyle(isSelected ? 0x446644 : 0x333344, 0.8);
       icon.setAlpha(isSelected ? 1 : 0.5);
     }
+  }
+
+  /** Draw a compact energy seismograph at the bottom of the screen. */
+  private drawEnergyGraph(): void {
+    if (!this.energyGraph) {
+      this.energyGraph = this.add.graphics().setDepth(85).setAlpha(0.5);
+    }
+    this.energyGraph.clear();
+
+    const history = this.energyHistory;
+    if (history.length < 2) return;
+
+    const graphW = 200;
+    const graphH = 25;
+    const graphX = GAME_WIDTH - graphW - 10;
+    const graphY = GAME_HEIGHT - 55;
+
+    // Background
+    this.energyGraph.fillStyle(0x0a0a1a, 0.5);
+    this.energyGraph.fillRect(graphX, graphY, graphW, graphH);
+
+    // Normalize
+    const maxE = Math.max(...history, 0.01);
+    const visiblePoints = Math.min(history.length, graphW);
+    const startIdx = Math.max(0, history.length - graphW);
+
+    // Draw line
+    this.energyGraph.lineStyle(1.5, 0xff8844, 0.8);
+    this.energyGraph.beginPath();
+    for (let i = 0; i < visiblePoints; i++) {
+      const val = history[startIdx + i] / maxE;
+      const px = graphX + (i / visiblePoints) * graphW;
+      const py = graphY + graphH - val * graphH;
+      if (i === 0) this.energyGraph.moveTo(px, py);
+      else this.energyGraph.lineTo(px, py);
+    }
+    this.energyGraph.strokePath();
   }
 
   /** Show a directional hint arrow from zone center toward the nearest target. */
