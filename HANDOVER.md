@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 was a massive feature + polish + creative pass. 25 commits pushed (total 55 in repo). Transformed the game from amateur to professional: Orbitron font, Style system, upgraded textures, dot grid, ghost glow, star shimmer, sprite replays, enhanced confetti, colorblind mode, challenge URLs, chain juice, legal compliance, og:image, score animation. Creative brainstorm delivered: Sonic Chain (pentatonic collision audio), Gravity Flip Friday, Kettenmeister title system, Photon Trail Art (velocity-colored generative art). All 27 tests pass, typecheck clean, build clean.
+Session 3 was a massive feature + polish + creative pass. 29 commits pushed (total 59 in repo). Transformed the game from amateur to professional with Orbitron font, Style system, upgraded textures, and 8 creative brainstorm features: Sonic Chain audio, Gravity Flip Friday, Kettenmeister titles, Photon Trail Art, Progressive Zoom Camera, Phantom Replay Overlay, Energy Seismograph, and Daily Hint system. Plus colorblind mode, challenge URLs, WhatsApp share, legal compliance, og:image, and much more. All 27 tests pass, typecheck clean, build clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -51,6 +51,11 @@ Session 3 was a massive feature + polish + creative pass. 25 commits pushed (tot
 - [x] Gravity Flip Friday: inverted gravity on Fridays, "Flip Friday" HUD badge
 - [x] Kettenmeister title system: 6 German ranks based on games + solve rate
 - [x] Photon Trail Art: velocity-colored physics trajectories as generative art
+- [x] Progressive Zoom Camera: action-following camera with velocity-weighted centroid
+- [x] Phantom Replay Overlay: ghost dots of previous attempt during simulation
+- [x] WhatsApp share deep-link button (DACH market)
+- [x] Daily Hint (H key): directional arrow toward first target
+- [x] Energy Seismograph: real-time kinetic energy line graph during simulation
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -83,7 +88,7 @@ Session 3 was a massive feature + polish + creative pass. 25 commits pushed (tot
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `62af558` (HEAD) — everything works, 27 tests pass, build clean
+- Last known good state: commit `1f040dd` (HEAD) — everything works, 27 tests pass, build clean
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
