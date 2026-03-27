@@ -215,8 +215,20 @@ export class MenuScene extends Phaser.Scene {
       cbBtn.setColor(enabled ? '#4488ff' : '#666688');
     });
 
-    // Stats
+    // Player title
     const data = StorageManager.load();
+    if (data.gamesPlayed >= 5) {
+      const title = StorageManager.getTitle();
+      this.add
+        .text(cx, 500, `\u{1F3C6} ${title}`, {
+          fontFamily: FONT_UI,
+          fontSize: '10px', color: COLOR.secondary,
+          stroke: '#111122', strokeThickness: 1,
+        })
+        .setOrigin(0.5).setDepth(10);
+    }
+
+    // Stats
     if (data.gamesPlayed > 0) {
       this.add
         .text(cx, 478, `Spiele: ${data.gamesPlayed}  |  Bester: ${data.bestScore.toLocaleString('de-DE')}`, {
