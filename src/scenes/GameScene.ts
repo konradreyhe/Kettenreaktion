@@ -593,6 +593,22 @@ export class GameScene extends Phaser.Scene {
       });
     });
 
+    // Keyboard: 1/2 keys switch object type
+    this.input.keyboard?.on('keydown-ONE', () => {
+      const allowed = this.level.placementZone.allowedObjects;
+      if (allowed.length > 0 && !this.isSimulating) {
+        this.selectedObjectType = allowed[0];
+        this.updateSelectorHighlight();
+      }
+    });
+    this.input.keyboard?.on('keydown-TWO', () => {
+      const allowed = this.level.placementZone.allowedObjects;
+      if (allowed.length > 1 && !this.isSimulating) {
+        this.selectedObjectType = allowed[1];
+        this.updateSelectorHighlight();
+      }
+    });
+
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive || !this.previewGhost) return;
 

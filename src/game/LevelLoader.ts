@@ -28,7 +28,17 @@ export class LevelLoader {
 
     // Fallback to all levels if no match (shouldn't happen with 90 levels)
     const pool = eligible.length > 0 ? eligible : LEVEL_TEMPLATES;
-    const index = DailySystem.getLevelIndex(seed, pool.length);
+    let index = DailySystem.getLevelIndex(seed, pool.length);
+
+    // Prevent same level two days in a row
+    if (pool.length > 1) {
+      const yesterdaySeed = seed - 1;
+      const yesterdayIndex = DailySystem.getLevelIndex(yesterdaySeed, pool.length);
+      if (index === yesterdayIndex) {
+        index = (index + 1) % pool.length;
+      }
+    }
+
     const template = pool[index];
     return LevelLoader.applyVariations(template, seed);
   }
