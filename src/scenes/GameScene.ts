@@ -46,6 +46,7 @@ export class GameScene extends Phaser.Scene {
   private introActive = false;
   private hintUsed = false;
   private isPractice = false;
+  private isGravityFlipped = false;
   private practiceIndex = 0;
   private simulationStartTime = 0;
   private bestScore: ScoreResult | null = null;
@@ -105,16 +106,18 @@ export class GameScene extends Phaser.Scene {
     this.trailRenderer = new TrailRenderer(this);
     this.hud = new HUD(this);
 
-    // Gravity Flip Friday — invert gravity on Fridays (UTC)
-    const isFriday = new Date().getUTCDay() === 5;
-    if (isFriday && !this.isPractice) {
-      this.matter.world.setGravity(0, -1);
-    }
-
     // Load level — practice mode uses specific index, daily uses seed
     this.level = this.isPractice
       ? LevelLoader.loadByIndex(this.practiceIndex)
       : LevelLoader.loadToday();
+
+    // Gravity Flip Friday — invert gravity and mirror level on Fridays (UTC)
+    const isFriday = new Date().getUTCDay() === 5;
+    this.isGravityFlipped = isFriday && !this.isPractice;
+    if (this.isGravityFlipped) {
+      this.matter.world.setGravity(0, -1);
+      this.mirrorLevelY();
+    }
 
     this.createTextures();
     this.drawBackgroundGrid();
@@ -456,6 +459,36 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Mirror all level Y coordinates for Gravity Flip Friday. */
+  private mirrorLevelY(): void {
+    const h = this.level.world.height;
+    const flipY = (y: number): number => h - y;
+
+    // Mirror placement zone
+    const zone = this.level.placementZone;
+    zone.y = flipY(zone.y + zone.height);
+
+    // Mirror static objects (platforms, ramps)
+    for (const obj of this.level.staticObjects) {
+      const objH = obj.height ?? 20;
+      obj.y = flipY(obj.y + objH);
+      // Negate ramp angles so slopes face correctly
+      if (obj.angle) {
+        obj.angle = -obj.angle;
+      }
+    }
+
+    // Mirror dynamic objects
+    for (const obj of this.level.dynamicObjects) {
+      obj.y = flipY(obj.y);
+    }
+
+    // Mirror targets
+    for (const target of this.level.targets) {
+      target.y = flipY(target.y);
+    }
+  }
+
   private setupLevel(): void {
     // Clean previous
     this.targets.forEach((t) => {
@@ -481,8 +514,8 @@ export class GameScene extends Phaser.Scene {
       this.chainDisplay.setText('');
     }
 
-    // Build physics world
-    this.physicsManager.buildLevel(this.level);
+    // Build physics world (floor at top when gravity flipped)
+    this.physicsManager.buildLevel(this.level, this.isGravityFlipped);
 
     // Placement zone (colorblind-aware)
     const zone = this.level.placementZone;

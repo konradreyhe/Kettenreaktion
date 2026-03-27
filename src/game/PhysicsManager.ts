@@ -24,9 +24,9 @@ export class PhysicsManager {
     return isMobile ? MAX_BODIES_MOBILE : MAX_BODIES_DESKTOP;
   }
 
-  buildLevel(level: Level): void {
+  buildLevel(level: Level, gravityFlipped = false): void {
     this.clearLevel();
-    this.buildFloor(level.world.width, level.world.height);
+    this.buildFloor(level.world.width, level.world.height, gravityFlipped);
     this.buildWalls(level.world.width, level.world.height);
 
     for (const obj of level.staticObjects) {
@@ -156,25 +156,27 @@ export class PhysicsManager {
     this.tracked.push({ sprite: tileSprite, body });
   }
 
-  private buildFloor(w: number, h: number): void {
+  private buildFloor(w: number, h: number, flipped = false): void {
     const floorH = 20;
+    const floorY = flipped ? floorH / 2 : h - floorH / 2;
+    const edgeY = flipped ? floorH : h - floorH;
+
     const tileSprite = this.scene.add
-      .tileSprite(w / 2, h - floorH / 2, w, floorH, 'floor_tile')
+      .tileSprite(w / 2, floorY, w, floorH, 'floor_tile')
       .setDepth(5);
 
-    // Top edge highlight
     const edge = this.scene.add.graphics().setDepth(7);
+    // Edge highlight on the side facing the play area
     edge.lineStyle(2, 0x7a9a8a, 0.4);
-    edge.moveTo(0, h - floorH);
-    edge.lineTo(w, h - floorH);
+    edge.moveTo(0, edgeY);
+    edge.lineTo(w, edgeY);
     edge.strokePath();
-    // Bottom shadow
     edge.lineStyle(1, 0x000000, 0.2);
-    edge.moveTo(0, h - floorH + 2);
-    edge.lineTo(w, h - floorH + 2);
+    edge.moveTo(0, edgeY + (flipped ? -2 : 2));
+    edge.lineTo(w, edgeY + (flipped ? -2 : 2));
     edge.strokePath();
 
-    const body = this.scene.matter.add.rectangle(w / 2, h - floorH / 2, w, floorH, {
+    const body = this.scene.matter.add.rectangle(w / 2, floorY, w, floorH, {
       isStatic: true, friction: 0.5, restitution: 0.1, label: 'floor',
     });
 
