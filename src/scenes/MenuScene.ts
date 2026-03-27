@@ -89,12 +89,30 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Today's difficulty stars
+    // Day-of-week mode label
+    const utcDay = new Date().getUTCDay();
+    const dayLabels: Record<number, string> = {
+      0: '\u{1F525} Sonntagschallenge',
+      1: '\u{1F7E2} Montag: Leicht',
+      5: '\u{1F504} Flip Friday!',
+    };
+    const dayLabel = dayLabels[utcDay];
+    if (dayLabel) {
+      this.add
+        .text(cx, 240, dayLabel, {
+          fontFamily: FONT_UI,
+          fontSize: '10px', color: utcDay === 5 ? '#88aaff' : utcDay === 0 ? '#ff6644' : '#66bb66',
+          stroke: '#111122', strokeThickness: 1,
+        })
+        .setOrigin(0.5).setDepth(10);
+    }
+
+    // Today's difficulty stars (below day label if present)
     const [minDiff, maxDiff] = DailySystem.getDailyDifficultyRange();
     const avgDiff = Math.round((minDiff + maxDiff) / 2);
     const diffStars = '\u2605'.repeat(avgDiff) + '\u2606'.repeat(5 - avgDiff);
     this.add
-      .text(cx, 240, diffStars, {
+      .text(cx, dayLabel ? 255 : 240, diffStars, {
         fontSize: '12px', color: '#ffaa44',
       })
       .setOrigin(0.5).setDepth(10);
