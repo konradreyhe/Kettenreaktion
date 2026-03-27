@@ -76,36 +76,45 @@ export class BootScene extends Phaser.Scene {
     this.genStar();
     this.genPlatform();
     this.genRamp();
+    this.genFloor();
   }
 
-  /** Ball — light blue circle with shine rings and highlight. */
+  /** Ball — gradient blue sphere with specular highlights. */
   private genBall(): void {
     const s = 28;
     const r = s / 2;
     const gfx = this.make.graphics({ x: 0, y: 0 });
 
-    // Shadow
-    gfx.fillStyle(0x000000, 0.25);
-    gfx.fillCircle(r + 1, r + 1, r - 1);
+    // Drop shadow
+    gfx.fillStyle(0x000000, 0.3);
+    gfx.fillCircle(r + 1, r + 2, r - 1);
 
-    // Main body
-    gfx.fillStyle(0x7799cc);
+    // Base — darker rim
+    gfx.fillStyle(0x446688);
     gfx.fillCircle(r, r, r - 1);
 
-    // Inner ring
-    gfx.lineStyle(1.5, 0x99bbee, 0.5);
-    gfx.strokeCircle(r, r, r * 0.65);
+    // Mid layer — main color
+    gfx.fillStyle(0x6699cc, 0.9);
+    gfx.fillCircle(r - 1, r - 1, r - 3);
 
-    // Highlight
-    gfx.fillStyle(0xffffff, 0.4);
-    gfx.fillCircle(r - 3, r - 3, 4);
+    // Light layer — upper highlight area
+    gfx.fillStyle(0x88bbee, 0.6);
+    gfx.fillCircle(r - 2, r - 2, r - 5);
 
-    // Small secondary highlight
-    gfx.fillStyle(0xffffff, 0.15);
-    gfx.fillCircle(r + 2, r - 4, 2);
+    // Specular highlight
+    gfx.fillStyle(0xffffff, 0.6);
+    gfx.fillCircle(r - 4, r - 4, 3.5);
 
-    // Dark outline
-    gfx.lineStyle(1.5, 0x334466, 0.6);
+    // Secondary specular
+    gfx.fillStyle(0xffffff, 0.2);
+    gfx.fillCircle(r + 2, r - 5, 1.5);
+
+    // Rim light (bottom right)
+    gfx.fillStyle(0x99ccff, 0.15);
+    gfx.fillCircle(r + 3, r + 3, 3);
+
+    // Clean outline
+    gfx.lineStyle(1, 0x334466, 0.5);
     gfx.strokeCircle(r, r, r - 1);
 
     gfx.generateTexture('ball', s, s);
@@ -281,8 +290,8 @@ export class BootScene extends Phaser.Scene {
     gfx.closePath();
     gfx.fillPath();
 
-    // Main star — gold
-    gfx.fillStyle(0xffdd00);
+    // Main star — bright gold
+    gfx.fillStyle(0xffcc00);
     gfx.beginPath();
     gfx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
@@ -291,12 +300,16 @@ export class BootScene extends Phaser.Scene {
     gfx.closePath();
     gfx.fillPath();
 
-    // Inner glow
-    gfx.fillStyle(0xffff88, 0.5);
-    gfx.fillCircle(cx, cy, 4);
+    // Inner bright core
+    gfx.fillStyle(0xffee66, 0.7);
+    gfx.fillCircle(cx, cy, 5);
 
-    // Outline
-    gfx.lineStyle(1, 0xcc9900, 0.8);
+    // Center white hot spot
+    gfx.fillStyle(0xffffff, 0.4);
+    gfx.fillCircle(cx - 1, cy - 1, 2);
+
+    // Outline with warm tone
+    gfx.lineStyle(1.5, 0xbb8800, 0.8);
     gfx.beginPath();
     gfx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
@@ -309,31 +322,67 @@ export class BootScene extends Phaser.Scene {
     gfx.destroy();
   }
 
-  /** Platform — grey with hatched pattern (visually static). */
+  /** Platform — steel-grey with rivet pattern (visually static). */
   private genPlatform(): void {
     const gfx = this.make.graphics({ x: 0, y: 0 });
-    const s = 8;
+    const s = 10;
 
-    gfx.fillStyle(0x556666);
+    // Base — cool steel
+    gfx.fillStyle(0x4a5566);
     gfx.fillRect(0, 0, s, s);
 
-    // Hatch lines — signal "this is fixed"
-    gfx.lineStyle(1, 0x667777, 0.4);
+    // Subtle lighter band (top half)
+    gfx.fillStyle(0x556677, 0.4);
+    gfx.fillRect(0, 0, s, s / 2);
+
+    // Diagonal hatch — "immovable" signal
+    gfx.lineStyle(1, 0x5a6677, 0.5);
     gfx.moveTo(0, s);
     gfx.lineTo(s, 0);
-    gfx.moveTo(s / 2, s);
-    gfx.lineTo(s, s / 2);
-    gfx.moveTo(0, s / 2);
-    gfx.lineTo(s / 2, 0);
     gfx.strokePath();
 
     // Top edge highlight
-    gfx.lineStyle(1, 0x88aaaa, 0.3);
+    gfx.lineStyle(1, 0x8899aa, 0.4);
     gfx.moveTo(0, 0);
     gfx.lineTo(s, 0);
     gfx.strokePath();
 
+    // Bottom edge shadow
+    gfx.lineStyle(1, 0x333344, 0.3);
+    gfx.moveTo(0, s - 1);
+    gfx.lineTo(s, s - 1);
+    gfx.strokePath();
+
     gfx.generateTexture('platform_tile', s, s);
+    gfx.destroy();
+  }
+
+  /** Floor — distinct ground with subtle stripe pattern. */
+  private genFloor(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const w = 16;
+    const h = 16;
+
+    // Base — warm grey-green
+    gfx.fillStyle(0x556b5e);
+    gfx.fillRect(0, 0, w, h);
+
+    // Alternating stripe bands
+    gfx.fillStyle(0x4d6358, 0.5);
+    gfx.fillRect(0, 0, w, 4);
+    gfx.fillRect(0, 8, w, 4);
+
+    // Top highlight
+    gfx.lineStyle(1, 0x7a9a8a, 0.3);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(w, 0);
+    gfx.strokePath();
+
+    // Subtle grid marks
+    gfx.fillStyle(0x4a6050, 0.3);
+    gfx.fillRect(w / 2, 0, 1, h);
+
+    gfx.generateTexture('floor_tile', w, h);
     gfx.destroy();
   }
 

@@ -159,14 +159,19 @@ export class PhysicsManager {
   private buildFloor(w: number, h: number): void {
     const floorH = 20;
     const tileSprite = this.scene.add
-      .tileSprite(w / 2, h - floorH / 2, w, floorH, 'platform_tile')
+      .tileSprite(w / 2, h - floorH / 2, w, floorH, 'floor_tile')
       .setDepth(5);
 
-    // Top edge line
+    // Top edge highlight
     const edge = this.scene.add.graphics().setDepth(7);
-    edge.lineStyle(2, 0x88aaaa, 0.3);
+    edge.lineStyle(2, 0x7a9a8a, 0.4);
     edge.moveTo(0, h - floorH);
     edge.lineTo(w, h - floorH);
+    edge.strokePath();
+    // Bottom shadow
+    edge.lineStyle(1, 0x000000, 0.2);
+    edge.moveTo(0, h - floorH + 2);
+    edge.lineTo(w, h - floorH + 2);
     edge.strokePath();
 
     const body = this.scene.matter.add.rectangle(w / 2, h - floorH / 2, w, floorH, {
