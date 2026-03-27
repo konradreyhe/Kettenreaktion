@@ -143,12 +143,29 @@ export class MenuScene extends Phaser.Scene {
         onClick: () => {}, // no-op
       });
     } else {
-      // Play button
+      // Play button with glow pulse
       const hasResult = todayResult !== null;
+      const playColor = hasResult ? 0x2a3a55 : 0x3355aa;
+
+      // Glow behind play button
+      const glow = this.add
+        .rectangle(cx, 320, 240, 62, 0x4488ff, 0)
+        .setDepth(9);
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0, to: 0.15 },
+        scaleX: { from: 1, to: 1.08 },
+        scaleY: { from: 1, to: 1.12 },
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+
       new Button(this, {
         x: cx, y: 320, text: hasResult ? 'WEITER SPIELEN' : 'SPIELEN',
         width: 220, height: 52, fontSize: hasResult ? '16px' : '20px',
-        color: hasResult ? 0x2a3a55 : 0x3355aa,
+        color: playColor,
         hoverColor: hasResult ? 0x334466 : 0x4466cc,
         onClick: () => {
           this.cameras.main.fadeOut(300, 26, 26, 46);
@@ -159,10 +176,10 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Secondary buttons row
+    // Secondary buttons — three in a row
     new Button(this, {
-      x: cx - 100, y: 390, text: 'Uebung',
-      width: 130, height: 36, fontSize: '13px',
+      x: cx - 130, y: 390, text: 'Uebung',
+      width: 115, height: 36, fontSize: '13px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -174,8 +191,16 @@ export class MenuScene extends Phaser.Scene {
     });
 
     new Button(this, {
-      x: cx + 100, y: 390, text: 'Statistik',
-      width: 130, height: 36, fontSize: '13px',
+      x: cx, y: 390, text: 'Anleitung',
+      width: 115, height: 36, fontSize: '13px',
+      color: 0x2a3a44, hoverColor: 0x334455,
+      textColor: '#88aacc',
+      onClick: () => this.scene.start('HowToScene'),
+    });
+
+    new Button(this, {
+      x: cx + 130, y: 390, text: 'Statistik',
+      width: 115, height: 36, fontSize: '13px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -186,22 +211,13 @@ export class MenuScene extends Phaser.Scene {
       },
     });
 
-    // How-To button
-    new Button(this, {
-      x: cx - 80, y: 435, text: 'Anleitung',
-      width: 120, height: 32, fontSize: '12px',
-      color: 0x222233, hoverColor: 0x2a2a44,
-      textColor: '#777799',
-      onClick: () => this.scene.start('HowToScene'),
-    });
-
     // Yesterday's replay button (only if yesterday's puzzle has replay data)
     const yesterdayNum = puzzleNum - 1;
     const yesterdayResult = yesterdayNum > 0 ? StorageManager.getPuzzleResult(yesterdayNum) : null;
     if (yesterdayResult?.replay && yesterdayResult.replay.length > 0) {
       new Button(this, {
-        x: cx + 80, y: 435, text: 'Gestern',
-        width: 120, height: 32, fontSize: '12px',
+        x: cx, y: 435, text: 'Gestern ansehen',
+        width: 150, height: 30, fontSize: '11px',
         color: 0x222233, hoverColor: 0x2a2a44,
         textColor: '#777799',
         onClick: () => {
