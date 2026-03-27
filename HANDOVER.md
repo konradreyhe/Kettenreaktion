@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 was a massive feature + polish + creative pass. 29 commits pushed (total 59 in repo). Transformed the game from amateur to professional with Orbitron font, Style system, upgraded textures, and 8 creative brainstorm features: Sonic Chain audio, Gravity Flip Friday, Kettenmeister titles, Photon Trail Art, Progressive Zoom Camera, Phantom Replay Overlay, Energy Seismograph, and Daily Hint system. Plus colorblind mode, challenge URLs, WhatsApp share, legal compliance, og:image, and much more. All 27 tests pass, typecheck clean, build clean.
+Session 3 was a massive feature + polish + creative pass. 32 commits pushed (total 62 in repo). Transformed the game from amateur to professional with Orbitron font, Style system, upgraded textures, and 10 creative features: Sonic Chain audio, Gravity Flip Friday, Kettenmeister titles, Photon Trail Art, Progressive Zoom Camera, Phantom Replay Overlay, Energy Seismograph, Daily Hint, Joker streak insurance, WhatsApp share. Plus colorblind mode, challenge URLs, legal compliance, og:image, and much more. All 27 tests pass, typecheck clean, build clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -56,6 +56,9 @@ Session 3 was a massive feature + polish + creative pass. 29 commits pushed (tot
 - [x] WhatsApp share deep-link button (DACH market)
 - [x] Daily Hint (H key): directional arrow toward first target
 - [x] Energy Seismograph: real-time kinetic energy line graph during simulation
+- [x] Joker streak insurance: earn 1 per 7-day streak, max 3, auto-saves streaks
+- [x] Player title shown on menu (trophy + rank name)
+- [x] WhatsApp share deep-link button
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -88,7 +91,7 @@ Session 3 was a massive feature + polish + creative pass. 29 commits pushed (tot
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `1f040dd` (HEAD) — everything works, 27 tests pass, build clean
+- Last known good state: commit `5c70ac6` (HEAD) — everything works, 27 tests pass, build clean
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
