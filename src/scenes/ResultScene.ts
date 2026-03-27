@@ -239,6 +239,29 @@ export class ResultScene extends Phaser.Scene {
       },
     });
 
+    // WhatsApp share button (DACH market)
+    if (typeof navigator.share !== 'function') {
+      new Button(this, {
+        x: cx, y: 455, text: 'WhatsApp teilen',
+        width: 180, height: 34, fontSize: '12px',
+        color: 0x25d366, hoverColor: 0x2ee67a, textColor: '#ffffff',
+        onClick: () => {
+          const text = ShareManager.generateEmojiResult({
+            puzzleNumber: puzzleNum,
+            score: data.score.total,
+            attempts: data.attempts,
+            chainLength: data.chainLength,
+            streak,
+            solved: data.solved,
+            targetsHit: data.targetsHit,
+            totalTargets: data.totalTargets,
+            title: StorageManager.getTitle(),
+          });
+          ShareManager.shareWhatsApp(text);
+        },
+      });
+    }
+
     if (isPractice) {
       // Practice mode: Replay + Next Level + Back
       new Button(this, {

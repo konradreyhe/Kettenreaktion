@@ -102,12 +102,24 @@ export class ShareManager {
 
   static async share(text: string): Promise<void> {
     if (typeof navigator.share === 'function') {
-      await navigator.share({
-        text,
-        url: 'https://konradreyhe.github.io/Kettenreaktion/',
-      });
-    } else if (navigator.clipboard) {
+      try {
+        await navigator.share({
+          text,
+          url: 'https://konradreyhe.github.io/Kettenreaktion/',
+        });
+        return;
+      } catch {
+        // Share cancelled or failed — fall through to clipboard
+      }
+    }
+    if (navigator.clipboard) {
       await navigator.clipboard.writeText(text);
     }
+  }
+
+  /** Share directly via WhatsApp (DACH market primary messenger). */
+  static shareWhatsApp(text: string): void {
+    const encoded = encodeURIComponent(text);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
   }
 }

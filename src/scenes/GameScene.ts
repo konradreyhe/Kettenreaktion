@@ -44,6 +44,7 @@ export class GameScene extends Phaser.Scene {
   private attempts = 0;
   private isSimulating = false;
   private introActive = false;
+  private hintUsed = false;
   private isPractice = false;
   private practiceIndex = 0;
   private simulationStartTime = 0;
@@ -670,6 +671,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupInput(): void {
+    // Keyboard: H shows daily hint (direction arrow, once per puzzle)
+    this.input.keyboard?.on('keydown-H', () => {
+      if (this.hintUsed || this.isSimulating || this.introActive) return;
+      this.hintUsed = true;
+      this.showDirectionHint();
+    });
+
     // Keyboard: ESC returns to menu
     this.input.keyboard?.on('keydown-ESC', () => {
       const returnScene = this.isPractice ? 'PracticeScene' : 'MenuScene';
@@ -1252,6 +1260,61 @@ export class GameScene extends Phaser.Scene {
       bg.setFillStyle(isSelected ? 0x446644 : 0x333344, 0.8);
       icon.setAlpha(isSelected ? 1 : 0.5);
     }
+  }
+
+  /** Show a directional hint arrow from zone center toward the nearest target. */
+  private showDirectionHint(): void {
+    const zone = this.level.placementZone;
+    const fromX = zone.x + zone.width / 2;
+    const fromY = zone.y + zone.height / 2;
+
+    // Point toward the first target (or nearest dynamic object)
+    let toX = fromX;
+    let toY = fromY + 50; // default: down (gravity)
+    if (this.level.targets.length > 0) {
+      toX = this.level.targets[0].x;
+      toY = this.level.targets[0].y;
+    }
+
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    const arrowLen = 40;
+    const endX = fromX + Math.cos(angle) * arrowLen;
+    const endY = fromY + Math.sin(angle) * arrowLen;
+
+    const gfx = this.add.graphics().setDepth(25);
+    gfx.lineStyle(3, 0xffaa44, 0.6);
+    gfx.beginPath();
+    gfx.moveTo(fromX, fromY);
+    gfx.lineTo(endX, endY);
+    gfx.strokePath();
+
+    // Arrowhead
+    const headLen = 8;
+    const a1 = angle + Math.PI * 0.8;
+    const a2 = angle - Math.PI * 0.8;
+    gfx.moveTo(endX, endY);
+    gfx.lineTo(endX + Math.cos(a1) * headLen, endY + Math.sin(a1) * headLen);
+    gfx.moveTo(endX, endY);
+    gfx.lineTo(endX + Math.cos(a2) * headLen, endY + Math.sin(a2) * headLen);
+    gfx.strokePath();
+
+    // "Hinweis" label
+    const hintLabel = this.add
+      .text(fromX, fromY - 20, 'Hinweis (H)', {
+        fontFamily: FONT_UI,
+        fontSize: '9px', color: '#ffaa44',
+      })
+      .setOrigin(0.5).setDepth(25).setAlpha(0.6);
+
+    // Fade out after 3 seconds
+    this.time.delayedCall(3000, () => {
+      this.tweens.add({
+        targets: [gfx, hintLabel],
+        alpha: 0,
+        duration: 500,
+        onComplete: () => { gfx.destroy(); hintLabel.destroy(); },
+      });
+    });
   }
 
   private isInZone(x: number, y: number): boolean {
