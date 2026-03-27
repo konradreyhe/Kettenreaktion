@@ -512,6 +512,25 @@ export class GameScene extends Phaser.Scene {
         delay: 200,
       });
 
+      // Sparkle shimmer orbiting the star
+      const sparkle = this.add
+        .circle(target.x + 10, target.y - 10, 2, 0xffffff, 0.7)
+        .setDepth(16);
+      const sparkleRadius = 14;
+      this.tweens.addCounter({
+        from: 0, to: 360,
+        duration: 2000,
+        repeat: -1,
+        onUpdate: (tween) => {
+          const angle = Phaser.Math.DegToRad(tween.getValue() ?? 0);
+          sparkle.setPosition(
+            target.x + Math.cos(angle) * sparkleRadius,
+            target.y + Math.sin(angle) * sparkleRadius
+          );
+          sparkle.setAlpha(0.3 + Math.sin(angle * 3) * 0.4);
+        },
+      });
+
       const body = this.matter.add.circle(target.x, target.y, 12, {
         isSensor: true,
         isStatic: true,

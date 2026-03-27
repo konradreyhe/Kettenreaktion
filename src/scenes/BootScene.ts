@@ -219,43 +219,50 @@ export class BootScene extends Phaser.Scene {
     gfx.destroy();
   }
 
-  /** Weight — dark metallic circle with cross and sheen. */
+  /** Weight — heavy dark metallic sphere with industrial feel. */
   private genWeight(): void {
     const s = 34;
     const r = s / 2;
     const gfx = this.make.graphics({ x: 0, y: 0 });
 
-    // Shadow
-    gfx.fillStyle(0x000000, 0.3);
-    gfx.fillCircle(r + 1, r + 1, r - 1);
+    // Drop shadow
+    gfx.fillStyle(0x000000, 0.35);
+    gfx.fillCircle(r + 1, r + 2, r - 1);
 
-    // Main body — dark steel
-    gfx.fillStyle(0x556677);
+    // Base — dark iron
+    gfx.fillStyle(0x3a4555);
     gfx.fillCircle(r, r, r - 1);
 
-    // Metallic ring
-    gfx.lineStyle(2.5, 0x445566, 0.8);
-    gfx.strokeCircle(r, r, r * 0.7);
+    // Mid layer
+    gfx.fillStyle(0x4a5566, 0.8);
+    gfx.fillCircle(r - 1, r - 1, r - 3);
 
-    // Cross mark
-    gfx.lineStyle(2, 0x334455, 0.5);
+    // Metallic ring — industrial groove
+    gfx.lineStyle(2, 0x3a4555, 0.9);
+    gfx.strokeCircle(r, r, r * 0.68);
+
+    // Inner ring
+    gfx.lineStyle(1, 0x556677, 0.6);
+    gfx.strokeCircle(r, r, r * 0.45);
+
+    // Cross mark — weight indicator
+    gfx.lineStyle(2, 0x2a3544, 0.6);
     gfx.moveTo(r - 5, r);
     gfx.lineTo(r + 5, r);
     gfx.moveTo(r, r - 5);
     gfx.lineTo(r, r + 5);
     gfx.strokePath();
 
-    // Highlight — metallic sheen
-    gfx.fillStyle(0xffffff, 0.2);
+    // Metallic highlight
+    gfx.fillStyle(0xaabbcc, 0.2);
     gfx.fillCircle(r - 4, r - 5, 4);
 
-    // "KG" text implication (small dot pattern)
-    gfx.fillStyle(0x778899, 0.6);
-    gfx.fillCircle(r - 3, r + 5, 1.5);
-    gfx.fillCircle(r + 3, r + 5, 1.5);
+    // Small specular
+    gfx.fillStyle(0xffffff, 0.15);
+    gfx.fillCircle(r - 5, r - 6, 2);
 
     // Dark outline
-    gfx.lineStyle(2, 0x2a3a4a, 0.8);
+    gfx.lineStyle(1.5, 0x1a2a3a, 0.8);
     gfx.strokeCircle(r, r, r - 1);
 
     gfx.generateTexture('weight', s, s);
