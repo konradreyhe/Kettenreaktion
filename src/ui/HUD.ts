@@ -74,4 +74,8 @@ export class HUD {
   updatePuzzleNumber(num: number): void {
     this.puzzleText.setText(`Puzzle #${num}`);
   }
+
+  updateLabel(label: string): void {
+    this.puzzleText.setText(label);
+  }
 }

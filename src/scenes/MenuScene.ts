@@ -54,7 +54,7 @@ export class MenuScene extends Phaser.Scene {
     const streak = StorageManager.getStreak();
     if (streak > 0) {
       const streakText = this.add
-        .text(cx, 250, `Streak: ${streak} Tage`, {
+        .text(cx, 250, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
           fontSize: '16px', color: '#ffaa44',
         })
         .setOrigin(0.5).setDepth(10);
@@ -186,6 +186,18 @@ export class MenuScene extends Phaser.Scene {
         .setOrigin(0.5).setDepth(10);
     }
 
+    // Impressum link (German legal requirement)
+    const impressumLink = this.add
+      .text(GAME_WIDTH - 16, GAME_HEIGHT - 10, 'Impressum', {
+        fontSize: '9px', color: '#333355',
+      })
+      .setOrigin(1, 1).setDepth(10)
+      .setInteractive({ useHandCursor: true });
+
+    impressumLink.on('pointerover', () => impressumLink.setColor('#5555aa'));
+    impressumLink.on('pointerout', () => impressumLink.setColor('#333355'));
+    impressumLink.on('pointerdown', () => this.showImpressum());
+
     // Countdown
     const countdownText = this.add
       .text(cx, GAME_HEIGHT - 30, '', {
@@ -199,6 +211,55 @@ export class MenuScene extends Phaser.Scene {
         const ms = DailySystem.getTimeUntilReset();
         countdownText.setText(`Naechstes Puzzle: ${DailySystem.formatCountdown(ms)}`);
       },
+    });
+  }
+
+  private showImpressum(): void {
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2;
+
+    const overlay = this.add
+      .rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x0a0a1a, 0.92)
+      .setDepth(200)
+      .setInteractive();
+
+    const title = this.add
+      .text(cx, cy - 80, 'Impressum', {
+        fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
+      })
+      .setOrigin(0.5).setDepth(201);
+
+    const body = this.add
+      .text(cx, cy, [
+        'Angaben gemaess § 5 TMG',
+        '',
+        'Konrad Reyhe',
+        'E-Mail: konrad@reyhe.de',
+        '',
+        'Haftungsausschluss:',
+        'Dieses Spiel ist ein kostenloses Hobbyprojekt.',
+        'Es werden keine personenbezogenen Daten erhoben.',
+        'Alle Spielstaende werden lokal im Browser gespeichert.',
+      ].join('\n'), {
+        fontSize: '11px', color: '#8888aa', align: 'center',
+        lineSpacing: 4,
+      })
+      .setOrigin(0.5).setDepth(201);
+
+    const closeBtn = this.add
+      .text(cx, cy + 100, 'Schliessen', {
+        fontSize: '14px', color: '#6688cc',
+      })
+      .setOrigin(0.5).setDepth(201)
+      .setInteractive({ useHandCursor: true });
+
+    closeBtn.on('pointerover', () => closeBtn.setColor('#88aaee'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#6688cc'));
+    closeBtn.on('pointerdown', () => {
+      overlay.destroy();
+      title.destroy();
+      body.destroy();
+      closeBtn.destroy();
     });
   }
 

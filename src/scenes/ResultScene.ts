@@ -86,10 +86,11 @@ export class ResultScene extends Phaser.Scene {
     }
 
     // Score breakdown — animate in sequentially
+    const savedAttempts = data.score.efficiencyBonus / 200;
     const breakdownItems = [
       { label: 'Sterne', value: `${data.targetsHit}/${data.totalTargets}`, score: data.score.baseScore },
       { label: 'Kette', value: `${data.chainLength}`, score: data.score.chainBonus },
-      { label: 'Effizienz', value: `${data.attempts}/3`, score: data.score.efficiencyBonus },
+      { label: 'Effizienz', value: savedAttempts > 0 ? `${savedAttempts} gespart` : `${data.attempts}/3`, score: data.score.efficiencyBonus },
       { label: 'Zeit', value: '', score: data.score.timeBonus },
     ];
 
@@ -152,7 +153,7 @@ export class ResultScene extends Phaser.Scene {
     // Streak
     if (streak > 0) {
       this.add
-        .text(cx, 370, `Streak: ${streak} Tage`, {
+        .text(cx, 370, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
           fontSize: '16px',
           color: '#ffaa44',
         })

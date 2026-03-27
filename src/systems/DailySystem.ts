@@ -38,7 +38,7 @@ export class DailySystem {
     }
   }
 
-  /** Returns the puzzle number (days since launch + 1). */
+  /** Returns the puzzle number (days since launch + 1). Always positive. */
   static getPuzzleNumber(): number {
     const now = new Date();
     const today = Date.UTC(
@@ -46,7 +46,8 @@ export class DailySystem {
       now.getUTCMonth(),
       now.getUTCDate()
     );
-    return Math.floor((today - LAUNCH_DATE) / 86400000) + 1;
+    const daysSinceLaunch = Math.floor((today - LAUNCH_DATE) / 86400000) + 1;
+    return Math.abs(daysSinceLaunch);
   }
 
   /** Returns milliseconds until next UTC midnight. */

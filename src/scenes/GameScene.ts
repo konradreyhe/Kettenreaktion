@@ -123,7 +123,11 @@ export class GameScene extends Phaser.Scene {
       .setDepth(60);
 
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
-    this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
+    if (this.isPractice) {
+      this.hud.updateLabel(`Uebung: ${this.level.name}`);
+    } else {
+      this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
+    }
 
     // Pause physics when tab is hidden to prevent time accumulation
     this.visibilityHandler = () => {
@@ -259,15 +263,24 @@ export class GameScene extends Phaser.Scene {
     const chain = this.chainDetector.getChainLength();
     this.hud.updateChain(chain);
 
-    // Big center chain counter during simulation
+    // Big center chain counter — escalates with chain length
     if (chain >= 3 && this.chainDisplay) {
       this.chainDisplay.setText(`${chain}`);
+      const intensity = Math.min(1, chain / 12);
+      const targetAlpha = 0.1 + intensity * 0.2;
+      const targetScale = 1 + intensity * 0.6;
       if (this.chainDisplay.alpha === 0) {
+        this.chainDisplay.setScale(1);
         this.tweens.add({
           targets: this.chainDisplay,
-          alpha: 0.15,
+          alpha: targetAlpha,
+          scaleX: targetScale,
+          scaleY: targetScale,
           duration: 200,
         });
+      } else {
+        this.chainDisplay.setAlpha(targetAlpha);
+        this.chainDisplay.setScale(targetScale);
       }
     }
 
@@ -602,9 +615,10 @@ export class GameScene extends Phaser.Scene {
             this.sparkEmitter?.emitParticleAt(cx, cy);
           }
 
-          // Screen shake proportional to impact
+          // Screen shake proportional to impact + chain length
           if (impactSpeed > 3) {
-            this.cameraFX.addTrauma(Math.min(0.3, impactSpeed * 0.04));
+            const chainBoost = 1 + newChain * 0.08;
+            this.cameraFX.addTrauma(Math.min(0.4, impactSpeed * 0.04 * chainBoost));
           }
 
           // Squash & stretch on both bodies' sprites

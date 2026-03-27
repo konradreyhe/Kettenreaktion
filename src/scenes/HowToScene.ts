@@ -33,7 +33,7 @@ export class HowToScene extends Phaser.Scene {
     ];
 
     steps.forEach((step, i) => {
-      const y = 95 + i * 52;
+      const y = 90 + i * 46;
 
       // Step number circle
       this.add
@@ -59,10 +59,10 @@ export class HowToScene extends Phaser.Scene {
 
     // Scoring section
     this.add
-      .rectangle(cx, 420, 500, 1, 0x333366, 0.5);
+      .rectangle(cx, 380, 500, 1, 0x333366, 0.5);
 
     this.add
-      .text(cx, 445, 'Punkte-System', {
+      .text(cx, 400, 'Punkte-System', {
         fontSize: '16px',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -77,7 +77,7 @@ export class HowToScene extends Phaser.Scene {
     ];
 
     scoring.forEach((row, i) => {
-      const y = 478 + i * 22;
+      const y = 428 + i * 22;
       this.add
         .text(cx - 150, y, row[0], { fontSize: '12px', color: '#9999bb' })
         .setOrigin(0, 0.5);
@@ -88,18 +88,15 @@ export class HowToScene extends Phaser.Scene {
 
     // Keyboard shortcuts
     this.add
-      .rectangle(cx, GAME_HEIGHT - 100, 500, 1, 0x333366, 0.5);
-
-    this.add
-      .text(cx - 150, GAME_HEIGHT - 80, 'ESC: Zurueck  |  Pfeiltasten: Level wechseln (Uebung)', {
+      .text(cx, 520, 'ESC: Zurueck  |  Pfeiltasten: Level wechseln (Uebung)', {
         fontSize: '10px', color: '#555577',
       })
-      .setOrigin(0, 0.5);
+      .setOrigin(0.5);
 
     // Back button
     new Button(this, {
       x: cx,
-      y: GAME_HEIGHT - 40,
+      y: 560,
       text: 'Zurueck',
       width: 160,
       height: 38,
