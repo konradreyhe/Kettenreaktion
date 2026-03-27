@@ -1070,6 +1070,30 @@ export class GameScene extends Phaser.Scene {
         this.cameraFX.addTrauma(0.5);
       }
 
+      // Quick score flash before transition
+      if (!isPerfect) {
+        const scoreFlash = this.add
+          .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `${this.bestScore!.total.toLocaleString('de-DE')}`, {
+            fontFamily: FONT_TITLE,
+            fontSize: '36px',
+            color: this.totalTargetsHitBest > 0 ? COLOR.accent : COLOR.textMuted,
+            fontStyle: 'bold',
+            stroke: '#111122', strokeThickness: 4,
+            shadow: TEXT_SHADOW,
+          })
+          .setOrigin(0.5).setDepth(200).setScale(0);
+
+        this.tweens.add({
+          targets: scoreFlash,
+          scaleX: 1, scaleY: 1,
+          duration: 300, ease: 'Back.easeOut',
+        });
+        this.tweens.add({
+          targets: scoreFlash,
+          alpha: 0, delay: 400, duration: 200,
+        });
+      }
+
       this.time.delayedCall(isPerfect ? 1000 : 600, () => {
         this.cameras.main.fadeOut(500, 26, 26, 46);
         this.cameras.main.once('camerafadeoutcomplete', () => {
