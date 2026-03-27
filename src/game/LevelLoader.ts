@@ -3,8 +3,9 @@ import { DailySystem } from '../systems/DailySystem';
 import { LEVEL_TEMPLATES as BATCH_1 } from './LevelTemplates';
 import { LEVEL_TEMPLATES_2 as BATCH_2 } from './LevelTemplates2';
 import { LEVEL_TEMPLATES_3 as BATCH_3 } from './LevelTemplates3';
+import { LEVEL_TEMPLATES_4 as BATCH_4 } from './LevelTemplates4';
 
-const LEVEL_TEMPLATES = [...BATCH_1, ...BATCH_2, ...BATCH_3];
+const LEVEL_TEMPLATES = [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4];
 
 /** Loads and prepares levels with seed-based variations. */
 export class LevelLoader {
