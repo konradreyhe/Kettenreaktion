@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 3 was a massive feature + polish pass driven by visual playtesting via Playwright MCP and quick-win features from research docs. 12 commits pushed (total 42 in repo). Fixed 8 bugs, added colorblind mode, challenge URLs, hit stop, ghost placement, Impressum + Datenschutz (legal), og:image, score counter animation, background atmosphere, placement pop, "Neuer Rekord!" badge, streak grace period, HUD target count, keyboard shortcuts, and level repeat prevention. All 27 tests pass, typecheck clean.
+Session 3 was a massive feature + polish pass. 15 commits pushed (total 45 in repo). Key highlights: professional visual overhaul with Orbitron font + Style system, colorblind mode, challenge URLs, chain reaction juice (hit stop, atmosphere shift, placement pop), legal compliance (Impressum + Datenschutz), og:image, score counter animation, streak grace period, ghost placement, and level repeat prevention. All 27 tests pass, typecheck clean.
 
 ## Completed
 - [x] Visual playtest of all screens: Menu, Game, Result, HowTo, Practice, Stats (desktop + mobile)
@@ -30,6 +30,10 @@ Session 3 was a massive feature + polish pass driven by visual playtesting via P
 - [x] Keyboard 1/2 keys to switch object type
 - [x] Streak 1-day grace period (missing one day doesn't break streak)
 - [x] HUD shows total target count (Sterne: 0/3)
+- [x] Professional visual overhaul: Orbitron Google Font across all scenes
+- [x] Centralized Style.ts with brand colors, font constants, text effects
+- [x] Text stroke + shadow on all important text (titles, scores, chain counter)
+- [x] Updated og-image.jpg with new font/style
 
 ## In Progress
 - [ ] GIF/MP4 replay export — research says #1 viral feature, not started
@@ -62,7 +66,7 @@ Session 3 was a massive feature + polish pass driven by visual playtesting via P
 7. **More levels** — generate templates 091+ for additional months
 
 ## Rollback Info
-- Last known good state: commit `2f23c24` (HEAD) — everything works, 27 tests pass
+- Last known good state: commit `810883b` (HEAD) — everything works, 27 tests pass
 - Session 2 last good state: `f4e1b91` (handover commit)
 - Session 1 last good state: `01eeee4`
 - All 6 session commits are incremental — can safely `git revert` any single commit
