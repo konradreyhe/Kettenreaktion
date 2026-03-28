@@ -249,11 +249,19 @@ export class ResultScene extends Phaser.Scene {
           width: 220, height: 38, fontSize: '13px',
           color: 0x2a3355, hoverColor: 0x3a4466, textColor: '#8899cc',
           onClick: async () => {
-            gifBtn.setText('Erstelle GIF...');
-            // Yield to let the UI update before encoding
-            await new Promise((r) => setTimeout(r, 50));
+            // Animated loading dots
+            let dots = 0;
+            const loadingTimer = this.time.addEvent({
+              delay: 300,
+              loop: true,
+              callback: () => {
+                dots = (dots + 1) % 4;
+                gifBtn.setText('Erstelle GIF' + '.'.repeat(dots));
+              },
+            });
+            gifBtn.setText('Erstelle GIF.');
             try {
-              const blob = ReplayExporter.export({
+              const blob = await ReplayExporter.export({
                 replayFrames: data.replay!,
                 level,
                 placement: data.placement!,
@@ -261,10 +269,12 @@ export class ResultScene extends Phaser.Scene {
                 score: data.score.total,
                 solved: data.solved,
               });
+              loadingTimer.destroy();
               const result = await ReplayExporter.share(blob, puzzleNum);
               gifBtn.setText(result === 'shared' ? 'Geteilt!' : 'Gespeichert!');
               this.time.delayedCall(2000, () => gifBtn.setText('GIF speichern'));
             } catch {
+              loadingTimer.destroy();
               gifBtn.setText('Fehler');
               this.time.delayedCall(2000, () => gifBtn.setText('GIF speichern'));
             }

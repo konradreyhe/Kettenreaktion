@@ -52,14 +52,61 @@ interface ExportOptions {
 
 /**
  * Exports a replay as an animated GIF.
- * Renders to an offscreen canvas (no Phaser dependency) and encodes via gifenc.
+ * Uses a Web Worker with OffscreenCanvas when available, falls back to synchronous main-thread encoding.
  */
 export class ReplayExporter {
   /**
    * Generate an animated GIF blob from replay data.
-   * Runs synchronously on the main thread — typical encode takes 200-500ms.
+   * Prefers Web Worker (non-blocking) with sync fallback.
    */
-  static export(options: ExportOptions): Blob {
+  static async export(options: ExportOptions): Promise<Blob> {
+    if (typeof OffscreenCanvas !== 'undefined' && typeof Worker !== 'undefined') {
+      return this.exportWorker(options);
+    }
+    return this.exportSync(options);
+  }
+
+  /** Non-blocking export via Web Worker + OffscreenCanvas. */
+  private static exportWorker(options: ExportOptions): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(
+        new URL('./ReplayExporter.worker.ts', import.meta.url),
+        { type: 'module' },
+      );
+
+      worker.onmessage = (e: MessageEvent<ArrayBuffer>) => {
+        worker.terminate();
+        resolve(new Blob([e.data], { type: 'image/gif' }));
+      };
+
+      worker.onerror = (err) => {
+        worker.terminate();
+        // Fallback to sync on worker failure
+        try {
+          resolve(this.exportSync(options));
+        } catch (syncErr) {
+          reject(syncErr);
+        }
+      };
+
+      const { replayFrames, level, placement, puzzleNumber, score, solved } = options;
+      worker.postMessage({
+        replayFrames,
+        level: {
+          staticObjects: level.staticObjects,
+          targets: level.targets,
+        },
+        placement,
+        puzzleNumber,
+        score,
+        solved,
+        gameWidth: GAME_WIDTH,
+      });
+    });
+  }
+
+  /** Synchronous fallback — blocks UI for 200-500ms. */
+  private static exportSync(options: ExportOptions): Blob {
     const { replayFrames, level, placement, puzzleNumber, score, solved } = options;
 
     const canvas = document.createElement('canvas');
@@ -69,7 +116,6 @@ export class ReplayExporter {
 
     const gif = GIFEncoder();
 
-    // Determine body type for the player's placed object
     const playerType = placement.type === 'weight' ? 'weight' : 'ball';
 
     // Pre-render static background once
@@ -84,10 +130,8 @@ export class ReplayExporter {
     for (let i = 0; i < totalFrames; i += FRAME_SKIP) {
       const frame = replayFrames[i];
 
-      // Draw cached background
       ctx.drawImage(bgCanvas, 0, 0);
 
-      // Draw dynamic bodies
       for (let j = 0; j < frame.length; j++) {
         const [x, y, angle] = frame[j];
         const isPlayer = j === frame.length - 1;
@@ -95,10 +139,8 @@ export class ReplayExporter {
         this.drawBody(ctx, x * SCALE, y * SCALE, angle, bodyType, isPlayer);
       }
 
-      // Branding overlay (bottom bar)
       this.drawBranding(ctx, puzzleNumber, score, solved);
 
-      // Quantize and write frame
       const imageData = ctx.getImageData(0, 0, GIF_WIDTH, GIF_HEIGHT);
       const palette = quantize(imageData.data, 128);
       const index = applyPalette(imageData.data, palette);
@@ -108,7 +150,7 @@ export class ReplayExporter {
       });
     }
 
-    // Hold last frame longer so viewers can see the final state
+    // Hold last frame longer
     if (totalFrames > 0) {
       const lastFrame = replayFrames[totalFrames - 1];
       ctx.drawImage(bgCanvas, 0, 0);
@@ -125,7 +167,7 @@ export class ReplayExporter {
       const index = applyPalette(imageData.data, palette);
       gif.writeFrame(index, GIF_WIDTH, GIF_HEIGHT, {
         palette,
-        delay: 200, // 2 seconds hold on last frame
+        delay: 200,
       });
     }
 
@@ -141,11 +183,10 @@ export class ReplayExporter {
     placement: { type: string; x: number; y: number },
     puzzleNumber: number,
   ): void {
-    // Background
     ctx.fillStyle = COLORS.bg;
     ctx.fillRect(0, 0, GIF_WIDTH, GIF_HEIGHT);
 
-    // Dot grid (subtle, like GameScene)
+    // Dot grid
     ctx.fillStyle = 'rgba(255,255,255,0.03)';
     for (let gx = 20; gx < GIF_WIDTH; gx += 20) {
       for (let gy = 20; gy < GIF_HEIGHT; gy += 20) {
@@ -159,13 +200,12 @@ export class ReplayExporter {
     ctx.fillStyle = COLORS.floor;
     ctx.fillRect(0, 580 * SCALE, GIF_WIDTH, 20 * SCALE);
 
-    // Static objects (platforms, ramps)
+    // Static objects
     for (const obj of level.staticObjects) {
       const h = obj.height ?? 20;
       if (obj.type === 'platform') {
         ctx.fillStyle = COLORS.platform;
         ctx.fillRect(obj.x * SCALE, obj.y * SCALE, obj.width * SCALE, h * SCALE);
-        // Top edge highlight
         ctx.strokeStyle = 'rgba(136,153,170,0.4)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -173,12 +213,10 @@ export class ReplayExporter {
         ctx.lineTo((obj.x + obj.width) * SCALE, obj.y * SCALE);
         ctx.stroke();
       } else if (obj.type === 'ramp') {
-        ctx.save();
         ctx.fillStyle = COLORS.ramp;
         const rx = obj.x * SCALE;
         const ry = (obj.y - h / 2) * SCALE;
         ctx.fillRect(rx, ry, obj.width * SCALE, h * SCALE);
-        ctx.restore();
       }
     }
 
@@ -186,12 +224,10 @@ export class ReplayExporter {
     for (const target of level.targets) {
       const tx = target.x * SCALE;
       const ty = target.y * SCALE;
-      // Glow
       ctx.fillStyle = COLORS.targetGlow;
       ctx.beginPath();
       ctx.arc(tx, ty, 14 * SCALE, 0, Math.PI * 2);
       ctx.fill();
-      // Star shape
       this.drawStar(ctx, tx, ty, 12 * SCALE, 5 * SCALE);
     }
 
@@ -226,7 +262,6 @@ export class ReplayExporter {
     }
     ctx.closePath();
     ctx.fill();
-    // Outline
     ctx.strokeStyle = '#bb8800';
     ctx.lineWidth = 1;
     ctx.stroke();
@@ -251,7 +286,6 @@ export class ReplayExporter {
     if (size.type === 'circle') {
       const r = w / 2;
       if (bodyType === 'weight') {
-        // Weight — dark metallic sphere
         ctx.fillStyle = COLORS.weight;
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
@@ -259,7 +293,6 @@ export class ReplayExporter {
         ctx.strokeStyle = COLORS.weightRing;
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Cross mark
         ctx.strokeStyle = 'rgba(42,53,68,0.6)';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -269,23 +302,19 @@ export class ReplayExporter {
         ctx.lineTo(0, 3 * SCALE);
         ctx.stroke();
       } else {
-        // Ball — blue sphere with highlight
         ctx.fillStyle = COLORS.ball;
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fill();
-        // Specular highlight
         ctx.fillStyle = COLORS.ballHighlight;
         ctx.beginPath();
         ctx.arc(-r * 0.25, -r * 0.25, r * 0.4, 0, Math.PI * 2);
         ctx.fill();
-        // Bright dot
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.beginPath();
         ctx.arc(-r * 0.35, -r * 0.35, r * 0.15, 0, Math.PI * 2);
         ctx.fill();
       }
-      // Player glow ring
       if (isPlayer) {
         ctx.strokeStyle = 'rgba(136,204,255,0.6)';
         ctx.lineWidth = 2;
@@ -294,18 +323,15 @@ export class ReplayExporter {
         ctx.stroke();
       }
     } else {
-      // Rectangle body (domino, crate)
       if (bodyType === 'crate') {
         ctx.fillStyle = '#ccaa55';
       } else {
         ctx.fillStyle = COLORS.domino;
       }
       ctx.fillRect(-w / 2, -h / 2, w, h);
-      // Outline
       ctx.strokeStyle = COLORS.dominoDark;
       ctx.lineWidth = 1;
       ctx.strokeRect(-w / 2, -h / 2, w, h);
-      // Player highlight
       if (isPlayer) {
         ctx.strokeStyle = 'rgba(136,204,255,0.6)';
         ctx.lineWidth = 2;
@@ -323,7 +349,6 @@ export class ReplayExporter {
     score: number,
     solved: boolean,
   ): void {
-    // Semi-transparent bar
     ctx.fillStyle = 'rgba(13,13,26,0.7)';
     ctx.fillRect(0, GIF_HEIGHT - 22, GIF_WIDTH, 22);
 
