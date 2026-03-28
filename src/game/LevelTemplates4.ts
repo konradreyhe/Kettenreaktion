@@ -58,7 +58,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     targets: [{ id: 't1', type: 'star', x: 250, y: 555, points: 100 }],
   },
-  { id: 't096', name: 'Erste Schritte', difficulty: 1, theme: 'wood',
+  { id: 't096', name: 'Anfaenger', difficulty: 1, theme: 'wood',
     world: { width: 800, height: 600 },
     placementZone: { x: 50, y: 150, width: 200, height: 250, allowedObjects: ['ball', 'weight'] },
     staticObjects: [{ type: 'platform', x: 0, y: 580, width: 800, height: 20 }],
@@ -71,7 +71,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
   },
 
   // ===== Difficulty 2 (Medium) =====
-  { id: 't097', name: 'Kettenglied', difficulty: 2, theme: 'stone',
+  { id: 't097', name: 'Kettenstueck', difficulty: 2, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 30, y: 50, width: 120, height: 100, allowedObjects: ['ball'] },
     staticObjects: [
@@ -104,7 +104,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
       { id: 't1', type: 'star', x: 650, y: 555, points: 100 },
     ],
   },
-  { id: 't099', name: 'Dominoeffekt', difficulty: 2, theme: 'wood',
+  { id: 't099', name: 'Dominoreihe', difficulty: 2, theme: 'wood',
     world: { width: 800, height: 600 },
     placementZone: { x: 30, y: 350, width: 100, height: 150, allowedObjects: ['ball'] },
     staticObjects: [{ type: 'platform', x: 0, y: 580, width: 800, height: 20 }],
@@ -137,7 +137,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     targets: [{ id: 't1', type: 'star', x: 680, y: 555, points: 100 }],
     seed_variations: { ramp_angle_offset: { min: -3, max: 3 } },
   },
-  { id: 't101', name: 'Slalom', difficulty: 2, theme: 'wood',
+  { id: 't101', name: 'Slalomkurs', difficulty: 2, theme: 'wood',
     world: { width: 800, height: 600 },
     placementZone: { x: 30, y: 30, width: 100, height: 80, allowedObjects: ['ball'] },
     staticObjects: [
@@ -150,7 +150,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     targets: [{ id: 't1', type: 'star', x: 500, y: 555, points: 100 }],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
   },
-  { id: 't102', name: 'Aufprall', difficulty: 2, theme: 'stone',
+  { id: 't102', name: 'Zusammenstoss', difficulty: 2, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 550, y: 50, width: 120, height: 100, allowedObjects: ['ball', 'weight'] },
     staticObjects: [
@@ -224,7 +224,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -3, max: 3 } },
   },
-  { id: 't106', name: 'Labyrinth', difficulty: 3, theme: 'stone',
+  { id: 't106', name: 'Labyrinthgang', difficulty: 3, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 30, y: 30, width: 80, height: 60, allowedObjects: ['ball'] },
     staticObjects: [
@@ -456,7 +456,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
   },
-  { id: 't116', name: 'Chaos-Theorie', difficulty: 5, theme: 'metal',
+  { id: 't116', name: 'Wirbelwind', difficulty: 5, theme: 'metal',
     world: { width: 800, height: 600 },
     placementZone: { x: 30, y: 30, width: 60, height: 50, allowedObjects: ['weight'] },
     staticObjects: [
@@ -566,7 +566,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -3, max: 3 } },
   },
-  { id: 't120', name: 'Finale', difficulty: 5, theme: 'metal',
+  { id: 't120', name: 'Grosse Finale', difficulty: 5, theme: 'metal',
     world: { width: 800, height: 600 },
     placementZone: { x: 370, y: 30, width: 60, height: 40, allowedObjects: ['ball'] },
     staticObjects: [

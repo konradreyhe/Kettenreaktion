@@ -12,7 +12,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
     ],
     targets: [{ id: 't1', type: 'star', x: 450, y: 555, points: 100 }],
   },
-  { id: 't122', name: 'Rampenfieber', difficulty: 1, theme: 'wood',
+  { id: 't122', name: 'Rampenstart', difficulty: 1, theme: 'wood',
     world: { width: 800, height: 600 },
     placementZone: { x: 600, y: 30, width: 150, height: 120, allowedObjects: ['ball'] },
     staticObjects: [
@@ -70,7 +70,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
   },
 
   // ===== Difficulty 2 (Medium) =====
-  { id: 't127', name: 'Doppelrampe', difficulty: 2, theme: 'stone',
+  { id: 't127', name: 'Gabelung', difficulty: 2, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 350, y: 30, width: 100, height: 80, allowedObjects: ['ball'] },
     staticObjects: [
@@ -191,7 +191,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -3, max: 3 } },
   },
-  { id: 't134', name: 'Kaskadenfall', difficulty: 3, theme: 'metal',
+  { id: 't134', name: 'Stufenfluss', difficulty: 3, theme: 'metal',
     world: { width: 800, height: 600 },
     placementZone: { x: 30, y: 30, width: 80, height: 60, allowedObjects: ['weight'] },
     staticObjects: [
@@ -211,7 +211,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
       { id: 't2', type: 'star', x: 600, y: 555, points: 100 },
     ],
   },
-  { id: 't135', name: 'Spiegelwelt', difficulty: 3, theme: 'stone',
+  { id: 't135', name: 'Spiegelbild', difficulty: 3, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 350, y: 30, width: 100, height: 80, allowedObjects: ['ball'] },
     staticObjects: [
@@ -319,7 +319,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
   },
-  { id: 't140', name: 'Irrweg', difficulty: 4, theme: 'stone',
+  { id: 't140', name: 'Umleitung', difficulty: 4, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 350, y: 30, width: 100, height: 50, allowedObjects: ['ball'] },
     staticObjects: [
@@ -391,7 +391,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
   },
-  { id: 't143', name: 'Kreisverkehr', difficulty: 4, theme: 'stone',
+  { id: 't143', name: 'Rundkurs', difficulty: 4, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 350, y: 30, width: 100, height: 50, allowedObjects: ['ball'] },
     staticObjects: [
@@ -441,7 +441,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
   },
 
   // ===== Difficulty 5 (Expert — Friday/Weekend levels) =====
-  { id: 't145', name: 'Kettenmeister', difficulty: 5, theme: 'metal',
+  { id: 't145', name: 'Kettenprofi', difficulty: 5, theme: 'metal',
     world: { width: 800, height: 600 },
     placementZone: { x: 370, y: 30, width: 60, height: 50, allowedObjects: ['ball'] },
     staticObjects: [
@@ -491,7 +491,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
   },
-  { id: 't147', name: 'Symmetrie', difficulty: 5, theme: 'stone',
+  { id: 't147', name: 'Spiegelsymmetrie', difficulty: 5, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 370, y: 30, width: 60, height: 40, allowedObjects: ['ball'] },
     staticObjects: [
@@ -541,7 +541,7 @@ export const LEVEL_TEMPLATES_5: Level[] = [
     ],
     seed_variations: { ramp_angle_offset: { min: -3, max: 3 } },
   },
-  { id: 't149', name: 'Turmbau', difficulty: 5, theme: 'stone',
+  { id: 't149', name: 'Turmwerk', difficulty: 5, theme: 'stone',
     world: { width: 800, height: 600 },
     placementZone: { x: 370, y: 30, width: 60, height: 40, allowedObjects: ['ball', 'weight'] },
     staticObjects: [
