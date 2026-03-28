@@ -49,9 +49,41 @@
       width: 100vw;
       height: 100vh;
     }
+    #rotate-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #1a1a2e;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      font-family: Orbitron, monospace;
+      color: #8899bb;
+      text-align: center;
+      padding: 24px;
+    }
+    #rotate-overlay .icon {
+      font-size: 48px;
+      animation: rotate-hint 2s ease-in-out infinite;
+    }
+    @keyframes rotate-hint {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-90deg); }
+      75% { transform: rotate(-90deg); }
+    }
+    @media (max-width: 600px) and (orientation: portrait) {
+      #rotate-overlay { display: flex; }
+    }
   </style>
 </head>
 <body>
+  <div id="rotate-overlay">
+    <div class="icon">&#128241;</div>
+    <div style="font-size:18px;font-weight:bold;color:#aabbdd">Bitte drehe dein Geraet</div>
+    <div style="font-size:13px;color:#667799">Kettenreaktion funktioniert am besten im Querformat</div>
+  </div>
   <noscript>
     <div style="color:#aaa;text-align:center;padding:40px;font-family:monospace">
       <h1>Kettenreaktion</h1>
