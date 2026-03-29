@@ -15,6 +15,15 @@ export class AudioManager {
     AudioManager.enabled = on;
   }
 
+  /** Expose AudioContext for MusicEngine. */
+  static getContext(): AudioContext | null {
+    return AudioManager.ctx;
+  }
+
+  static isEnabled(): boolean {
+    return AudioManager.enabled;
+  }
+
   private static getCtx(): AudioContext | null {
     if (!AudioManager.enabled || !AudioManager.ctx) return null;
     if (AudioManager.ctx.state === 'suspended') {
