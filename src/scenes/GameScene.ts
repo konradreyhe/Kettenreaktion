@@ -7,12 +7,14 @@ import { CameraFX } from '../game/CameraFX';
 import { TrailRenderer } from '../game/TrailRenderer';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
+import { MusicEngine } from '../systems/MusicEngine';
 import { HUD } from '../ui/HUD';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
+  BG_COLOR,
   MAX_ATTEMPTS,
   MAX_SIMULATION_MS,
   NEAR_MISS_PX,
@@ -23,13 +25,14 @@ import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface TargetEntry {
   id: string;
-  sprite: Phaser.GameObjects.GameObject;
+  sprite: Phaser.GameObjects.Sprite;
   glow: Phaser.GameObjects.Arc;
   body: MatterJS.BodyType;
   hit: boolean;
   x: number;
   y: number;
   points: number;
+  bloom?: Phaser.FX.Bloom;
 }
 
 /** Core gameplay scene — placement, simulation, scoring. */
@@ -85,6 +88,18 @@ export class GameScene extends Phaser.Scene {
   // Chain counter display (big center number)
   private chainDisplay: Phaser.GameObjects.Text | null = null;
 
+  // Track last milestone to prevent duplicate celebrations
+  private lastChainMilestone = 0;
+  private allTargetsCleared = false;
+
+  // PostFX references
+  private cameraVignette: Phaser.FX.Vignette | null = null;
+  private cameraBokeh: Phaser.FX.Bokeh | null = null;
+  private isWebGL = false;
+
+  // Music
+  private music = new MusicEngine();
+
   constructor() {
     super({ key: 'GameScene' });
   }
@@ -99,12 +114,20 @@ export class GameScene extends Phaser.Scene {
     this.bestScore = null;
     this.bestChainLength = 0;
     this.totalTargetsHitBest = 0;
+    this.isWebGL = this.renderer.type === Phaser.WEBGL;
 
     this.physicsManager = new PhysicsManager(this);
     this.chainDetector = new ChainDetector();
     this.cameraFX = new CameraFX(this);
     this.trailRenderer = new TrailRenderer(this);
     this.hud = new HUD(this);
+
+    // Camera-level PostFX (WebGL only)
+    this.cameraVignette = null;
+    this.cameraBokeh = null;
+    if (this.isWebGL && !AccessibilityManager.prefersReducedMotion()) {
+      this.cameraVignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.9, 0.15);
+    }
 
     // Load level — practice mode uses specific index, daily uses seed
     this.level = this.isPractice
@@ -312,6 +335,7 @@ export class GameScene extends Phaser.Scene {
     const elapsed = Date.now() - this.simulationStartTime;
     const chain = this.chainDetector.getChainLength();
     this.hud.updateChain(chain);
+    this.music.updateChain(chain);
 
     // Big center chain counter — escalates with chain length
     if (chain >= 3 && this.chainDisplay) {
@@ -341,6 +365,12 @@ export class GameScene extends Phaser.Scene {
       const g = Math.floor(26 - t * 8);   // 26 -> 18 (less green)
       const b = Math.floor(46 - t * 10);  // 46 -> 36 (less blue)
       this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(r, g, b));
+
+      // Intensify vignette with chain length
+      if (this.cameraVignette) {
+        this.cameraVignette.strength = 0.15 + t * 0.35; // 0.15 -> 0.50
+        this.cameraVignette.radius = 0.9 - t * 0.2;     // 0.9 -> 0.7
+      }
     }
 
     // Sample kinetic energy for seismograph (skip on mobile — too visually busy)
@@ -498,6 +528,8 @@ export class GameScene extends Phaser.Scene {
     });
     this.targets = [];
     this.targetsHit = 0;
+    this.lastChainMilestone = 0;
+    this.allTargetsCleared = false;
     this.chainDetector.reset();
     this.previewGhost?.destroy();
     this.previewGhost = null;
@@ -512,6 +544,17 @@ export class GameScene extends Phaser.Scene {
     if (this.chainDisplay) {
       this.chainDisplay.setAlpha(0);
       this.chainDisplay.setText('');
+    }
+
+    // Reset camera PostFX and background
+    this.cameras.main.setBackgroundColor(BG_COLOR);
+    if (this.cameraVignette) {
+      this.cameraVignette.strength = 0.15;
+      this.cameraVignette.radius = 0.9;
+    }
+    if (this.cameraBokeh) {
+      this.cameras.main.postFX.remove(this.cameraBokeh);
+      this.cameraBokeh = null;
     }
 
     // Build physics world (floor at top when gravity flipped)
@@ -595,6 +638,22 @@ export class GameScene extends Phaser.Scene {
         .setDisplaySize(26, 26)
         .setDepth(15);
 
+      // Add bloom PostFX for pulsing glow (WebGL only)
+      let bloom: Phaser.FX.Bloom | undefined;
+      if (this.isWebGL) {
+        bloom = sprite.postFX.addBloom(0xffdd00, 0, 0, 1, 1.2, 4);
+        if (!AccessibilityManager.prefersReducedMotion()) {
+          this.tweens.add({
+            targets: bloom,
+            strength: { from: 0.8, to: 1.6 },
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+          });
+        }
+      }
+
       this.tweens.add({
         targets: sprite,
         scaleX: 1.1,
@@ -640,6 +699,7 @@ export class GameScene extends Phaser.Scene {
         x: target.x,
         y: target.y,
         points: target.points,
+        bloom,
       });
     }
 
@@ -733,6 +793,7 @@ export class GameScene extends Phaser.Scene {
 
     // Keyboard: ESC returns to menu
     this.input.keyboard?.on('keydown-ESC', () => {
+      this.music.stop();
       const returnScene = this.isPractice ? 'PracticeScene' : 'MenuScene';
       this.cameras.main.fadeOut(200, 26, 26, 46);
       this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -824,6 +885,14 @@ export class GameScene extends Phaser.Scene {
             });
           }
 
+          // Chain milestone celebrations
+          if (newChain > prevChain && newChain >= 5 && newChain > this.lastChainMilestone) {
+            if (newChain % 5 === 0 || newChain === 5) {
+              this.lastChainMilestone = newChain;
+              this.celebrateChainMilestone(newChain);
+            }
+          }
+
           // Audio
           if (newChain > prevChain) {
             AudioManager.playChainUp(newChain);
@@ -855,6 +924,187 @@ export class GameScene extends Phaser.Scene {
       yoyo: true,
       ease: 'Quad.easeOut',
     });
+  }
+
+  /** Show chain milestone celebration with expanding ring + text. */
+  private celebrateChainMilestone(chain: number): void {
+    if (AccessibilityManager.prefersReducedMotion()) return;
+
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2;
+
+    // Milestone labels in German
+    const labels: Record<number, string> = {
+      5: 'STARK!',
+      10: 'UNGLAUBLICH!',
+      15: 'WAHNSINN!',
+      20: 'LEGENDE!',
+    };
+    const label = labels[chain] ?? `${chain}x KETTE!`;
+
+    // Expanding shockwave rings using scale
+    const ringColor = chain >= 15 ? 0xffdd00 : chain >= 10 ? 0xff6644 : 0x44bbff;
+    const ring = this.add.circle(cx, cy, 150, 0x00000000)
+      .setStrokeStyle(3, ringColor)
+      .setDepth(100).setAlpha(0.8).setScale(0.05);
+
+    this.tweens.add({
+      targets: ring,
+      scaleX: 2, scaleY: 2,
+      alpha: 0,
+      duration: 800,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+
+    // Second ring delayed
+    const ring2 = this.add.circle(cx, cy, 120, 0x00000000)
+      .setStrokeStyle(2, 0xffffff)
+      .setDepth(100).setAlpha(0.5).setScale(0.05);
+
+    this.tweens.add({
+      targets: ring2,
+      scaleX: 2, scaleY: 2,
+      alpha: 0,
+      delay: 100,
+      duration: 700,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring2.destroy(),
+    });
+
+    // Big text
+    const text = this.add.text(cx, cy, label, {
+      fontFamily: FONT_TITLE,
+      fontSize: chain >= 15 ? '32px' : '26px',
+      color: chain >= 15 ? '#ffdd00' : chain >= 10 ? '#ff8844' : '#44ccff',
+      fontStyle: 'bold',
+      stroke: '#111122',
+      strokeThickness: 4,
+      shadow: TEXT_SHADOW,
+    }).setOrigin(0.5).setDepth(101).setScale(0);
+
+    this.tweens.add({
+      targets: text,
+      scaleX: 1, scaleY: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+    });
+    this.tweens.add({
+      targets: text,
+      y: cy - 40,
+      alpha: 0,
+      delay: 600,
+      duration: 500,
+      onComplete: () => text.destroy(),
+    });
+
+    // Extra particles at milestones
+    for (let i = 0; i < 3; i++) {
+      const angle = (Math.PI * 2 * i) / 3;
+      const px = cx + Math.cos(angle) * 60;
+      const py = cy + Math.sin(angle) * 60;
+      this.hitEmitter?.emitParticleAt(px, py);
+    }
+
+    // Stronger screen flash for bigger milestones
+    const flashIntensity = Math.min(255, 150 + chain * 5);
+    this.cameras.main.flash(200, flashIntensity, flashIntensity, 100);
+  }
+
+  /** Mega celebration when all targets are hit. */
+  private celebrateAllTargets(): void {
+    if (this.allTargetsCleared) return;
+    this.allTargetsCleared = true;
+
+    const cx = GAME_WIDTH / 2;
+    const cy = GAME_HEIGHT / 2;
+
+    // Triple expanding rings in gold
+    for (let i = 0; i < 3; i++) {
+      const ring = this.add.circle(cx, cy, 180, 0x00000000)
+        .setStrokeStyle(4 - i, 0xffdd00)
+        .setDepth(100).setAlpha(0.9 - i * 0.2).setScale(0.05);
+
+      this.tweens.add({
+        targets: ring,
+        scaleX: 2.2 + i * 0.3, scaleY: 2.2 + i * 0.3,
+        alpha: 0,
+        delay: i * 150,
+        duration: 1000,
+        ease: 'Quad.easeOut',
+        onComplete: () => ring.destroy(),
+      });
+    }
+
+    // "PERFEKT!" text
+    const text = this.add.text(cx, cy - 20, 'PERFEKT!', {
+      fontFamily: FONT_TITLE,
+      fontSize: '36px',
+      color: '#ffdd00',
+      fontStyle: 'bold',
+      stroke: '#442200',
+      strokeThickness: 5,
+      shadow: TEXT_SHADOW,
+    }).setOrigin(0.5).setDepth(102).setScale(0);
+
+    this.tweens.add({
+      targets: text,
+      scaleX: 1.2, scaleY: 1.2,
+      duration: 400,
+      ease: 'Back.easeOut',
+    });
+    this.tweens.add({
+      targets: text,
+      scaleX: 1, scaleY: 1,
+      delay: 400,
+      duration: 200,
+    });
+    this.tweens.add({
+      targets: text,
+      y: cy - 60,
+      alpha: 0,
+      delay: 1200,
+      duration: 600,
+      onComplete: () => text.destroy(),
+    });
+
+    // Shower of particles from multiple positions
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const px = cx + Math.cos(angle) * 100;
+      const py = cy + Math.sin(angle) * 80;
+      this.time.delayedCall(i * 50, () => {
+        this.hitEmitter?.emitParticleAt(px, py);
+      });
+    }
+
+    // Big screen flash in gold
+    this.cameras.main.flash(300, 255, 220, 80);
+
+    // Big slow-mo moment
+    this.cameraFX.slowMotion(0.15, 800);
+    this.cameraFX.addTrauma(0.5);
+
+    // Bokeh depth-of-field effect (WebGL only)
+    if (this.isWebGL && !this.cameraBokeh) {
+      this.cameraBokeh = this.cameras.main.postFX.addBokeh(0.5, 8, 0.8);
+      this.tweens.add({
+        targets: this.cameraBokeh,
+        amount: { from: 0, to: 8 },
+        duration: 400,
+        ease: 'Quad.easeIn',
+      });
+      // Remove after celebration
+      this.time.delayedCall(1500, () => {
+        if (this.cameraBokeh) {
+          this.cameras.main.postFX.remove(this.cameraBokeh);
+          this.cameraBokeh = null;
+        }
+      });
+    }
+
+    AudioManager.playSuccess();
+    this.music.crescendo();
   }
 
   private checkTargetHit(bodyA: MatterJS.BodyType, bodyB: MatterJS.BodyType): void {
@@ -930,6 +1180,11 @@ export class GameScene extends Phaser.Scene {
           duration: 400,
           onComplete: () => popup.destroy(),
         });
+
+        // Check if all targets are now hit
+        if (this.targetsHit === this.level.targets.length) {
+          this.time.delayedCall(200, () => this.celebrateAllTargets());
+        }
       }
     }
   }
@@ -938,6 +1193,7 @@ export class GameScene extends Phaser.Scene {
     this.attempts++;
     this.isSimulating = true;
     this.simulationStartTime = Date.now();
+    this.music.start();
 
     this.previewGhost?.setVisible(false);
     this.placementZoneBorder?.setAlpha(0.1);
@@ -979,6 +1235,11 @@ export class GameScene extends Phaser.Scene {
     this.placementData = { type: objectType, x, y };
     this.placedSprite = this.physicsManager.createPlayerObject(objectType, x, y);
 
+    // Add glow PostFX to placed object (WebGL only)
+    if (this.isWebGL && this.placedSprite) {
+      this.placedSprite.postFX.addGlow(0x88ccff, 4, 0, false, 0.1, 16);
+    }
+
     // Hide selector during simulation
     for (const btn of this.selectorButtons) btn.setVisible(false);
 
@@ -1017,6 +1278,7 @@ export class GameScene extends Phaser.Scene {
 
   private endSimulation(): void {
     this.isSimulating = false;
+    this.music.stop();
 
     // Fade out energy graph
     if (this.energyGraph) {

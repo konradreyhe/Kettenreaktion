@@ -74,15 +74,51 @@ export class HUD {
     } else {
       this.scoreText.setText(`Sterne: ${targetsHit}`);
     }
+
+    // Flash and scale on target hit
+    if (targetsHit > 0) {
+      this.scene.tweens.add({
+        targets: this.scoreText,
+        scaleX: 1.3, scaleY: 1.3,
+        duration: 100,
+        yoyo: true,
+        ease: 'Quad.easeOut',
+      });
+    }
   }
 
   updateAttempts(current: number, max: number): void {
     this.attemptsText.setText(`Versuche: ${current}/${max}`);
+
+    // Warning color when low on attempts
+    if (current >= max) {
+      this.attemptsText.setColor('#ff4444');
+    } else if (current === max - 1) {
+      this.attemptsText.setColor('#ffaa44');
+      // Pulse warning
+      this.scene.tweens.add({
+        targets: this.attemptsText,
+        scaleX: 1.15, scaleY: 1.15,
+        duration: 150,
+        yoyo: true,
+      });
+    } else {
+      this.attemptsText.setColor('#aaaacc');
+    }
   }
 
   updateChain(length: number): void {
     if (length > 0) {
       this.chainText.setText(`Kette: ${length}`);
+
+      // Escalating chain colors
+      if (length >= 15) {
+        this.chainText.setColor('#ffdd00');
+      } else if (length >= 10) {
+        this.chainText.setColor('#ff6644');
+      } else if (length >= 5) {
+        this.chainText.setColor('#44ddff');
+      }
     }
   }
 
