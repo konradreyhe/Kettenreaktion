@@ -4,6 +4,7 @@ import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { AudioManager } from '../systems/AudioManager';
+import { MusicEngine } from '../systems/MusicEngine';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
 
@@ -16,17 +17,25 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     const cx = GAME_WIDTH / 2;
 
-    // Handle challenge URL parameter
+    // Handle URL parameters (challenge, PWA shortcuts)
     const params = new URLSearchParams(window.location.search);
+    window.history.replaceState({}, '', window.location.pathname);
+
     const challengeParam = params.get('challenge');
     if (challengeParam !== null) {
       const levelIndex = parseInt(challengeParam, 10);
       if (!isNaN(levelIndex) && levelIndex >= 0) {
-        // Clear the URL param so refreshing doesn't restart
-        window.history.replaceState({}, '', window.location.pathname);
         this.scene.start('GameScene', { practiceIndex: levelIndex });
         return;
       }
+    }
+    if (params.get('play') === 'today') {
+      this.scene.start('GameScene');
+      return;
+    }
+    if (params.get('mode') === 'zen') {
+      this.scene.start('ZenScene');
+      return;
     }
 
     this.cameras.main.fadeIn(300, 26, 26, 46);
@@ -74,11 +83,44 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5).setDepth(10);
 
+    // Day-of-week mode label
+    const utcDay = new Date().getUTCDay();
+    const dayLabels: Record<number, string> = {
+      0: '\u{1F525} Sonntagschallenge',
+      1: '\u{1F7E2} Montag: Leicht',
+      5: '\u{1F504} Flip Friday!',
+    };
+    const dayLabel = dayLabels[utcDay];
+    let infoY = 240;
+    if (dayLabel) {
+      this.add
+        .text(cx, infoY, dayLabel, {
+          fontFamily: FONT_UI,
+          fontSize: '10px', color: utcDay === 5 ? '#88aaff' : utcDay === 0 ? '#ff6644' : '#66bb66',
+          stroke: '#111122', strokeThickness: 1,
+        })
+        .setOrigin(0.5).setDepth(10);
+      infoY += 18;
+    }
+
+    // Today's difficulty stars
+    const [minDiff, maxDiff] = DailySystem.getDailyDifficultyRange();
+    const avgDiff = Math.round((minDiff + maxDiff) / 2);
+    const diffStars = '\u2605'.repeat(avgDiff) + '\u2606'.repeat(5 - avgDiff);
+    this.add
+      .text(cx, infoY, diffStars, {
+        fontSize: '12px', color: '#ffaa44',
+      })
+      .setOrigin(0.5).setDepth(10);
+    infoY += 20;
+
     // Streak
     const streak = StorageManager.getStreak();
     if (streak > 0) {
+      const jokers = StorageManager.getJokers();
+      const jokerLabel = jokers > 0 ? ` (+${jokers} Joker)` : '';
       const streakText = this.add
-        .text(cx, 260, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${StorageManager.getJokers() > 0 ? ` \u{1F0CF}${StorageManager.getJokers()}` : ''}`, {
+        .text(cx, infoY, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${jokerLabel}`, {
           fontSize: '16px', color: '#ffaa44',
         })
         .setOrigin(0.5).setDepth(10);
@@ -88,34 +130,6 @@ export class MenuScene extends Phaser.Scene {
         duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
       });
     }
-
-    // Day-of-week mode label
-    const utcDay = new Date().getUTCDay();
-    const dayLabels: Record<number, string> = {
-      0: '\u{1F525} Sonntagschallenge',
-      1: '\u{1F7E2} Montag: Leicht',
-      5: '\u{1F504} Flip Friday!',
-    };
-    const dayLabel = dayLabels[utcDay];
-    if (dayLabel) {
-      this.add
-        .text(cx, 240, dayLabel, {
-          fontFamily: FONT_UI,
-          fontSize: '10px', color: utcDay === 5 ? '#88aaff' : utcDay === 0 ? '#ff6644' : '#66bb66',
-          stroke: '#111122', strokeThickness: 1,
-        })
-        .setOrigin(0.5).setDepth(10);
-    }
-
-    // Today's difficulty stars (below day label if present)
-    const [minDiff, maxDiff] = DailySystem.getDailyDifficultyRange();
-    const avgDiff = Math.round((minDiff + maxDiff) / 2);
-    const diffStars = '\u2605'.repeat(avgDiff) + '\u2606'.repeat(5 - avgDiff);
-    this.add
-      .text(cx, dayLabel ? 255 : 240, diffStars, {
-        fontSize: '12px', color: '#ffaa44',
-      })
-      .setOrigin(0.5).setDepth(10);
 
     // Check if today's puzzle was already completed
     const todayResult = StorageManager.getPuzzleResult(puzzleNum);
@@ -176,10 +190,10 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Secondary buttons — three in a row
+    // Secondary buttons — four in a row
     new Button(this, {
-      x: cx - 130, y: 390, text: 'Uebung',
-      width: 115, height: 36, fontSize: '13px',
+      x: cx - 150, y: 390, text: 'Uebung',
+      width: 90, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -191,15 +205,28 @@ export class MenuScene extends Phaser.Scene {
     });
 
     new Button(this, {
-      x: cx, y: 390, text: 'Anleitung',
-      width: 115, height: 36, fontSize: '13px',
+      x: cx - 50, y: 390, text: 'Anleitung',
+      width: 90, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => this.scene.start('HowToScene'),
     });
 
     new Button(this, {
-      x: cx + 130, y: 390, text: 'Statistik',
+      x: cx + 50, y: 390, text: 'Zen',
+      width: 90, height: 36, fontSize: '12px',
+      color: 0x2a3a44, hoverColor: 0x334455,
+      textColor: '#88aacc',
+      onClick: () => {
+        this.cameras.main.fadeOut(200, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('ZenScene');
+        });
+      },
+    });
+
+    new Button(this, {
+      x: cx + 150, y: 390, text: 'Statistik',
       width: 115, height: 36, fontSize: '13px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
@@ -243,6 +270,7 @@ export class MenuScene extends Phaser.Scene {
     soundBtn.on('pointerdown', () => {
       soundOn = !soundOn;
       AudioManager.setEnabled(soundOn);
+      MusicEngine.setEnabled(soundOn);
       soundBtn.setText(soundOn ? '\u{1F50A}' : '\u{1F507}');
     });
 

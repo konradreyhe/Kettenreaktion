@@ -7,6 +7,7 @@
   "orientation": "landscape",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "./icon-192.png",
@@ -17,6 +18,22 @@
       "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Heute spielen",
+      "short_name": "Spielen",
+      "description": "Heutiges Puzzle starten",
+      "url": "./?play=today",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Zen-Modus",
+      "short_name": "Zen",
+      "description": "Entspannter Sandbox-Modus",
+      "url": "./?mode=zen",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

@@ -112,35 +112,70 @@ export class ReplayScene extends Phaser.Scene {
       delay: 50, // ~20fps matching the recording rate
       loop: true,
       callback: () => {
-        if (!this.isPlaying || this.frameIndex >= this.replayFrames.length) {
-          this.isPlaying = false;
-          return;
-        }
-
-        const frame = this.replayFrames[this.frameIndex];
-        for (let i = 0; i < Math.min(frame.length, this.dots.length); i++) {
-          const d = this.dots[i] as unknown as Phaser.GameObjects.Sprite;
-          d.setPosition(frame[i][0], frame[i][1]);
-          if (frame[i][2] !== undefined) {
-            d.setRotation(frame[i][2]);
-          }
-        }
-
-        // Update progress bar
-        const progress = this.frameIndex / Math.max(1, this.replayFrames.length - 1);
-        barFill.setSize(400 * progress, 6);
-        frameText.setText(
-          `${Math.round(progress * 100)}%`
-        );
-
+        if (!this.isPlaying || this.frameIndex >= this.replayFrames.length) return;
+        this.renderFrame(this.frameIndex, barFill, frameText);
         this.frameIndex++;
+      },
+    });
+
+    // Clickable progress bar — scrub to any position
+    const barHitArea = this.add.rectangle(cx, GAME_HEIGHT - 50, 400, 20, 0x000000, 0)
+      .setInteractive({ useHandCursor: true }).setDepth(52);
+    barHitArea.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
+      const localX = ptr.x - (cx - 200);
+      const ratio = Phaser.Math.Clamp(localX / 400, 0, 1);
+      this.frameIndex = Math.floor(ratio * (this.replayFrames.length - 1));
+      this.renderFrame(this.frameIndex, barFill, frameText);
+    });
+
+    // Control buttons row
+    let playbackSpeed = 1;
+
+    const playPauseBtn = new Button(this, {
+      x: cx - 120, y: GAME_HEIGHT - 18, text: '\u23F8', width: 36, height: 28, fontSize: '14px',
+      color: 0x333355, hoverColor: 0x444466, textColor: '#8888aa',
+      onClick: () => {
+        this.isPlaying = !this.isPlaying;
+        playPauseBtn.setText(this.isPlaying ? '\u23F8' : '\u25B6');
+      },
+    });
+
+    // Rewind
+    new Button(this, {
+      x: cx - 80, y: GAME_HEIGHT - 18, text: '\u23EE', width: 36, height: 28, fontSize: '14px',
+      color: 0x333355, hoverColor: 0x444466, textColor: '#8888aa',
+      onClick: () => {
+        this.frameIndex = 0;
+        this.isPlaying = true;
+        playPauseBtn.setText('\u23F8');
+        this.renderFrame(0, barFill, frameText);
+      },
+    });
+
+    // Speed toggle
+    const speedBtn = new Button(this, {
+      x: cx - 40, y: GAME_HEIGHT - 18, text: '1x', width: 36, height: 28, fontSize: '11px',
+      color: 0x333355, hoverColor: 0x444466, textColor: '#88aacc',
+      onClick: () => {
+        playbackSpeed = playbackSpeed === 1 ? 2 : playbackSpeed === 2 ? 0.5 : 1;
+        speedBtn.setText(`${playbackSpeed}x`);
+        // Recreate timer with new speed
+        if (this.playTimer) this.playTimer.destroy();
+        this.playTimer = this.time.addEvent({
+          delay: 50 / playbackSpeed,
+          loop: true,
+          callback: () => {
+            if (!this.isPlaying || this.frameIndex >= this.replayFrames.length) return;
+            this.renderFrame(this.frameIndex, barFill, frameText);
+            this.frameIndex++;
+          },
+        });
       },
     });
 
     // Back button
     new Button(this, {
-      x: cx - 80, y: GAME_HEIGHT - 18, text: 'Zurueck',
-      width: 100, height: 28, fontSize: '11px',
+      x: cx + 60, y: GAME_HEIGHT - 18, text: 'Zurueck', width: 80, height: 28, fontSize: '11px',
       color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
       onClick: () => {
         this.cameras.main.fadeOut(200, 26, 26, 46);
@@ -150,24 +185,44 @@ export class ReplayScene extends Phaser.Scene {
       },
     });
 
-    // Replay button
-    new Button(this, {
-      x: cx + 80, y: GAME_HEIGHT - 18, text: 'Nochmal',
-      width: 100, height: 28, fontSize: '11px',
-      color: 0x333355, hoverColor: 0x444466, textColor: '#8888aa',
-      onClick: () => {
-        this.frameIndex = 0;
-        this.isPlaying = true;
-      },
+    // Keyboard controls
+    this.input.keyboard?.on('keydown-SPACE', () => {
+      this.isPlaying = !this.isPlaying;
+      playPauseBtn.setText(this.isPlaying ? '\u23F8' : '\u25B6');
     });
-
-    // ESC to go back
+    this.input.keyboard?.on('keydown-LEFT', () => {
+      this.frameIndex = Math.max(0, this.frameIndex - 5);
+      this.renderFrame(this.frameIndex, barFill, frameText);
+    });
+    this.input.keyboard?.on('keydown-RIGHT', () => {
+      this.frameIndex = Math.min(this.replayFrames.length - 1, this.frameIndex + 5);
+      this.renderFrame(this.frameIndex, barFill, frameText);
+    });
     this.input.keyboard?.on('keydown-ESC', () => {
       this.cameras.main.fadeOut(200, 26, 26, 46);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.start('MenuScene');
       });
     });
+  }
+
+  private renderFrame(
+    idx: number,
+    barFill: Phaser.GameObjects.Rectangle,
+    frameText: Phaser.GameObjects.Text
+  ): void {
+    if (idx < 0 || idx >= this.replayFrames.length) return;
+    const frame = this.replayFrames[idx];
+    for (let i = 0; i < Math.min(frame.length, this.dots.length); i++) {
+      const d = this.dots[i] as unknown as Phaser.GameObjects.Sprite;
+      d.setPosition(frame[i][0], frame[i][1]);
+      if (frame[i][2] !== undefined) {
+        d.setRotation(frame[i][2]);
+      }
+    }
+    const progress = idx / Math.max(1, this.replayFrames.length - 1);
+    barFill.setSize(400 * progress, 6);
+    frameText.setText(`${Math.round(progress * 100)}%`);
   }
 
   private drawLevelLayout(level: Level): void {
