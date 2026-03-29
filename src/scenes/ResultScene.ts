@@ -253,6 +253,7 @@ export class ResultScene extends Phaser.Scene {
           targetsHit: data.targetsHit,
           totalTargets: data.totalTargets,
           title: StorageManager.getTitle(),
+          replay: data.replay,
         });
 
         try {

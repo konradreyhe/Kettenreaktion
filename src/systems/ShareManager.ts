@@ -7,6 +7,8 @@ const YELLOW = '\uD83D\uDFE1';
 const RED = '\uD83D\uDD34';
 const BLACK = '\u2B1B';
 
+import type { ReplayFrame } from '../types/GameState';
+
 export interface ShareParams {
   puzzleNumber: number;
   score: number;
@@ -17,6 +19,7 @@ export interface ShareParams {
   targetsHit: number;
   totalTargets: number;
   title?: string;
+  replay?: ReplayFrame[];
 }
 
 /** Generates share text and handles sharing via Web Share API / Clipboard. */
@@ -41,11 +44,15 @@ export class ShareManager {
     // Attempt indicator
     const attemptDots = ShareManager.buildAttemptDots(attempts, solved);
 
+    // Chain path arrows from replay data
+    const chainPath = ShareManager.buildChainPath(params.replay);
+
     const lines = [
       header,
       '',
       targetBar,
       chainBar,
+      ...(chainPath ? [`\uD83C\uDFAF ${chainPath}`] : []),
       attemptDots,
       '',
       `Score: ${score.toLocaleString('de-DE')}`,
@@ -98,6 +105,31 @@ export class ShareManager {
       else dots.push(BLACK);
     }
     return `Versuche: ${dots.join('')}`;
+  }
+
+  /** Build directional arrow path from replay frames showing chain reaction direction. */
+  private static buildChainPath(frames?: ReplayFrame[]): string {
+    if (!frames || frames.length < 2) return '';
+
+    const arrows: string[] = [];
+    const step = Math.max(1, Math.floor(frames.length / 6));
+
+    for (let i = step; i < frames.length && arrows.length < 6; i += step) {
+      const prev = frames[i - step][0];
+      const curr = frames[i][0];
+      if (!prev || !curr) continue;
+
+      const dx = curr[0] - prev[0];
+      const dy = curr[1] - prev[1];
+      const angle = Math.atan2(dy, dx);
+
+      if (angle > -Math.PI / 4 && angle <= Math.PI / 4) arrows.push('\u27A1\uFE0F');
+      else if (angle > Math.PI / 4 && angle <= 3 * Math.PI / 4) arrows.push('\u2B07\uFE0F');
+      else if (angle > -3 * Math.PI / 4 && angle <= -Math.PI / 4) arrows.push('\u2B06\uFE0F');
+      else arrows.push('\u2B05\uFE0F');
+    }
+
+    return arrows.join('');
   }
 
   static async share(text: string): Promise<void> {
