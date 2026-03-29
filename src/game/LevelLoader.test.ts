@@ -4,13 +4,15 @@ import { LEVEL_TEMPLATES_2 as BATCH_2 } from './LevelTemplates2';
 import { LEVEL_TEMPLATES_3 as BATCH_3 } from './LevelTemplates3';
 import { LEVEL_TEMPLATES_4 as BATCH_4 } from './LevelTemplates4';
 import { LEVEL_TEMPLATES_5 as BATCH_5 } from './LevelTemplates5';
+import { LEVEL_TEMPLATES_6 as BATCH_6 } from './LevelTemplates6';
+import { LEVEL_TEMPLATES_7 as BATCH_7 } from './LevelTemplates7';
 import type { Level } from '../types/Level';
 
-const ALL_LEVELS: Level[] = [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5];
+const ALL_LEVELS: Level[] = [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7];
 
 describe('Level Templates', () => {
-  it('should have exactly 150 levels', () => {
-    expect(ALL_LEVELS.length).toBe(150);
+  it('should have exactly 198 levels', () => {
+    expect(ALL_LEVELS.length).toBe(198);
   });
 
   it('should have unique IDs', () => {

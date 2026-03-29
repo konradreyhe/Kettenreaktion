@@ -5,18 +5,20 @@ import { LEVEL_TEMPLATES_2 as BATCH_2 } from './LevelTemplates2';
 import { LEVEL_TEMPLATES_3 as BATCH_3 } from './LevelTemplates3';
 import { LEVEL_TEMPLATES_4 as BATCH_4 } from './LevelTemplates4';
 import { LEVEL_TEMPLATES_5 as BATCH_5 } from './LevelTemplates5';
+import { LEVEL_TEMPLATES_6 as BATCH_6 } from './LevelTemplates6';
+import { LEVEL_TEMPLATES_7 as BATCH_7 } from './LevelTemplates7';
 
-const LEVEL_TEMPLATES = [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5];
+const LEVEL_TEMPLATES = [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7];
 
 /** Loads and prepares levels with seed-based variations. */
 export class LevelLoader {
   /** Load today's level using the daily seed. Override with ?level=N URL param. */
   static loadToday(): Level {
-    // Debug: ?level=5 loads template index 5 directly
+    // Debug/challenge: ?level=5 or ?challenge=5 loads template index directly
     const params = new URLSearchParams(window.location.search);
-    const debugLevel = params.get('level');
-    if (debugLevel !== null) {
-      const idx = Math.max(0, Math.min(parseInt(debugLevel, 10), LEVEL_TEMPLATES.length - 1));
+    const overrideLevel = params.get('level') ?? params.get('challenge');
+    if (overrideLevel !== null) {
+      const idx = Math.max(0, Math.min(parseInt(overrideLevel, 10), LEVEL_TEMPLATES.length - 1));
       return { ...LEVEL_TEMPLATES[idx] };
     }
 
@@ -28,7 +30,7 @@ export class LevelLoader {
       (t) => t.difficulty >= minDiff && t.difficulty <= maxDiff
     );
 
-    // Fallback to all levels if no match (shouldn't happen with 90 levels)
+    // Fallback to all levels if no match (shouldn't happen with 180 levels)
     const pool = eligible.length > 0 ? eligible : LEVEL_TEMPLATES;
     let index = DailySystem.getLevelIndex(seed, pool.length);
 
