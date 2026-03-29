@@ -94,7 +94,14 @@ export class ZenScene extends Phaser.Scene {
     this.trailRenderer.update();
   }
 
+  private static readonly MAX_OBJECTS = 50;
+
   private placeObject(x: number, y: number): void {
+    if (this.objectCount >= ZenScene.MAX_OBJECTS) {
+      this.countText.setText(`Objekte: ${this.objectCount} (Max!)`);
+      return;
+    }
+
     AudioManager.playPlace();
 
     const type = this.selectedType;

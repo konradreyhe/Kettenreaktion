@@ -19,6 +19,7 @@ export class PhysicsManager {
   private glowCleanups: (() => void)[] = [];
   /** Map dynamic object IDs to their Matter bodies for constraint lookup. */
   private dynamicBodyMap: Map<string, MatterJS.BodyType> = new Map();
+  private gravityFlipped = false;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -31,6 +32,7 @@ export class PhysicsManager {
 
   buildLevel(level: Level, gravityFlipped = false): void {
     this.clearLevel();
+    this.gravityFlipped = gravityFlipped;
     this.buildFloor(level.world.width, level.world.height, gravityFlipped);
     this.buildWalls(level.world.width, level.world.height);
 
@@ -275,10 +277,14 @@ export class PhysicsManager {
     this.scene.events.on('update', updateFn);
     this.constraintUpdateFns.push(updateFn);
 
-    // Visual pivot marker (triangle)
+    // Visual pivot marker (triangle — flips direction with gravity)
     const gfx = this.scene.add.graphics().setDepth(8);
     gfx.fillStyle(0x88aacc, 0.6);
-    gfx.fillTriangle(cx - 8, cy + 12, cx + 8, cy + 12, cx, cy + 2);
+    if (this.gravityFlipped) {
+      gfx.fillTriangle(cx - 8, cy - 12, cx + 8, cy - 12, cx, cy - 2);
+    } else {
+      gfx.fillTriangle(cx - 8, cy + 12, cx + 8, cy + 12, cx, cy + 2);
+    }
     gfx.lineStyle(1, 0xaaccee, 0.4);
     gfx.strokeCircle(cx, cy, 4);
     this.constraintGraphics.push(gfx);
