@@ -45,6 +45,24 @@ export interface SeedVariation {
   max: number;
 }
 
+export interface LevelConstraint {
+  type: 'seesaw' | 'spring' | 'rope';
+  /** For seesaw: the static platform index to pivot. */
+  staticIndex?: number;
+  /** For spring/rope: IDs of the two dynamic objects to connect. */
+  bodyA?: string;
+  bodyB?: string;
+  /** For spring: anchor to a static point instead of a body. */
+  anchorA?: { x: number; y: number };
+  anchorB?: { x: number; y: number };
+  /** Spring stiffness (0-1). Default 0.05 for spring, 1 for rope. */
+  stiffness?: number;
+  /** Rope segment count. Default 8. */
+  segments?: number;
+  /** Rest length override. Auto-calculated from body positions if omitted. */
+  length?: number;
+}
+
 export interface Level {
   id: string;
   name: string;
@@ -55,5 +73,6 @@ export interface Level {
   staticObjects: StaticObject[];
   dynamicObjects: DynamicObject[];
   targets: Target[];
+  constraints?: LevelConstraint[];
   seed_variations?: Record<string, SeedVariation>;
 }
