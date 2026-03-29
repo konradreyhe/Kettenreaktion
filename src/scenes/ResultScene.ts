@@ -6,6 +6,7 @@ import { ShareManager } from '../systems/ShareManager';
 import { LevelLoader } from '../game/LevelLoader';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { ReplayExporter } from '../systems/ReplayExporter';
+import { ScoreCalculator } from '../game/ScoreCalculator';
 import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
@@ -23,6 +24,7 @@ interface ResultData {
   replay?: ReplayFrame[];
   placement?: { type: string; x: number; y: number };
   levelId?: string;
+  difficulty?: number;
 }
 
 /** Displays final score, breakdown, sharing, and countdown. */
@@ -219,6 +221,18 @@ export class ResultScene extends Phaser.Scene {
         .text(cx, 370, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
           fontSize: '16px',
           color: '#ffaa44',
+        })
+        .setOrigin(0.5);
+    }
+
+    // Difficulty percentile (daily mode only)
+    if (!isPractice && data.difficulty) {
+      const percentile = ScoreCalculator.estimatePercentile(
+        data.score.total, data.totalTargets, data.difficulty
+      );
+      this.add
+        .text(cx, streak > 0 ? 390 : 370, `Besser als ${percentile}% der Spieler`, {
+          fontSize: '11px', color: COLOR.textMuted,
         })
         .setOrigin(0.5);
     }

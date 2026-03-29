@@ -12,6 +12,7 @@ export class CameraFX {
 
   private isSlowMo = false;
   private slowMoTarget = 1.0;
+  private colorMatrix: Phaser.FX.ColorMatrix | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -115,6 +116,28 @@ export class CameraFX {
     cam.scrollX += (clampedX - cam.scrollX) * lerpFactor;
     cam.scrollY += (clampedY - cam.scrollY) * lerpFactor;
     cam.zoom += (targetZoom - cam.zoom) * lerpFactor;
+  }
+
+  /** Apply warm color grade based on chain intensity (0-1). WebGL only. */
+  warmShift(intensity: number): void {
+    if (this.scene.renderer.type !== Phaser.WEBGL) return;
+
+    if (!this.colorMatrix) {
+      this.colorMatrix = this.scene.cameras.main.postFX.addColorMatrix();
+    }
+
+    this.colorMatrix.reset();
+    if (intensity > 0) {
+      this.colorMatrix.brightness(1 + intensity * 0.05);
+      this.colorMatrix.saturate(intensity * 0.3);
+    }
+  }
+
+  /** Remove warm color shift. */
+  resetColorShift(): void {
+    if (this.colorMatrix) {
+      this.colorMatrix.reset();
+    }
   }
 
   /** Smoothly return camera to default position. */

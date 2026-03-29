@@ -371,11 +371,14 @@ export class GameScene extends Phaser.Scene {
       const b = Math.floor(46 - t * 10);  // 46 -> 36 (less blue)
       this.cameras.main.setBackgroundColor(Phaser.Display.Color.GetColor(r, g, b));
 
-      // Intensify vignette with chain length
+      // ColorMatrix warm grade (WebGL) + vignette
+      this.cameraFX.warmShift(t);
       if (this.cameraVignette) {
         this.cameraVignette.strength = 0.15 + t * 0.35; // 0.15 -> 0.50
         this.cameraVignette.radius = 0.9 - t * 0.2;     // 0.9 -> 0.7
       }
+    } else {
+      this.cameraFX.resetColorShift();
     }
 
     // Sample kinetic energy for seismograph (skip on mobile — too visually busy)
@@ -598,6 +601,29 @@ export class GameScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
+
+    // Shine sweep across placement zone (skip for reduced motion)
+    if (!AccessibilityManager.prefersReducedMotion()) {
+      const shine = this.add.rectangle(
+        zone.x - 30, zone.y + zone.height / 2,
+        20, zone.height + 40,
+        0xffffff, 0.08
+      ).setDepth(3).setAngle(20);
+
+      const maskGfx = this.make.graphics();
+      maskGfx.fillRect(zone.x, zone.y, zone.width, zone.height);
+      shine.setMask(maskGfx.createGeometryMask());
+
+      this.tweens.add({
+        targets: shine,
+        x: zone.x + zone.width + 30,
+        duration: 2000,
+        delay: 500,
+        repeat: -1,
+        repeatDelay: 3000,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
     // Ghost of previous attempt placement
     if (this.placementData && this.attempts > 0) {
@@ -1298,8 +1324,9 @@ export class GameScene extends Phaser.Scene {
     // Render photon trail art (velocity-colored paths)
     this.trailRenderer.renderArt();
 
-    // Reset camera and background
+    // Reset camera, color shift, and background
     this.cameraFX.resetCamera();
+    this.cameraFX.resetColorShift();
     this.cameras.main.setBackgroundColor(0x1a1a2e);
 
     // Hide chain display
@@ -1413,6 +1440,7 @@ export class GameScene extends Phaser.Scene {
             replay: this.bestReplayFrames,
             placement: this.bestPlacement,
             levelId: this.level.id,
+            difficulty: this.level.difficulty,
           });
         });
       });
