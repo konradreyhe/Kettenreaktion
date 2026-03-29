@@ -6,6 +6,7 @@ import { StorageManager } from '../systems/StorageManager';
 import { AudioManager } from '../systems/AudioManager';
 import { MusicEngine } from '../systems/MusicEngine';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
+import { EventManager } from '../systems/EventManager';
 import { Button } from '../ui/Button';
 
 /** Start screen with play button, streak, and puzzle info. */
@@ -72,6 +73,20 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5).setAlpha(0).setDepth(10);
 
     this.tweens.add({ targets: subtitle, alpha: 1, delay: 300, duration: 500 });
+
+    // Monthly event banner
+    const event = EventManager.getCurrentEvent();
+    if (event) {
+      this.cameras.main.setBackgroundColor(event.theme.bgColor);
+      const banner = this.add
+        .text(cx, 170, event.theme.bannerText, {
+          fontFamily: FONT_UI, fontSize: '10px',
+          color: event.theme.accentColor,
+          letterSpacing: 2,
+        })
+        .setOrigin(0.5).setAlpha(0).setDepth(10);
+      this.tweens.add({ targets: banner, alpha: 0.8, delay: 500, duration: 600 });
+    }
 
     // Divider
     this.add.rectangle(cx, 200, 180, 1, 0x4444aa, 0.4).setDepth(10);

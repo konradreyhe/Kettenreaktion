@@ -7,6 +7,7 @@ import { CameraFX } from '../game/CameraFX';
 import { TrailRenderer } from '../game/TrailRenderer';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
+import { EventManager } from '../systems/EventManager';
 import { MusicEngine } from '../systems/MusicEngine';
 import { HUD } from '../ui/HUD';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
@@ -452,6 +453,12 @@ export class GameScene extends Phaser.Scene {
       case 'metal':
         tintColor = 0x141418; // near-black with purple hint
         break;
+    }
+
+    // Override with monthly event bg if active
+    const event = EventManager.getCurrentEvent();
+    if (event) {
+      tintColor = Phaser.Display.Color.HexStringToColor(event.theme.bgColor).color;
     }
 
     // Subtle full-screen color overlay
