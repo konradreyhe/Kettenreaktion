@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 7 continued from session 6's handover. Added spatial audio panning, 12 mixed-constraint levels (batch 8, t199-t210), Zen Mode 50-object cap, seesaw pivot gravity flip fix, and a full level editor with HTML panel and test-play flow. **210 total levels, 1,712 tests pass, 265KB bundle. 4 commits pushed and deployed.**
+Session 7 continued from session 6's handover. Added spatial audio panning, 12 mixed-constraint levels (batch 8, t199-t210), Zen Mode 50-object cap, seesaw pivot gravity flip fix, level editor, placement zone shine, ColorMatrix warm shift, difficulty percentile, monthly themed events, and chain path arrows in share cards. **210 total levels, 1,712 tests pass, 268KB bundle. 8 commits pushed and deployed.**
 
 ## Completed
 - [x] Spatial audio panning — StereoPannerNode in playImpact/playChainUp/playTargetHit based on collision x
@@ -13,6 +13,11 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 - [x] Editor feature flag: ?editor URL param and Ctrl+Shift+E keyboard shortcut
 - [x] GameScene accepts custom editor levels via init data
 - [x] Service worker cache v7
+- [x] Placement zone shine sweep animation (masked diagonal light bar)
+- [x] ColorMatrix warm color grade during chain reactions (WebGL)
+- [x] Post-solve difficulty percentile ("Besser als X% der Spieler")
+- [x] Monthly themed events framework (4 seasons: Apr, Jul, Oct, Dec)
+- [x] Chain path directional arrows in share card (from replay data)
 
 ## In Progress
 - [ ] Beta testing — game is feature-complete but no community posts published yet
@@ -43,7 +48,7 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 5. **Monthly themed events** — seasonal variations framework
 
 ## Rollback Info
-- Last known good: `c96b39c` (HEAD) — 1,712 tests pass, 265KB bundle, deployed
+- Last known good: `52a817e` (HEAD) — 1,712 tests pass, 268KB bundle, deployed
 - Session 6 last good: `72f34a3` — 1,616 tests pass, 198 levels
 - Session 5 last good: `a7d3a0e`
 - If EditorScene crashes: remove from main.ts scene array, remove MenuScene Ctrl+Shift+E handler
@@ -55,13 +60,18 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 ## Files Created This Session
 - `src/game/LevelTemplates8.ts` — 12 mixed-constraint levels (t199-t210)
 - `src/scenes/EditorScene.ts` — level editor with HTML panel, 9 tools, test-play
+- `src/systems/EventManager.ts` — monthly themed events framework
 
 ## Files Modified This Session
 - `src/systems/AudioManager.ts` — spatial audio panning via StereoPannerNode + xToPan() helper
-- `src/scenes/GameScene.ts` — spatial audio x params, editorLevel support in init()
-- `src/scenes/MenuScene.ts` — ?editor param handler, Ctrl+Shift+E shortcut
+- `src/systems/ShareManager.ts` — chain path arrows from replay data
+- `src/scenes/GameScene.ts` — spatial audio, editorLevel, shine, ColorMatrix, event theme, percentile
+- `src/scenes/ResultScene.ts` — difficulty percentile display, replay data in share
+- `src/scenes/MenuScene.ts` — ?editor param handler, Ctrl+Shift+E shortcut, event banner
 - `src/scenes/ZenScene.ts` — 50-object MAX_OBJECTS cap
 - `src/game/PhysicsManager.ts` — gravityFlipped field, seesaw pivot triangle direction fix
+- `src/game/CameraFX.ts` — warmShift/resetColorShift for ColorMatrix
+- `src/game/ScoreCalculator.ts` — estimatePercentile method
 - `src/game/LevelLoader.ts` — batch 8 import
 - `src/game/LevelLoader.test.ts` — updated for 210 levels
 - `src/main.ts` — EditorScene registration
@@ -74,4 +84,4 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 - `docs/GAMEPLAN.md` — game design source of truth
 
 ---
-**Last Updated:** 2026-03-29 (Session 7 — 4 commits pushed)
+**Last Updated:** 2026-03-29 (Session 7 — 8 commits pushed)
