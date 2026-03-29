@@ -361,7 +361,7 @@ export class ResultScene extends Phaser.Scene {
         width: 140, height: 28, fontSize: '10px',
         color: 0x443355, hoverColor: 0x554466, textColor: '#bb88dd',
         onClick: async () => {
-          const url = `${window.location.origin}${window.location.pathname}?challenge=${data.practiceIndex ?? 0}`;
+          const url = `${window.location.origin}${window.location.pathname}?challenge=${data.practiceIndex ?? 0}&score=${data.score.total}`;
           try {
             await navigator.clipboard.writeText(url);
             challengeBtn.setText('Kopiert!');

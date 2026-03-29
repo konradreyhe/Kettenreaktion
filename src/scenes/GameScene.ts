@@ -107,10 +107,13 @@ export class GameScene extends Phaser.Scene {
 
   private editorLevel: Level | null = null;
 
-  init(data?: { practiceIndex?: number; editorLevel?: Level }): void {
+  private challengeScore: number | null = null;
+
+  init(data?: { practiceIndex?: number; editorLevel?: Level; challengeScore?: number }): void {
     this.isPractice = data?.practiceIndex !== undefined;
     this.practiceIndex = data?.practiceIndex ?? 0;
     this.editorLevel = data?.editorLevel ?? null;
+    this.challengeScore = data?.challengeScore ?? null;
   }
 
   create(): void {
@@ -184,6 +187,18 @@ export class GameScene extends Phaser.Scene {
       } else {
         this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
       }
+    }
+
+    // Challenge score target banner
+    if (this.challengeScore) {
+      const target = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 30,
+        `Ziel: ${this.challengeScore.toLocaleString('de-DE')} Punkte schlagen!`, {
+          fontSize: '11px', color: '#bb88dd', fontStyle: 'bold',
+        }).setOrigin(0.5).setDepth(50).setAlpha(0);
+      this.tweens.add({
+        targets: target, alpha: 0.8, duration: 600, delay: 500,
+        yoyo: true, hold: 3000,
+      });
     }
 
     // Pause physics when tab is hidden to prevent time accumulation

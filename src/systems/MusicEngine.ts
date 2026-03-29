@@ -20,6 +20,8 @@ export class MusicEngine {
   private arpGain: GainNode | null = null;
   private padOscs: OscillatorNode[] = [];
   private padGain: GainNode | null = null;
+  private percInterval: ReturnType<typeof setInterval> | null = null;
+  private percGain: GainNode | null = null;
   private playing = false;
   private currentChain = 0;
 
@@ -69,6 +71,11 @@ export class MusicEngine {
     // Layer 2: Pad at chain 5
     if (chain === 5 && this.padOscs.length === 0) {
       this.startPad();
+    }
+
+    // Layer 3: Percussion at chain 10
+    if (chain === 10 && !this.percInterval) {
+      this.startPercussion();
     }
 
     // Intensify: raise master volume with chain
@@ -123,6 +130,7 @@ export class MusicEngine {
       this.stopDrone();
       this.stopArpeggio();
       this.stopPad();
+      this.stopPercussion();
       if (this.masterGain) {
         this.masterGain.disconnect();
         this.masterGain = null;
@@ -263,5 +271,60 @@ export class MusicEngine {
     }
     this.padOscs = [];
     this.padGain = null;
+  }
+
+  // === PERCUSSION LAYER ===
+
+  private startPercussion(): void {
+    if (!this.ctx || !this.masterGain) return;
+
+    this.percGain = this.ctx.createGain();
+    this.percGain.gain.setValueAtTime(0, this.ctx.currentTime);
+    this.percGain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.5);
+    this.percGain.connect(this.masterGain);
+
+    let beat = 0;
+    this.percInterval = setInterval(() => {
+      if (!this.ctx || !this.percGain || !this.playing) return;
+      const now = this.ctx.currentTime;
+
+      // Filtered noise burst — kick-like on beat 0, hi-hat on others
+      const isKick = beat % 4 === 0;
+      const duration = isKick ? 0.08 : 0.03;
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+
+      // Filter: low-pass for kick, high-pass for hi-hat
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = isKick ? 'lowpass' : 'highpass';
+      filter.frequency.setValueAtTime(isKick ? 200 : 8000, now);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(isKick ? 0.6 : 0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.percGain);
+      source.start(now);
+      source.stop(now + duration + 0.01);
+
+      beat++;
+    }, 175); // half the arpeggio interval for 16th note feel
+  }
+
+  private stopPercussion(): void {
+    if (this.percInterval) {
+      clearInterval(this.percInterval);
+      this.percInterval = null;
+    }
+    this.percGain = null;
   }
 }

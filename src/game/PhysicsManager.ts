@@ -205,6 +205,13 @@ export class PhysicsManager {
     this.rawBodies.push(this.scene.matter.add.rectangle(w / 2, -10, w, 20, wallOpts));
   }
 
+  /** Build just floor + walls — for Zen mode or other sandbox scenes. */
+  buildMinimalWorld(w: number, h: number): void {
+    this.clearLevel();
+    this.buildFloor(w, h);
+    this.buildWalls(w, h);
+  }
+
   /** Create a physics constraint from level data. */
   private createConstraint(def: LevelConstraint, level: Level): void {
     switch (def.type) {

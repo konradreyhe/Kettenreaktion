@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { BODY_PROPERTIES } from '../constants/Physics';
 import { TrailRenderer } from '../game/TrailRenderer';
+import { PhysicsManager } from '../game/PhysicsManager';
 import { MusicEngine } from '../systems/MusicEngine';
 import { AudioManager } from '../systems/AudioManager';
 import { Button } from '../ui/Button';
@@ -27,18 +28,8 @@ export class ZenScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(300, 26, 26, 46);
 
-    // Floor
-    const floorH = 20;
-    this.add.tileSprite(GAME_WIDTH / 2, GAME_HEIGHT - floorH / 2, GAME_WIDTH, floorH, 'floor_tile').setDepth(5);
-    this.matter.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - floorH / 2, GAME_WIDTH, floorH, {
-      isStatic: true, friction: 0.5, restitution: 0.3, label: 'floor',
-    });
-
-    // Walls
-    const wallOpts = { isStatic: true, label: 'wall', friction: 0.3, restitution: 0.4 };
-    this.matter.add.rectangle(-10, GAME_HEIGHT / 2, 20, GAME_HEIGHT, wallOpts);
-    this.matter.add.rectangle(GAME_WIDTH + 10, GAME_HEIGHT / 2, 20, GAME_HEIGHT, wallOpts);
-    this.matter.add.rectangle(GAME_WIDTH / 2, -10, GAME_WIDTH, 20, wallOpts);
+    // Floor + walls via PhysicsManager
+    new PhysicsManager(this).buildMinimalWorld(GAME_WIDTH, GAME_HEIGHT);
 
     // Subtle title
     this.add.text(GAME_WIDTH / 2, 20, 'ZEN-MODUS', {

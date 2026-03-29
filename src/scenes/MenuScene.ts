@@ -26,7 +26,8 @@ export class MenuScene extends Phaser.Scene {
     if (challengeParam !== null) {
       const levelIndex = parseInt(challengeParam, 10);
       if (!isNaN(levelIndex) && levelIndex >= 0) {
-        this.scene.start('GameScene', { practiceIndex: levelIndex });
+        const challengeScore = parseInt(params.get('score') ?? '', 10) || undefined;
+        this.scene.start('GameScene', { practiceIndex: levelIndex, challengeScore });
         return;
       }
     }
