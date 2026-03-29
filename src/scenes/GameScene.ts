@@ -893,11 +893,11 @@ export class GameScene extends Phaser.Scene {
             }
           }
 
-          // Audio
+          // Audio (spatially panned based on collision x position)
           if (newChain > prevChain) {
-            AudioManager.playChainUp(newChain);
+            AudioManager.playChainUp(newChain, cx);
           } else {
-            AudioManager.playImpact(newChain);
+            AudioManager.playImpact(newChain, cx);
           }
         }
 
@@ -1116,8 +1116,8 @@ export class GameScene extends Phaser.Scene {
         this.targetsHit++;
         this.hud.updateScore(this.targetsHit, this.level.targets.length);
 
-        // Audio
-        AudioManager.playTargetHit(this.targetsHit - 1);
+        // Audio (spatially panned at target x position)
+        AudioManager.playTargetHit(this.targetsHit - 1, target.x);
 
         // BIG screen shake + slow-mo for target hit
         this.cameraFX.addTrauma(0.4);
@@ -1499,7 +1499,7 @@ export class GameScene extends Phaser.Scene {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < NEAR_MISS_PX + 15) {
-          AudioManager.playImpact(0);
+          AudioManager.playImpact(0, target.x);
 
           const nearMiss = this.add
             .text(target.x, target.y - 25, 'Knapp!', {

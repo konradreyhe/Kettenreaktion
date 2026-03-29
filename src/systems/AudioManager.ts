@@ -72,13 +72,23 @@ export class AudioManager {
     osc.stop(ctx.currentTime + 0.2);
   }
 
-  /** Collision impact — crunch with pitch variation. */
-  static playImpact(chainIndex: number): void {
+  /** Convert an x position (0..GAME_WIDTH) to a stereo pan value (-1..1). */
+  private static xToPan(x: number, gameWidth = 800): number {
+    return Math.max(-1, Math.min(1, (x / gameWidth) * 2 - 1));
+  }
+
+  /** Collision impact — crunch with pitch variation. Pans based on x position. */
+  static playImpact(chainIndex: number, x?: number): void {
     const ctx = AudioManager.getCtx();
     if (!ctx) return;
 
     const basePitch = 150 + chainIndex * 25;
     const now = ctx.currentTime;
+
+    // Stereo panner for spatial positioning
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(x !== undefined ? AudioManager.xToPan(x) : 0, now);
+    panner.connect(ctx.destination);
 
     // Noise burst for crunch feel
     const bufferSize = ctx.sampleRate * 0.06;
@@ -91,7 +101,7 @@ export class AudioManager {
     noise.buffer = noiseBuffer;
     const noiseGain = ctx.createGain();
     noise.connect(noiseGain);
-    noiseGain.connect(ctx.destination);
+    noiseGain.connect(panner);
     noiseGain.gain.setValueAtTime(0.08, now);
     noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
     noise.start(now);
@@ -100,7 +110,7 @@ export class AudioManager {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(panner);
 
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(basePitch, now);
@@ -112,19 +122,24 @@ export class AudioManager {
     osc.stop(now + 0.12);
   }
 
-  /** Target hit — bright ascending chime. Pitch rises with each target. */
-  static playTargetHit(targetIndex: number): void {
+  /** Target hit — bright ascending chime. Pitch rises with each target. Pans based on x. */
+  static playTargetHit(targetIndex: number, x?: number): void {
     const ctx = AudioManager.getCtx();
     if (!ctx) return;
 
     const baseFreq = 523 + targetIndex * 150; // C5 and up
+
+    // Stereo panner for spatial positioning
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(x !== undefined ? AudioManager.xToPan(x) : 0, ctx.currentTime);
+    panner.connect(ctx.destination);
 
     // Two-tone chime
     for (let i = 0; i < 2; i++) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(panner);
 
       const startTime = ctx.currentTime + i * 0.08;
       osc.type = 'sine';
@@ -192,8 +207,8 @@ export class AudioManager {
     1047, 1175, 1319, 1568, 1760, // C6 D6 E6 G6 A6
   ];
 
-  /** Chain escalation — pentatonic scale notes that build a melody. */
-  static playChainUp(chainLength: number): void {
+  /** Chain escalation — pentatonic scale notes that build a melody. Pans based on x. */
+  static playChainUp(chainLength: number, x?: number): void {
     const ctx = AudioManager.getCtx();
     if (!ctx) return;
 
@@ -201,11 +216,16 @@ export class AudioManager {
     const freq = AudioManager.PENTATONIC[noteIndex];
     const now = ctx.currentTime;
 
+    // Stereo panner for spatial positioning
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(x !== undefined ? AudioManager.xToPan(x) : 0, now);
+    panner.connect(ctx.destination);
+
     // Main tone
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(panner);
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, now);
@@ -220,7 +240,7 @@ export class AudioManager {
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
     osc2.connect(gain2);
-    gain2.connect(ctx.destination);
+    gain2.connect(panner);
 
     osc2.type = 'sine';
     osc2.frequency.setValueAtTime(freq * 2, now);
