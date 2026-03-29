@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { StorageManager } from '../systems/StorageManager';
+import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 
 /** Statistics screen with play history and achievements. */
@@ -30,7 +31,8 @@ export class StatsScene extends Phaser.Scene {
 
     // Big stats
     const jokers = data.jokers ?? 0;
-    const streakVal = `${data.streak} ${data.streak === 1 ? 'Tag' : 'Tage'}${jokers > 0 ? ` (\u{1F0CF}${jokers})` : ''}`;
+    const jokerLabel = jokers > 0 ? ` (+${jokers} Joker)` : '';
+    const streakVal = `${data.streak} ${data.streak === 1 ? 'Tag' : 'Tage'}${jokerLabel}`;
     const stats = [
       { label: 'Spiele', value: `${data.gamesPlayed}`, color: '#aaaacc' },
       { label: 'Bester Score', value: `${data.bestScore.toLocaleString('de-DE')}`, color: '#ffdd44' },
@@ -74,7 +76,7 @@ export class StatsScene extends Phaser.Scene {
     const puzzleNums = Object.keys(data.puzzleHistory)
       .map(Number)
       .sort((a, b) => b - a)
-      .slice(0, 10);
+      .slice(0, 6);
 
     if (puzzleNums.length === 0) {
       this.add
@@ -115,12 +117,60 @@ export class StatsScene extends Phaser.Scene {
       ].join('  |  ');
 
       this.add
-        .text(cx, GAME_HEIGHT - 100, bottomStats, {
+        .text(cx, 460, bottomStats, {
           fontFamily: FONT_UI,
           fontSize: '9px', color: COLOR.textDim,
         })
         .setOrigin(0.5);
     }
+
+    // Achievements section
+    const achDividerY = 480;
+    this.add.rectangle(cx, achDividerY, 500, 1, 0x333366, 0.5);
+
+    const achCount = AchievementManager.getUnlockedCount();
+    const achTotal = AchievementManager.getTotalCount();
+    this.add.text(cx, achDividerY + 18, `ABZEICHEN  ${achCount}/${achTotal}`, {
+      fontFamily: FONT_TITLE,
+      fontSize: '11px', color: COLOR.textBright, fontStyle: 'bold',
+      stroke: '#111122', strokeThickness: 2,
+    }).setOrigin(0.5);
+
+    const allAch = AchievementManager.getAll();
+    const achStartY = achDividerY + 35;
+    const cols = 17;
+    const cellW = 40;
+    const startX = cx - ((cols - 1) * cellW) / 2;
+
+    allAch.forEach((ach, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const ax = startX + col * cellW;
+      const ay = achStartY + row * 42;
+      const unlocked = ach.unlockedDate !== null;
+
+      // Icon (dimmed if locked)
+      this.add.text(ax, ay, unlocked ? ach.icon : '\u{1F512}', {
+        fontSize: '16px',
+      }).setOrigin(0.5).setAlpha(unlocked ? 1 : 0.3);
+
+      // Tooltip on hover area
+      const hitArea = this.add.rectangle(ax, ay, 34, 30, 0x000000, 0)
+        .setInteractive({ useHandCursor: true });
+
+      hitArea.on('pointerover', () => {
+        const tooltipBg = this.add.rectangle(ax, ay - 30, 140, 28, 0x2a2a4e, 0.95)
+          .setStrokeStyle(1, unlocked ? 0xffdd00 : 0x444466).setDepth(300);
+        const tooltipText = this.add.text(ax, ay - 30, unlocked ? ach.name : '???', {
+          fontSize: '9px', color: unlocked ? '#ffdd00' : '#666688',
+        }).setOrigin(0.5).setDepth(301);
+
+        hitArea.once('pointerout', () => {
+          tooltipBg.destroy();
+          tooltipText.destroy();
+        });
+      });
+    });
 
     // Back button
     new Button(this, {

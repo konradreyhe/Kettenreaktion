@@ -25,6 +25,10 @@ export interface GameStorage {
   puzzleHistory: Record<number, PuzzleResult>;
   /** Joker tokens earned through streaks (max 3). */
   jokers?: number;
+  /** Unlocked achievement IDs with unlock dates. */
+  achievements?: Record<string, string>;
+  /** Best scores for practice mode levels. Key = level ID. */
+  practiceScores?: Record<string, { score: number; solved: boolean }>;
 }
 
 export interface ScoreParams {

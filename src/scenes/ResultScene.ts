@@ -7,6 +7,7 @@ import { LevelLoader } from '../game/LevelLoader';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { ReplayExporter } from '../systems/ReplayExporter';
 import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
+import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
@@ -40,7 +41,7 @@ export class ResultScene extends Phaser.Scene {
     const previousBest = StorageManager.load().bestScore;
     const isNewBest = !isPractice && data.score.total > previousBest;
 
-    // Save result (daily mode only)
+    // Save result
     if (!isPractice) {
       StorageManager.recordPuzzle(puzzleNum, {
         score: data.score.total,
@@ -52,9 +53,21 @@ export class ResultScene extends Phaser.Scene {
         placement: data.placement,
         levelId: data.levelId,
       });
+    } else if (data.levelId) {
+      // Save practice best score
+      const gameData = StorageManager.load();
+      const practiceScores = gameData.practiceScores ?? {};
+      const existing = practiceScores[data.levelId];
+      if (!existing || data.score.total > existing.score) {
+        practiceScores[data.levelId] = { score: data.score.total, solved: data.solved };
+        StorageManager.save({ practiceScores });
+      }
     }
 
     const streak = isPractice ? 0 : StorageManager.getStreak();
+
+    // Check achievements after recording
+    const newAchievements = isPractice ? [] : AchievementManager.checkAll();
 
     // Header
     const headerText = isPractice ? 'Uebungsmodus' : `Kettenreaktion #${puzzleNum}`;
@@ -369,6 +382,13 @@ export class ResultScene extends Phaser.Scene {
       });
     }
 
+    // Achievement unlock toasts
+    newAchievements.forEach((achievement, i) => {
+      this.time.delayedCall(2000 + i * 1200, () => {
+        this.showAchievementToast(achievement.icon, achievement.name, achievement.description);
+      });
+    });
+
     // Countdown
     const countdownText = this.add
       .text(cx, GAME_HEIGHT - 30, '', {
@@ -386,6 +406,61 @@ export class ResultScene extends Phaser.Scene {
           `Naechstes Puzzle: ${DailySystem.formatCountdown(ms)}`
         );
       },
+    });
+  }
+
+  private showAchievementToast(icon: string, name: string, description: string): void {
+    const cx = GAME_WIDTH / 2;
+    const toastY = 80;
+
+    // Background panel
+    const bg = this.add.rectangle(cx, toastY, 280, 50, 0x2a2a4e, 0.95)
+      .setStrokeStyle(2, 0xffdd00)
+      .setDepth(200).setAlpha(0).setScale(0.8);
+
+    // Icon + text
+    const iconText = this.add.text(cx - 120, toastY, icon, {
+      fontSize: '22px',
+    }).setOrigin(0, 0.5).setDepth(201).setAlpha(0);
+
+    const titleText = this.add.text(cx - 95, toastY - 10, name, {
+      fontFamily: FONT_TITLE,
+      fontSize: '13px',
+      color: '#ffdd00',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0.5).setDepth(201).setAlpha(0);
+
+    const descText = this.add.text(cx - 95, toastY + 8, description, {
+      fontSize: '10px',
+      color: '#8899bb',
+    }).setOrigin(0, 0.5).setDepth(201).setAlpha(0);
+
+    const elements = [bg, iconText, titleText, descText];
+
+    // Slide in
+    this.tweens.add({
+      targets: elements,
+      alpha: 1,
+      duration: 300,
+    });
+    this.tweens.add({
+      targets: bg,
+      scaleX: 1, scaleY: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+    });
+
+    // Flash border
+    this.cameras.main.flash(200, 255, 220, 50);
+
+    // Slide out after 2s
+    this.tweens.add({
+      targets: elements,
+      alpha: 0,
+      y: '-=20',
+      delay: 2000,
+      duration: 400,
+      onComplete: () => elements.forEach((e) => e.destroy()),
     });
   }
 
