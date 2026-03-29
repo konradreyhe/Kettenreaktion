@@ -7,6 +7,7 @@ import { PhysicsManager } from '../game/PhysicsManager';
 import { MusicEngine } from '../systems/MusicEngine';
 import { AudioManager } from '../systems/AudioManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 import type { ObjectType } from '../types/Level';
 
 /** Zen Mode — no goals, infinite placement, persistent trails, ambient music. */
@@ -26,7 +27,7 @@ export class ZenScene extends Phaser.Scene {
     this.objectCount = 0;
     this.trailRenderer = new TrailRenderer(this);
 
-    this.cameras.main.fadeIn(300, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     // Floor + walls via PhysicsManager
     new PhysicsManager(this).buildMinimalWorld(GAME_WIDTH, GAME_HEIGHT);
@@ -57,10 +58,7 @@ export class ZenScene extends Phaser.Scene {
       color: 0x2a2a44, hoverColor: 0x333355, textColor: '#9999bb',
       onClick: () => {
         this.music.stop();
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('MenuScene');
-        });
+        SceneTransition.wipeOut(this, 'MenuScene');
       },
     });
 

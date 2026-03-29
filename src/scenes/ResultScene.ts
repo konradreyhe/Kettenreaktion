@@ -10,6 +10,7 @@ import { ScoreCalculator } from '../game/ScoreCalculator';
 import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface ResultData {
@@ -37,7 +38,7 @@ export class ResultScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2;
     const puzzleNum = DailySystem.getPuzzleNumber();
 
-    this.cameras.main.fadeIn(300, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     const isPractice = data.isPractice ?? false;
     const previousBest = StorageManager.load().bestScore;
@@ -375,10 +376,7 @@ export class ResultScene extends Phaser.Scene {
         width: 100, height: 28, fontSize: '10px',
         color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
         onClick: () => {
-          this.cameras.main.fadeOut(200, 26, 26, 46);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('PracticeScene');
-          });
+          SceneTransition.wipeOut(this, 'PracticeScene');
         },
       });
     } else {
@@ -389,10 +387,7 @@ export class ResultScene extends Phaser.Scene {
         color: 0x2a2a44, hoverColor: 0x333355,
         textColor: '#9999bb',
         onClick: () => {
-          this.cameras.main.fadeOut(300, 26, 26, 46);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('MenuScene');
-          });
+          SceneTransition.wipeOut(this, 'MenuScene');
         },
       });
     }

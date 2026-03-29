@@ -4,6 +4,7 @@ import { LevelLoader } from '../game/LevelLoader';
 import { FONT_TITLE, FONT_UI } from '../constants/Style';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 import type { PuzzleResult, ReplayFrame } from '../types/GameState';
 import type { Level } from '../types/Level';
 
@@ -26,7 +27,7 @@ export class ReplayScene extends Phaser.Scene {
 
   create(data: ReplayData): void {
     const cx = GAME_WIDTH / 2;
-    this.cameras.main.fadeIn(200, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     this.replayFrames = data.result.replay ?? [];
     this.frameIndex = 0;
@@ -178,10 +179,7 @@ export class ReplayScene extends Phaser.Scene {
       x: cx + 60, y: GAME_HEIGHT - 18, text: 'Zurueck', width: 80, height: 28, fontSize: '11px',
       color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('MenuScene');
-        });
+        SceneTransition.wipeOut(this, 'MenuScene');
       },
     });
 
@@ -199,10 +197,7 @@ export class ReplayScene extends Phaser.Scene {
       this.renderFrame(this.frameIndex, barFill, frameText);
     });
     this.input.keyboard?.on('keydown-ESC', () => {
-      this.cameras.main.fadeOut(200, 26, 26, 46);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('MenuScene');
-      });
+      SceneTransition.wipeOut(this, 'MenuScene');
     });
   }
 

@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { FONT_TITLE, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { StorageManager } from '../systems/StorageManager';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
+import { SceneTransition } from '../game/SceneTransition';
 
 /** Preloads assets, generates all procedural textures. */
 export class BootScene extends Phaser.Scene {
@@ -23,10 +24,7 @@ export class BootScene extends Phaser.Scene {
     StorageManager.pruneOldReplays(7);
 
     this.time.delayedCall(600, () => {
-      this.cameras.main.fadeOut(300, 26, 26, 46);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('MenuScene');
-      });
+      SceneTransition.wipeOut(this, 'MenuScene', undefined, 'down');
     });
   }
 

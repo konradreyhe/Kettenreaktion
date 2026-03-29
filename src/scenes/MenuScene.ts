@@ -8,6 +8,7 @@ import { MusicEngine } from '../systems/MusicEngine';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { EventManager } from '../systems/EventManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 
 /** Start screen with play button, streak, and puzzle info. */
 export class MenuScene extends Phaser.Scene {
@@ -44,7 +45,7 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
 
-    this.cameras.main.fadeIn(300, 26, 26, 46);
+    SceneTransition.wipeIn(this);
     this.createBackgroundParticles();
 
     // Title
@@ -202,10 +203,7 @@ export class MenuScene extends Phaser.Scene {
         color: playColor,
         hoverColor: hasResult ? 0x334466 : 0x4466cc,
         onClick: () => {
-          this.cameras.main.fadeOut(300, 26, 26, 46);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('GameScene');
-          });
+          SceneTransition.wipeOut(this, 'GameScene');
         },
       });
     }
@@ -217,10 +215,7 @@ export class MenuScene extends Phaser.Scene {
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('PracticeScene');
-        });
+        SceneTransition.wipeOut(this, 'PracticeScene');
       },
     });
 
@@ -238,10 +233,7 @@ export class MenuScene extends Phaser.Scene {
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('ZenScene');
-        });
+        SceneTransition.wipeOut(this, 'ZenScene');
       },
     });
 
@@ -251,20 +243,14 @@ export class MenuScene extends Phaser.Scene {
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('StatsScene');
-        });
+        SceneTransition.wipeOut(this, 'StatsScene');
       },
     });
 
     // Ctrl+Shift+E shortcut to open editor (hidden feature)
     this.input.keyboard?.on('keydown-E', (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey) {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('EditorScene');
-        });
+        SceneTransition.wipeOut(this, 'EditorScene');
       }
     });
 
@@ -278,13 +264,10 @@ export class MenuScene extends Phaser.Scene {
         color: 0x222233, hoverColor: 0x2a2a44,
         textColor: '#777799',
         onClick: () => {
-          this.cameras.main.fadeOut(200, 26, 26, 46);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('ReplayScene', {
+          SceneTransition.wipeOut(this, 'ReplayScene', {
               puzzleNumber: yesterdayNum,
               result: yesterdayResult,
             });
-          });
         },
       });
     }

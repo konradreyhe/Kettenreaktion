@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { FONT_TITLE, COLOR } from '../constants/Style';
 import { AudioManager } from '../systems/AudioManager';
+import { SceneTransition } from '../game/SceneTransition';
 import type { Level, StaticObject, DynamicObject, Target, ObjectType } from '../types/Level';
 
 type EditorTool = 'platform' | 'ramp' | 'ball' | 'domino' | 'crate' | 'weight' | 'star' | 'zone' | 'select';
@@ -98,7 +99,7 @@ export class EditorScene extends Phaser.Scene {
       this.updatePropertiesPanel();
     });
 
-    this.cameras.main.fadeIn(200, 26, 26, 46);
+    SceneTransition.wipeIn(this);
   }
 
   private drawGrid(): void {
@@ -516,10 +517,7 @@ export class EditorScene extends Phaser.Scene {
 
   private goBack(): void {
     this.removePanel();
-    this.cameras.main.fadeOut(200, 26, 26, 46);
-    this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('MenuScene');
-    });
+    SceneTransition.wipeOut(this, 'MenuScene');
   }
 
   private removePanel(): void {

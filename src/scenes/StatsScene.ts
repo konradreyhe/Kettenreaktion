@@ -4,6 +4,7 @@ import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { StorageManager } from '../systems/StorageManager';
 import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 
 /** Statistics screen with play history and achievements. */
 export class StatsScene extends Phaser.Scene {
@@ -15,7 +16,7 @@ export class StatsScene extends Phaser.Scene {
     const cx = GAME_WIDTH / 2;
     const data = StorageManager.load();
 
-    this.cameras.main.fadeIn(200, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     // Title
     this.add
@@ -178,10 +179,7 @@ export class StatsScene extends Phaser.Scene {
       width: 160, height: 36, fontSize: '13px',
       color: 0x2a2a44, hoverColor: 0x333355, textColor: '#9999bb',
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('MenuScene');
-        });
+        SceneTransition.wipeOut(this, 'MenuScene');
       },
     });
   }

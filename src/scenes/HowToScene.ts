@@ -5,6 +5,7 @@ import { BODY_PROPERTIES } from '../constants/Physics';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { AudioManager } from '../systems/AudioManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 
 /** Interactive tutorial — guided playable level with step-by-step instructions. */
 export class HowToScene extends Phaser.Scene {
@@ -28,7 +29,7 @@ export class HowToScene extends Phaser.Scene {
     this.simulating = false;
     this.placedBall = null;
 
-    this.cameras.main.fadeIn(300, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     // Title
     this.add.text(GAME_WIDTH / 2, 25, 'ANLEITUNG', {
@@ -274,9 +275,6 @@ export class HowToScene extends Phaser.Scene {
   }
 
   private goToMenu(): void {
-    this.cameras.main.fadeOut(200, 26, 26, 46);
-    this.cameras.main.once('camerafadeoutcomplete', () => {
-      this.scene.start('MenuScene');
-    });
+    SceneTransition.wipeOut(this, 'MenuScene');
   }
 }

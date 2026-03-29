@@ -5,6 +5,7 @@ import { ScoreCalculator } from '../game/ScoreCalculator';
 import { LevelLoader } from '../game/LevelLoader';
 import { CameraFX } from '../game/CameraFX';
 import { TrailRenderer } from '../game/TrailRenderer';
+import { SceneTransition } from '../game/SceneTransition';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { EventManager } from '../systems/EventManager';
@@ -211,7 +212,7 @@ export class GameScene extends Phaser.Scene {
     };
     document.addEventListener('visibilitychange', this.visibilityHandler);
 
-    this.cameras.main.fadeIn(300, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     // Level intro overlay
     this.showLevelIntro();
@@ -848,10 +849,7 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => {
       this.music.stop();
       const returnScene = this.isPractice ? 'PracticeScene' : 'MenuScene';
-      this.cameras.main.fadeOut(200, 26, 26, 46);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start(returnScene);
-      });
+      SceneTransition.wipeOut(this, returnScene);
     });
 
     // Keyboard: 1/2 keys switch object type
@@ -1448,9 +1446,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.time.delayedCall(isPerfect ? 1000 : 600, () => {
-        this.cameras.main.fadeOut(500, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('ResultScene', {
+        SceneTransition.wipeOut(this, 'ResultScene', {
             score: this.bestScore!,
             chainLength: this.bestChainLength,
             attempts: this.attempts,
@@ -1463,8 +1459,7 @@ export class GameScene extends Phaser.Scene {
             placement: this.bestPlacement,
             levelId: this.level.id,
             difficulty: this.level.difficulty,
-          });
-        });
+          }, 'down', 500);
       });
     } else {
       // Retry overlay

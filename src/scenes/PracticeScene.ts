@@ -4,6 +4,7 @@ import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { LevelLoader } from '../game/LevelLoader';
 import { StorageManager } from '../systems/StorageManager';
 import { Button } from '../ui/Button';
+import { SceneTransition } from '../game/SceneTransition';
 
 /** Practice mode: browse and play any level freely with difficulty filter. */
 export class PracticeScene extends Phaser.Scene {
@@ -29,7 +30,7 @@ export class PracticeScene extends Phaser.Scene {
     this.activeFilter = null;
     this.filteredIndices = Array.from({ length: this.totalLevels }, (_, i) => i);
 
-    this.cameras.main.fadeIn(200, 26, 26, 46);
+    SceneTransition.wipeIn(this);
 
     // Title
     this.add.text(cx, 40, 'UEBUNGSMODUS', {
@@ -124,10 +125,7 @@ export class PracticeScene extends Phaser.Scene {
       width: 200, height: 46, fontSize: '16px',
       color: 0x338833, hoverColor: 0x44aa44,
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('GameScene', { practiceIndex: this.currentIndex });
-        });
+        SceneTransition.wipeOut(this, 'GameScene', { practiceIndex: this.currentIndex });
       },
     });
 
@@ -137,10 +135,7 @@ export class PracticeScene extends Phaser.Scene {
       width: 160, height: 36, fontSize: '13px',
       color: 0x2a2a44, hoverColor: 0x333355, textColor: '#9999bb',
       onClick: () => {
-        this.cameras.main.fadeOut(200, 26, 26, 46);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-          this.scene.start('MenuScene');
-        });
+        SceneTransition.wipeOut(this, 'MenuScene');
       },
     });
 
