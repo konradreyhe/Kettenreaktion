@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 7 continued from session 6's handover. Added spatial audio panning, 12 mixed-constraint levels (batch 8, t199-t210), Zen Mode 50-object cap, seesaw pivot gravity flip fix, level editor, placement zone shine, ColorMatrix warm shift, difficulty percentile, monthly themed events, and chain path arrows in share cards. **210 total levels, 1,712 tests pass, 268KB bundle. 8 commits pushed and deployed.**
+Session 7 completed the ENTIRE enhancement plan (all 6 phases, 42 sections). Added spatial audio, 12 mixed-constraint levels, level editor, visual polish (shine, ColorMatrix, wipe transitions), percussion layer, challenge scores, monthly events, chain path sharing, and more. **210 total levels, 1,712 tests pass, 268KB bundle. 11 commits pushed and deployed.**
 
 ## Completed
 - [x] Spatial audio panning — StereoPannerNode in playImpact/playChainUp/playTargetHit based on collision x
@@ -18,9 +18,14 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 - [x] Post-solve difficulty percentile ("Besser als X% der Spieler")
 - [x] Monthly themed events framework (4 seasons: Apr, Jul, Oct, Dec)
 - [x] Chain path directional arrows in share card (from replay data)
+- [x] Percussion layer in MusicEngine at chain 10+ (filtered noise kick + hi-hat)
+- [x] Challenge URL with score param ("beat this score" competition)
+- [x] PhysicsManager.buildMinimalWorld() refactor, ZenScene uses it
+- [x] Wipe transitions replacing all fadeIn/fadeOut across 10 scenes
+- [x] SceneTransition utility class (wipeIn/wipeOut with direction control)
 
 ## In Progress
-- [ ] Beta testing — game is feature-complete but no community posts published yet
+- [ ] Beta testing — game is feature-complete, ALL enhancement plan items done
 
 ## Decisions Made
 | Decision | Why | Alternatives Rejected | Why Rejected |
@@ -48,7 +53,7 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 5. **Monthly themed events** — seasonal variations framework
 
 ## Rollback Info
-- Last known good: `52a817e` (HEAD) — 1,712 tests pass, 268KB bundle, deployed
+- Last known good: `46e31df` (HEAD) — 1,712 tests pass, 268KB bundle, deployed
 - Session 6 last good: `72f34a3` — 1,616 tests pass, 198 levels
 - Session 5 last good: `a7d3a0e`
 - If EditorScene crashes: remove from main.ts scene array, remove MenuScene Ctrl+Shift+E handler
@@ -61,15 +66,22 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 - `src/game/LevelTemplates8.ts` — 12 mixed-constraint levels (t199-t210)
 - `src/scenes/EditorScene.ts` — level editor with HTML panel, 9 tools, test-play
 - `src/systems/EventManager.ts` — monthly themed events framework
+- `src/game/SceneTransition.ts` — wipe transition utility (wipeIn/wipeOut)
 
 ## Files Modified This Session
 - `src/systems/AudioManager.ts` — spatial audio panning via StereoPannerNode + xToPan() helper
+- `src/systems/MusicEngine.ts` — percussion layer at chain 10+ (kick + hi-hat)
 - `src/systems/ShareManager.ts` — chain path arrows from replay data
-- `src/scenes/GameScene.ts` — spatial audio, editorLevel, shine, ColorMatrix, event theme, percentile
-- `src/scenes/ResultScene.ts` — difficulty percentile display, replay data in share
-- `src/scenes/MenuScene.ts` — ?editor param handler, Ctrl+Shift+E shortcut, event banner
-- `src/scenes/ZenScene.ts` — 50-object MAX_OBJECTS cap
-- `src/game/PhysicsManager.ts` — gravityFlipped field, seesaw pivot triangle direction fix
+- `src/scenes/GameScene.ts` — spatial audio, editorLevel, shine, ColorMatrix, events, percentile, challenge score, wipe transitions
+- `src/scenes/ResultScene.ts` — difficulty percentile, replay in share, challenge URL with score, wipe transitions
+- `src/scenes/MenuScene.ts` — ?editor param, Ctrl+Shift+E, event banner, challenge score param, wipe transitions
+- `src/scenes/ZenScene.ts` — 50-object cap, PhysicsManager refactor, wipe transitions
+- `src/scenes/BootScene.ts` — wipe transition
+- `src/scenes/HowToScene.ts` — wipe transitions
+- `src/scenes/PracticeScene.ts` — wipe transitions
+- `src/scenes/ReplayScene.ts` — wipe transitions
+- `src/scenes/StatsScene.ts` — wipe transitions
+- `src/game/PhysicsManager.ts` — gravityFlipped, seesaw pivot fix, buildMinimalWorld()
 - `src/game/CameraFX.ts` — warmShift/resetColorShift for ColorMatrix
 - `src/game/ScoreCalculator.ts` — estimatePercentile method
 - `src/game/LevelLoader.ts` — batch 8 import
@@ -84,4 +96,4 @@ Session 7 continued from session 6's handover. Added spatial audio panning, 12 m
 - `docs/GAMEPLAN.md` — game design source of truth
 
 ---
-**Last Updated:** 2026-03-29 (Session 7 — 8 commits pushed)
+**Last Updated:** 2026-03-29 (Session 7 — 11 commits, enhancement plan 100% complete)
