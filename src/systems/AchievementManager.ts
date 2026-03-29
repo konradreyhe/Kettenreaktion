@@ -65,6 +65,20 @@ const ACHIEVEMENTS: Achievement[] = [
     check: () => StorageManager.load().totalScore >= 5000 },
   { id: 'total_25000', name: 'Punktemagnat', description: '25.000 Gesamtpunkte', icon: '\u{1F3F0}',
     check: () => StorageManager.load().totalScore >= 25000 },
+
+  // Practice
+  { id: 'practice_10', name: 'Uebungsfleiss', description: '10 Level im Uebungsmodus gespielt', icon: '\u{1F3CB}',
+    check: () => {
+      const ps = StorageManager.load().practiceScores ?? {};
+      return Object.keys(ps).length >= 10;
+    },
+  },
+  { id: 'practice_50', name: 'Trainingsmeister', description: '50 Level im Uebungsmodus gespielt', icon: '\u{1F3C5}',
+    check: () => {
+      const ps = StorageManager.load().practiceScores ?? {};
+      return Object.keys(ps).length >= 50;
+    },
+  },
 ];
 
 /** Manages achievement tracking, unlocking, and notification. */
