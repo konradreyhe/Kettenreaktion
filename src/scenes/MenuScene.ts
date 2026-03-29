@@ -37,6 +37,10 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start('ZenScene');
       return;
     }
+    if (params.has('editor')) {
+      this.scene.start('EditorScene');
+      return;
+    }
 
     this.cameras.main.fadeIn(300, 26, 26, 46);
     this.createBackgroundParticles();
@@ -236,6 +240,16 @@ export class MenuScene extends Phaser.Scene {
           this.scene.start('StatsScene');
         });
       },
+    });
+
+    // Ctrl+Shift+E shortcut to open editor (hidden feature)
+    this.input.keyboard?.on('keydown-E', (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey) {
+        this.cameras.main.fadeOut(200, 26, 26, 46);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+          this.scene.start('EditorScene');
+        });
+      }
     });
 
     // Yesterday's replay button (only if yesterday's puzzle has replay data)

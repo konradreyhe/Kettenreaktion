@@ -104,9 +104,12 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
-  init(data?: { practiceIndex?: number }): void {
+  private editorLevel: Level | null = null;
+
+  init(data?: { practiceIndex?: number; editorLevel?: Level }): void {
     this.isPractice = data?.practiceIndex !== undefined;
     this.practiceIndex = data?.practiceIndex ?? 0;
+    this.editorLevel = data?.editorLevel ?? null;
   }
 
   create(): void {
@@ -129,10 +132,12 @@ export class GameScene extends Phaser.Scene {
       this.cameraVignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.9, 0.15);
     }
 
-    // Load level — practice mode uses specific index, daily uses seed
-    this.level = this.isPractice
-      ? LevelLoader.loadByIndex(this.practiceIndex)
-      : LevelLoader.loadToday();
+    // Load level — editor level, practice mode, or daily
+    this.level = this.editorLevel
+      ? { ...this.editorLevel }
+      : this.isPractice
+        ? LevelLoader.loadByIndex(this.practiceIndex)
+        : LevelLoader.loadToday();
 
     // Gravity Flip Friday — invert gravity and mirror level on Fridays (UTC)
     const isFriday = new Date().getUTCDay() === 5;
