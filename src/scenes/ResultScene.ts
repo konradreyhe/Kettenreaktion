@@ -422,7 +422,7 @@ export class ResultScene extends Phaser.Scene {
     // Countdown
     const countdownText = this.add
       .text(cx, GAME_HEIGHT - 14, '', {
-        fontSize: '10px',
+        fontSize: '11px',
         color: '#555577',
       })
       .setOrigin(0.5);

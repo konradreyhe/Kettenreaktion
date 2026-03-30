@@ -222,10 +222,10 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Secondary buttons — four in a row
+    // Secondary buttons — four evenly spaced
     new Button(this, {
-      x: cx - 150, y: 390, text: '\u{1F3AF} Uebung',
-      width: 105, height: 36, fontSize: '12px',
+      x: cx - 160, y: 390, text: '\u{1F3AF} Uebung',
+      width: 100, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -234,16 +234,16 @@ export class MenuScene extends Phaser.Scene {
     });
 
     new Button(this, {
-      x: cx - 40, y: 390, text: '\u{2753} Anleitung',
-      width: 110, height: 36, fontSize: '12px',
+      x: cx - 55, y: 390, text: '\u{2753} Anleitung',
+      width: 100, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => this.scene.start('HowToScene'),
     });
 
     new Button(this, {
-      x: cx + 70, y: 390, text: '\u{262F} Zen',
-      width: 80, height: 36, fontSize: '12px',
+      x: cx + 55, y: 390, text: '\u{262F} Zen',
+      width: 100, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -252,8 +252,8 @@ export class MenuScene extends Phaser.Scene {
     });
 
     new Button(this, {
-      x: cx + 170, y: 390, text: '\u{1F4CA} Statistik',
-      width: 115, height: 36, fontSize: '13px',
+      x: cx + 160, y: 390, text: '\u{1F4CA} Statistik',
+      width: 100, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -280,7 +280,7 @@ export class MenuScene extends Phaser.Scene {
       });
 
       // Pulse the Anleitung button area
-      const pulse = this.add.rectangle(cx - 40, 390, 114, 40, 0x88ccff, 0)
+      const pulse = this.add.rectangle(cx - 55, 390, 104, 40, 0x88ccff, 0)
         .setDepth(8);
       this.tweens.add({
         targets: pulse,

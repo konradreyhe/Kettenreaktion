@@ -847,9 +847,21 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.previewGhost = this.add
-      .circle(ghostCx, ghostCy, 12, ghostColor, 0.5)
-      .setStrokeStyle(1.5, 0xffffff, 0.3)
+      .circle(ghostCx, ghostCy, 12, ghostColor, 0.6)
+      .setStrokeStyle(1.5, 0xffffff, 0.4)
       .setDepth(20);
+
+    // Pulse ghost for visibility
+    this.tweens.add({
+      targets: this.previewGhost,
+      alpha: { from: 0.6, to: 0.35 },
+      scaleX: { from: 1, to: 1.15 },
+      scaleY: { from: 1, to: 1.15 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
 
     // Sync glow ring with ghost position
     this.input.on('pointermove', () => {
@@ -1742,7 +1754,7 @@ export class GameScene extends Phaser.Scene {
           this.updateSelectorHighlight();
           // Update ghost color
           if (this.previewGhost) {
-            this.previewGhost.setFillStyle(this.getObjectColor(type), 0.4);
+            this.previewGhost.setFillStyle(this.getObjectColor(type), 0.6);
           }
         });
 
