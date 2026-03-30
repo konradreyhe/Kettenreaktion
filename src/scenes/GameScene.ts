@@ -1712,7 +1712,7 @@ export class GameScene extends Phaser.Scene {
 
   private createObjectSelector(): void {
     const allowed = this.level.placementZone.allowedObjects;
-    const startX = GAME_WIDTH - 50;
+    const startX = GAME_WIDTH - 75;
     const startY = 80;
     const spacing = 50;
 

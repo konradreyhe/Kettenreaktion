@@ -224,8 +224,8 @@ export class MenuScene extends Phaser.Scene {
 
     // Secondary buttons — four in a row
     new Button(this, {
-      x: cx - 150, y: 390, text: 'Uebung',
-      width: 90, height: 36, fontSize: '12px',
+      x: cx - 150, y: 390, text: '\u{1F3AF} Uebung',
+      width: 105, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -234,16 +234,16 @@ export class MenuScene extends Phaser.Scene {
     });
 
     new Button(this, {
-      x: cx - 50, y: 390, text: 'Anleitung',
-      width: 90, height: 36, fontSize: '12px',
+      x: cx - 40, y: 390, text: '\u{2753} Anleitung',
+      width: 110, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => this.scene.start('HowToScene'),
     });
 
     new Button(this, {
-      x: cx + 50, y: 390, text: 'Zen',
-      width: 90, height: 36, fontSize: '12px',
+      x: cx + 70, y: 390, text: '\u{262F} Zen',
+      width: 80, height: 36, fontSize: '12px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
       onClick: () => {
@@ -252,7 +252,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     new Button(this, {
-      x: cx + 150, y: 390, text: 'Statistik',
+      x: cx + 170, y: 390, text: '\u{1F4CA} Statistik',
       width: 115, height: 36, fontSize: '13px',
       color: 0x2a3a44, hoverColor: 0x334455,
       textColor: '#88aacc',
