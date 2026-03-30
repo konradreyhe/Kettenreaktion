@@ -38,6 +38,8 @@ export class EditorScene extends Phaser.Scene {
   private htmlPanel: HTMLDivElement | null = null;
   private gridGfx!: Phaser.GameObjects.Graphics;
   private zoneGfx!: Phaser.GameObjects.Graphics;
+  private dragging = false;
+  private undoStack: string[] = [];
 
   constructor() {
     super({ key: 'EditorScene' });
@@ -86,17 +88,44 @@ export class EditorScene extends Phaser.Scene {
 
     // Input handling
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      // Ignore if click is in the HTML panel area (right 260px)
       if (ptr.x > GAME_WIDTH - 10) return;
+
+      if (this.selectedTool === 'select') {
+        this.selectAt(ptr.x, ptr.y);
+        if (this.selectedEntry) {
+          this.dragging = true;
+          this.pushUndo();
+        }
+        return;
+      }
+
+      this.pushUndo();
       this.handleCanvasClick(ptr.x, ptr.y);
     });
 
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (!this.dragging || !this.selectedEntry) return;
+      this.moveEntry(this.selectedEntry, this.snap(ptr.x), this.snap(ptr.y));
+    });
+
+    this.input.on('pointerup', () => {
+      if (this.dragging) {
+        this.dragging = false;
+        this.updatePropertiesPanel();
+        this.refreshPanel();
+      }
+    });
+
     // Keyboard shortcuts
-    this.input.keyboard?.on('keydown-DELETE', () => this.deleteSelected());
-    this.input.keyboard?.on('keydown-BACKSPACE', () => this.deleteSelected());
+    this.input.keyboard?.on('keydown-DELETE', () => { this.pushUndo(); this.deleteSelected(); });
+    this.input.keyboard?.on('keydown-BACKSPACE', () => { this.pushUndo(); this.deleteSelected(); });
     this.input.keyboard?.on('keydown-ESC', () => {
       this.selectedEntry = null;
+      this.dragging = false;
       this.updatePropertiesPanel();
+    });
+    this.input.keyboard?.on('keydown-Z', (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) this.undo();
     });
 
     SceneTransition.wipeIn(this);
@@ -138,11 +167,6 @@ export class EditorScene extends Phaser.Scene {
   private handleCanvasClick(x: number, y: number): void {
     const sx = this.snap(x);
     const sy = this.snap(y);
-
-    if (this.selectedTool === 'select') {
-      this.selectAt(x, y);
-      return;
-    }
 
     AudioManager.playPlace();
 
@@ -289,6 +313,160 @@ export class EditorScene extends Phaser.Scene {
     this.updatePropertiesPanel();
   }
 
+  /** Move an entry to a new snapped position, updating data and visuals. */
+  private moveEntry(entry: EditorEntry, x: number, y: number): void {
+    const data = entry.data as { x: number; y: number };
+
+    // For platforms/ramps, x is top-left corner — offset so drag feels centered
+    if (entry.kind === 'static') {
+      const s = data as StaticObject;
+      s.x = x - (s.width ?? 200) / 2;
+      s.y = y;
+    } else {
+      data.x = x;
+      data.y = y;
+    }
+
+    this.redrawEntry(entry);
+  }
+
+  /** Redraw a single entry's graphics at its current data position. */
+  private redrawEntry(entry: EditorEntry): void {
+    if (entry.gfx && 'destroy' in entry.gfx) {
+      (entry.gfx as Phaser.GameObjects.Graphics).destroy();
+    }
+
+    const data = entry.data;
+
+    if (entry.kind === 'static') {
+      const obj = data as StaticObject;
+      const gfx = this.add.graphics().setDepth(5);
+      if (obj.type === 'ramp') {
+        gfx.fillStyle(TOOL_COLORS.ramp, 0.6);
+        const cx = obj.x + (obj.width ?? 150) / 2;
+        const cy = obj.y;
+        const hw = (obj.width ?? 150) / 2;
+        const rad = ((obj.angle ?? -15) * Math.PI) / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        gfx.fillTriangle(
+          cx - hw * cos, cy - hw * sin,
+          cx + hw * cos, cy + hw * sin,
+          cx + hw * cos - 6 * sin, cy + hw * sin + 6 * cos,
+        );
+        gfx.fillTriangle(
+          cx - hw * cos, cy - hw * sin,
+          cx + hw * cos - 6 * sin, cy + hw * sin + 6 * cos,
+          cx - hw * cos - 6 * sin, cy - hw * sin + 6 * cos,
+        );
+      } else {
+        gfx.fillStyle(TOOL_COLORS.platform, 0.8);
+        gfx.fillRect(obj.x, obj.y, obj.width, obj.height ?? 12);
+        gfx.lineStyle(1, 0x8899aa, 0.5);
+        gfx.strokeRect(obj.x, obj.y, obj.width, obj.height ?? 12);
+      }
+      entry.gfx = gfx;
+    } else if (entry.kind === 'dynamic') {
+      const obj = data as DynamicObject;
+      const sizes: Record<string, { w: number; h: number }> = {
+        ball: { w: 28, h: 28 }, domino: { w: 16, h: 48 },
+        crate: { w: 40, h: 40 }, weight: { w: 34, h: 34 },
+      };
+      const size = sizes[obj.type] ?? { w: 30, h: 30 };
+      const color = TOOL_COLORS[obj.type as EditorTool] ?? 0x888888;
+      const gfx = this.add.graphics().setDepth(10);
+      if (obj.type === 'ball' || obj.type === 'weight') {
+        gfx.fillStyle(color, 0.8);
+        gfx.fillCircle(obj.x, obj.y, size.w / 2);
+        gfx.lineStyle(1, 0xffffff, 0.3);
+        gfx.strokeCircle(obj.x, obj.y, size.w / 2);
+      } else {
+        gfx.fillStyle(color, 0.8);
+        gfx.fillRect(obj.x - size.w / 2, obj.y - size.h / 2, size.w, size.h);
+        gfx.lineStyle(1, 0xffffff, 0.3);
+        gfx.strokeRect(obj.x - size.w / 2, obj.y - size.h / 2, size.w, size.h);
+      }
+      entry.gfx = gfx;
+    } else if (entry.kind === 'target') {
+      const obj = data as Target;
+      const gfx = this.add.graphics().setDepth(10);
+      gfx.fillStyle(TOOL_COLORS.star, 0.9);
+      gfx.fillCircle(obj.x, obj.y, 12);
+      gfx.lineStyle(2, 0xffaa00, 0.8);
+      gfx.strokeCircle(obj.x, obj.y, 12);
+      entry.gfx = gfx;
+    }
+  }
+
+  /** Save current level state for undo. */
+  private pushUndo(): void {
+    const snapshot = JSON.stringify({
+      staticObjects: this.level.staticObjects,
+      dynamicObjects: this.level.dynamicObjects,
+      targets: this.level.targets,
+      placementZone: this.level.placementZone,
+    });
+    this.undoStack.push(snapshot);
+    // Cap at 50 undo steps
+    if (this.undoStack.length > 50) this.undoStack.shift();
+  }
+
+  /** Restore previous level state. */
+  private undo(): void {
+    const snapshot = this.undoStack.pop();
+    if (!snapshot) {
+      this.showToast('Nichts zum Rueckgaengigmachen');
+      return;
+    }
+
+    // Destroy all visuals
+    for (const entry of this.entries) {
+      if (entry.gfx && 'destroy' in entry.gfx) {
+        (entry.gfx as Phaser.GameObjects.Graphics).destroy();
+      }
+    }
+    this.entries = [];
+    this.selectedEntry = null;
+
+    // Restore level data
+    const data = JSON.parse(snapshot) as {
+      staticObjects: StaticObject[];
+      dynamicObjects: DynamicObject[];
+      targets: Target[];
+      placementZone: Level['placementZone'];
+    };
+    this.level.staticObjects = data.staticObjects;
+    this.level.dynamicObjects = data.dynamicObjects;
+    this.level.targets = data.targets;
+    this.level.placementZone = data.placementZone;
+
+    // Rebuild visuals (skip floor at index 0)
+    for (let i = 1; i < this.level.staticObjects.length; i++) {
+      const obj = this.level.staticObjects[i];
+      const entry: EditorEntry = { kind: 'static', gfx: this.add.graphics(), data: obj };
+      this.redrawEntry(entry);
+      this.entries.push(entry);
+    }
+    for (const obj of this.level.dynamicObjects) {
+      const entry: EditorEntry = { kind: 'dynamic', gfx: this.add.graphics(), data: obj };
+      this.redrawEntry(entry);
+      this.entries.push(entry);
+    }
+    for (const obj of this.level.targets) {
+      const entry: EditorEntry = { kind: 'target', gfx: this.add.graphics(), data: obj };
+      this.redrawEntry(entry);
+      this.entries.push(entry);
+    }
+
+    // Update counters from restored data
+    this.dynamicCounter = this.level.dynamicObjects.length;
+    this.targetCounter = this.level.targets.length;
+
+    this.drawZone();
+    this.refreshPanel();
+    this.showToast('Rueckgaengig');
+  }
+
   private deleteSelected(): void {
     if (!this.selectedEntry) return;
 
@@ -401,6 +579,9 @@ export class EditorScene extends Phaser.Scene {
         <button id="ed-export" style="background:#222244;color:#aaaacc;border:1px solid #444466;padding:6px;cursor:pointer;font-family:inherit;font-size:10px;border-radius:3px">
           JSON kopieren
         </button>
+        <button id="ed-undo" style="background:#222244;color:#aaaacc;border:1px solid #444466;padding:6px;cursor:pointer;font-family:inherit;font-size:10px;border-radius:3px">
+          \u21B6 Rueckgaengig (Strg+Z)
+        </button>
         <button id="ed-clear" style="background:#332222;color:#cc8888;border:1px solid #664444;padding:6px;cursor:pointer;font-family:inherit;font-size:10px;border-radius:3px">
           Alles loeschen
         </button>
@@ -437,7 +618,8 @@ export class EditorScene extends Phaser.Scene {
     // Action buttons
     this.htmlPanel.querySelector('#ed-test')?.addEventListener('click', () => this.testLevel());
     this.htmlPanel.querySelector('#ed-export')?.addEventListener('click', () => this.exportJSON());
-    this.htmlPanel.querySelector('#ed-clear')?.addEventListener('click', () => this.clearAll());
+    this.htmlPanel.querySelector('#ed-undo')?.addEventListener('click', () => this.undo());
+    this.htmlPanel.querySelector('#ed-clear')?.addEventListener('click', () => { this.pushUndo(); this.clearAll(); });
     this.htmlPanel.querySelector('#ed-back')?.addEventListener('click', () => this.goBack());
   }
 
@@ -452,7 +634,7 @@ export class EditorScene extends Phaser.Scene {
     if (!propsDiv) return;
 
     if (!this.selectedEntry) {
-      propsDiv.innerHTML = '<div style="color:#555;font-size:9px">Klicke auf ein Objekt zum Bearbeiten</div>';
+      propsDiv.innerHTML = '<div style="color:#555;font-size:9px">Klicke auf ein Objekt zum Bearbeiten<br>Ziehen zum Verschieben (Auswahl-Tool)</div>';
       return;
     }
 
@@ -460,6 +642,7 @@ export class EditorScene extends Phaser.Scene {
     propsDiv.innerHTML = `
       <div style="color:#88ccff;font-size:9px;margin-bottom:4px">Ausgewaehlt: ${this.selectedEntry.kind}</div>
       <div style="color:#aaa;font-size:9px">x: ${(d as { x: number }).x}, y: ${(d as { y: number }).y}</div>
+      <div style="color:#556;font-size:8px;margin-top:2px">Ziehen zum Verschieben</div>
       <button id="ed-delete" style="margin-top:6px;background:#442222;color:#ff8888;border:1px solid #664444;padding:4px 8px;cursor:pointer;font-size:9px;border-radius:2px">
         Loeschen (Entf)
       </button>
