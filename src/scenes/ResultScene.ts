@@ -11,6 +11,7 @@ import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 import { SceneTransition } from '../game/SceneTransition';
+import { submitResult, fetchDailyStats, fetchHeatmap } from '../systems/ApiClient';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface ResultData {
@@ -56,6 +57,18 @@ export class ResultScene extends Phaser.Scene {
         placement: data.placement,
         levelId: data.levelId,
       });
+
+      // Submit to global leaderboard (fire-and-forget)
+      submitResult({
+        score: data.score.total,
+        solved: data.solved,
+        attempts: data.attempts,
+        chainLength: data.chainLength,
+        placement: data.placement ?? undefined,
+      });
+
+      // Fetch global stats and display (async, non-blocking)
+      this.loadGlobalStats(cx);
     } else if (data.levelId) {
       // Save practice best score
       const gameData = StorageManager.load();
@@ -522,5 +535,45 @@ export class ResultScene extends Phaser.Scene {
       tint: [0xffffff, 0xffddaa],
       duration: 2000,
     });
+  }
+
+  /** Fetch and display global daily stats (non-blocking). */
+  private async loadGlobalStats(cx: number): Promise<void> {
+    const [stats, heatmap] = await Promise.all([fetchDailyStats(), fetchHeatmap()]);
+    if (!stats || stats.totalPlayers < 1) return;
+
+    const y = 488;
+
+    // "Tagesauswertung" section
+    const statsLine = `${stats.totalPlayers} Spieler heute  |  ${stats.solveRate}% geloest  |  Ø ${stats.avgScore.toLocaleString('de-DE')} Pkt`;
+    const statsText = this.add.text(cx, y, statsLine, {
+      fontSize: '10px', color: '#6688aa',
+    }).setOrigin(0.5).setDepth(50).setAlpha(0);
+
+    this.tweens.add({ targets: statsText, alpha: 1, duration: 500 });
+
+    // Percentile badge
+    if (stats.percentile !== null) {
+      const pctText = this.add.text(cx, y + 16,
+        `Besser als ${stats.percentile}% der Spieler`, {
+          fontSize: '11px', color: '#88aacc', fontStyle: 'bold',
+        }).setOrigin(0.5).setDepth(50).setAlpha(0);
+
+      this.tweens.add({ targets: pctText, alpha: 1, delay: 200, duration: 500 });
+    }
+
+    // Heatmap top spots
+    if (heatmap && heatmap.topSpots.length > 0) {
+      const spotTexts = heatmap.topSpots.slice(0, 3).map((s, i) =>
+        `${['1.', '2.', '3.'][i]} (${s.x}, ${s.y}) — ${s.pct}%`
+      ).join('  ');
+
+      const heatText = this.add.text(cx, y + 34,
+        `Beliebteste Platzierungen: ${spotTexts}`, {
+          fontSize: '9px', color: '#556677',
+        }).setOrigin(0.5).setDepth(50).setAlpha(0);
+
+      this.tweens.add({ targets: heatText, alpha: 1, delay: 400, duration: 500 });
+    }
   }
 }
