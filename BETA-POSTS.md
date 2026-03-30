@@ -34,7 +34,7 @@ I've been building **Kettenreaktion** (German for "chain reaction") — a daily 
 - How's the sharing/GIF export?
 - Any bugs or weird behavior?
 
-Play here: https://konradreyhe.github.io/Kettenreaktion/
+Play here: https://kettenreaktion.crelvo.dev/
 
 Built with TypeScript, Phaser 3, and Matter.js. Happy to answer any technical questions too.
 
@@ -52,7 +52,7 @@ The concept is simple: each day you get one puzzle. Place a single object, watch
 
 150 levels ready, runs in the browser, no account needed.
 
-Play: https://konradreyhe.github.io/Kettenreaktion/
+Play: https://kettenreaktion.crelvo.dev/
 
 Would love feedback on difficulty, feel, and any bugs you find!
 
@@ -67,7 +67,7 @@ Would love feedback on difficulty, feel, and any bugs you find!
 **Game:** Kettenreaktion
 **Platform:** Browser (desktop + mobile landscape)
 **Price:** Free, no ads
-**Link:** https://konradreyhe.github.io/Kettenreaktion/
+**Link:** https://kettenreaktion.crelvo.dev/
 
 **Elevator pitch:** Daily physics puzzle — place one object, trigger a chain reaction, hit all the stars. New puzzle every day, same for everyone (like Wordle).
 
@@ -91,7 +91,7 @@ Thanks for playing!
 Place ONE object, watch the chain reaction, hit all the stars.
 New puzzle every day, 150 levels, free, no login.
 Looking for beta feedback!
-https://konradreyhe.github.io/Kettenreaktion/
+https://kettenreaktion.crelvo.dev/
 
 ---
 
@@ -104,7 +104,7 @@ Place one object. Watch the chain reaction. Hit all the stars.
 New puzzle every day. 150 levels. Free. No login. Browser only.
 
 Looking for feedback!
-https://konradreyhe.github.io/Kettenreaktion/
+https://kettenreaktion.crelvo.dev/
 
 #indiedev #gamedev #webgame #puzzlegame #dailypuzzle
 
@@ -124,6 +124,6 @@ It's a browser game — TypeScript + Phaser 3 + Matter.js, no backend needed for
 
 150 hand-designed levels covering 5 difficulty tiers. Works offline via service worker. No account, no ads.
 
-https://konradreyhe.github.io/Kettenreaktion/
+https://kettenreaktion.crelvo.dev/
 
 Would appreciate any feedback on the game feel, difficulty, and technical implementation.

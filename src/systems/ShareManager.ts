@@ -145,7 +145,7 @@ export class ShareManager {
       try {
         await navigator.share({
           text,
-          url: 'https://konradreyhe.github.io/Kettenreaktion/',
+          url: 'https://kettenreaktion.crelvo.dev/',
         });
         return;
       } catch {
