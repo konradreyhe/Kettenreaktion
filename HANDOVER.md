@@ -1,25 +1,32 @@
 # Handover
 
 ## Summary
-Session 8 was the biggest session yet: stability fixes, creative features, backend API, and production deployment. **Fixed a critical NaN camera bug** that caused permanent blank screens. **Added 3 creative features:** dramatic near-miss camera (slow-mo + zoom), weekly physics mutations (Gummi-Dienstag/Eis-Donnerstag/Flip-Freitag), and ghost placement sharing via URL. **Built and deployed a 3-route backend API** on the Dockfolio VM (POST results, GET stats, GET heatmap) with SQLite storage. **Deployed to production** at `kettenreaktion.crelvo.dev` with SSL, Plausible analytics, and API proxy. All URLs updated from GitHub Pages to production domain. **210 levels, 1,712 tests pass, 272KB bundle, 10 commits.**
+Session 9 was a comprehensive polish and feature session: **10 commits** covering visual polish, new visualizations, server-validated streaks, editor improvements, beta readiness, and an asset quality audit. **Added score histogram bar chart and heatmap grid** to ResultScene using Phaser Graphics. **Built server-validated streaks** with new GET /api/kr/streak backend endpoint + client sync. **Enhanced the level editor** with drag-to-move and undo (Ctrl+Z). **Fixed 5 known issues** from the previous handover. **Added 21 StorageManager tests** and a first-time player onboarding prompt. **Cleaned up all remaining old GitHub Pages URLs.** 210 levels, 1,733 tests pass, 280KB bundle, 10 commits.
 
 ## Completed This Session
-- [x] Visual verification of all wipe transitions across 7+ scene paths
-- [x] Fix NaN camera corruption in CameraFX.followAction() — permanent blank screen bug
-- [x] NaN guards in CameraFX.resetCamera(), collision FX, energy graph, TrailRenderer
-- [x] "KNAPP!" dramatic near-miss camera — slow-mo zoom + vignette pulse + shake + red glow text
-- [x] Weekly physics mutations system (DailyMutation.ts) — Gummi-Dienstag (2x bounce), Eis-Donnerstag (zero friction), Flip-Freitag (gravity flip)
-- [x] Mutation badges in level intro overlay and HUD label
-- [x] Ghost placement sharing — ?p=type,x,y URL param shows friend's placement as pulsing hint
-- [x] Share URLs include placement data for ghost comparison
-- [x] Backend API routes (kettenreaktion.js) in appManager — 3 endpoints: POST /api/kr/result, GET /api/kr/stats, GET /api/kr/heatmap
-- [x] SQLite table kr_daily_results with UNIQUE per player/day, score histogram, placement grid
-- [x] ApiClient.ts — client-side service for submitting results and fetching stats
-- [x] ResultScene integration — auto-submit scores, show global stats + percentile + heatmap top spots
-- [x] Production deployment at kettenreaktion.crelvo.dev (nginx + SSL + Plausible analytics)
-- [x] Vite base path fix for Windows bash (VITE_BASE_PATH=root sentinel)
-- [x] All URLs updated from GitHub Pages to kettenreaktion.crelvo.dev (OG tags, share URLs, canonical)
-- [x] Public path + CSRF exemptions for /api/kr/ in Dockfolio server.js
+- [x] Fix object selector label clipping — moved from GAME_WIDTH-50 to GAME_WIDTH-75
+- [x] Add Unicode icons to secondary menu buttons (target, question, yin-yang, chart)
+- [x] Fix ShareManager test expecting old GitHub Pages URL
+- [x] Score histogram bar chart in ResultScene (Phaser Graphics, blue→green gradient)
+- [x] Heatmap grid visualization in ResultScene (8x6 or full 16x12 grid, orange→red heat)
+- [x] Server-validated streaks — GET /api/kr/streak endpoint with grace period logic
+- [x] Client fetchStreak() + StorageManager.syncServerStreak() for server→client sync
+- [x] Extract seesaw body properties to BODY_PROPERTIES constant (was hardcoded 0.005)
+- [x] Enhanced heatmap to use full grid data when available (not just topSpots)
+- [x] Fix rope initial swing — frictionAir: 0.05 on segments dampens pendulum motion
+- [x] Fix all remaining old GitHub Pages URLs (robots.txt, sitemap.xml, ShareManager, BETA-POSTS.md)
+- [x] Add 21 StorageManager tests (streak logic, jokers, grace period, sync, scoring)
+- [x] Bump service worker cache to v8
+- [x] Level editor drag-to-move (select tool + drag, snapped to 20px grid)
+- [x] Level editor undo (Ctrl+Z, 50-step history, full visual rebuild)
+- [x] Undo button in editor panel with keyboard shortcut hint
+- [x] First-time player tutorial prompt in MenuScene (text + pulsing button highlight)
+- [x] Fix share URL missing https:// protocol
+- [x] Add global error/unhandledrejection handlers in main.ts
+- [x] Asset quality audit — 8 screenshots, 45 visual elements evaluated
+- [x] Ghost preview ball visibility fix (0.6 opacity + pulse animation)
+- [x] Equalized secondary menu button spacing (even 105px intervals)
+- [x] Countdown timer text bumped from 10px to 11px
 
 ## Completed in Previous Sessions (Still Working)
 - [x] 210 levels (batches 1-8) including 12 mixed-constraint levels
@@ -31,93 +38,91 @@ Session 8 was the biggest session yet: stability fixes, creative features, backe
 - [x] Replay scrubber with play/pause/speed/seek
 - [x] 19-badge achievement system
 - [x] PWA shortcuts and challenge URLs
-- [x] Level editor (EditorScene) with HTML panel
+- [x] Level editor (EditorScene) with HTML panel + drag-to-move + undo
 - [x] Monthly themed events framework
 - [x] Wipe scene transitions (verified working)
 - [x] Spatial audio panning
+- [x] NaN camera guards (multi-layer defense)
+- [x] Dramatic near-miss camera (slow-mo + zoom + vignette)
+- [x] Weekly physics mutations (Gummi-Dienstag/Eis-Donnerstag/Flip-Freitag)
+- [x] Ghost placement sharing via URL (?p=type,x,y)
+- [x] Backend API (POST result, GET stats, GET heatmap, GET streak)
+- [x] Production deployment at kettenreaktion.crelvo.dev
+- [x] GIF replay export (Web Worker + OffscreenCanvas, sync fallback)
 
 ## In Progress
-- [ ] Visual polish iteration — started but saved for next session. Object selector label clips on right edge. Secondary menu buttons could use icons.
+- [ ] Deploy backend streak endpoint to VM (kettenreaktion.js modified locally, needs scp + docker rebuild)
 - [ ] Beta testing — game is feature-complete, deployed, and has backend. Ready to post from BETA-POSTS.md.
 
 ## Decisions Made
 | Decision | Why | Alternatives Rejected | Why Rejected |
 |----------|-----|-----------------------|--------------|
-| NaN guard at body iteration + camera assignment | Multi-layer defense: skip bad bodies AND recover if NaN reaches camera | Guard only at camera | NaN still propagates through centroid math |
-| Snap camera to 0,0,1 on NaN (not tween) | Phaser tweens can't interpolate from NaN | Tween with fallback | Tweening NaN→0 stays NaN forever |
-| VITE_BASE_PATH=root sentinel instead of '/' | Bash on Windows expands '/' to 'C:/Program Files/Git/' | Direct '/' value | Broken on Windows bash |
-| Backend in Dockfolio (appManager) routes | Reuses existing Express + SQLite + Docker infra, no new services | Standalone Express app | Extra container, extra maintenance |
-| /api/kr/ public path + CSRF exempt | Game is cross-origin static site, can't have session cookies | Require auth | Game has no login, anonymous players |
-| Anonymous UUID player IDs (localStorage) | No accounts needed, privacy-friendly, works immediately | Server-generated IDs | Requires signup flow, kills onboarding |
-| 3 routes only (result, stats, heatmap) | Minimal viable backend, covers 80% of social features | Full REST API with users/friends | Over-engineering for pre-beta |
-| Weekly mutations as data-driven constants | Easy to add/modify, single file, no database | Per-level mutation configs | Over-complex, YAGNI |
-| Dramatic near-miss: slow-mo + zoom + vignette | Creates TikTok-clippable moments, all systems already existed | Just bigger text | Not dramatic enough for sharing |
-| Ghost placement as URL param (?p=) | Zero backend needed, works with clipboard sharing | Store in Supabase | No backend yet at time of implementation |
+| Ghost preview pulse animation (0.6↔0.35 alpha) | Asset audit found ghost nearly invisible on dark green zone | Higher static opacity | Still easy to miss without motion |
+| Equalized button spacing (cx±160, cx±55) | Previous 2+2 grouping implied false relationship | Keep original spacing | Looked unintentional |
+| Server streak with 1-day grace period | Match client grace period logic exactly | Strict consecutive only | Would desync with client behavior |
+| Undo as JSON snapshots (50-step) | Simple, correct, small memory footprint for editor | Command pattern | Over-complex for this use case |
+| frictionAir: 0.05 for rope segments | 5x default dampens initial swing while allowing natural motion | Sleep on creation | Would prevent rope from moving at all initially |
 
 ## Known Issues
-- **Object selector "Objekt:" label** clips at right edge on wider viewports
-- **Rope initial swing** — rope segments settle on creation causing slight pendulum motion
-- **Seesaw density** — hardcoded at 0.005
-- **Bloom performance** — up to 5 PostFX bloom instances per level
-- **Editor limitations** — no drag-to-move, no undo, no constraint editing
+- **Bloom performance** — up to 4 PostFX bloom instances per level (checked: not a real issue)
+- **Editor limitations** — no constraint editing, no width/height/angle editing for placed objects
 - **Gravity Flip + constraints** — seesaw pivot visual fixed, but full physics untested on Friday
-- **OG image** still references old URL path (og-image.jpg may need updating for new domain)
+- **Emoji rendering in buttons** — platform-dependent, some emojis render as squares on certain OS
+- **Playwright can't interact with Phaser input** — automated gameplay testing not possible via Playwright
 - **appManager server.js** modified locally — needs to stay in sync with VM copy
 
 ## Next Steps (Priority Order)
-1. **Beta testing** — Post from BETA-POSTS.md. Game is deployed with backend, ready for real users.
-2. **Visual polish** — Object selector positioning, secondary button icons, timer text size
+1. **Deploy to VM** — scp updated kettenreaktion.js + rebuild dashboard container for streak endpoint
+2. **Beta testing** — Post from BETA-POSTS.md. Game is deployed with full backend.
 3. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX, update nginx + SSL
-4. **Heatmap visualization** — Currently shows text-only top spots. Add canvas-drawn heatmap overlay in ResultScene.
-5. **Score histogram chart** — Draw bar chart of score distribution in ResultScene (data already available from API)
-6. **Server-validated streaks** — Move streak tracking to backend (anonymous UUID already in place)
-7. **Gravity Flip + constraints full test** — Wait for a Friday
-8. **GIF replay export** — Highest-leverage viral feature (already in Enhancement Plan)
+4. **Gravity Flip + constraints full test** — Wait for a Friday
+5. **Level theme visualization** — "wood"/"stone"/"metal" themes have no visual difference yet
+6. **Editor constraint editing** — Add UI for ropes, springs, seesaws in editor panel
 
 ## Rollback Info
-- Last known good: `97c2599` (HEAD) — 1,712 tests pass, 272KB bundle, deployed to kettenreaktion.crelvo.dev
-- Pre-backend: `3735446` — before API client integration
-- Pre-brainstorm features: `2337f90` — NaN fixes only, 269KB bundle
-- Pre-session 8: `18834bb` — session 7 handover commit
-- If mutations cause issues: remove DailyMutation.ts import and mutation code blocks in GameScene
-- If near-miss camera too dramatic: revert checkNearMisses() to simple text popup (commit 2337f90)
-- If backend breaks: game works fully offline — ApiClient silently fails, all features degrade gracefully
-- appManager rollback: revert dashboard/server.js and remove dashboard/routes/kettenreaktion.js, rebuild container
+- Last known good: `5077086` (HEAD) — 1,733 tests pass, 280KB bundle
+- Pre-session 9: `06508be` — session 8 handover commit
+- Pre-asset-audit fixes: `e2f8501` — before ghost pulse + button spacing
+- Pre-editor improvements: `426bde5` — before drag-to-move + undo
+- Pre-streak feature: `b8a6cd9` — before server-validated streaks
+- If streak endpoint breaks: game works fully offline — fetchStreak silently returns null
+- If editor undo breaks: remove undoStack/pushUndo/undo methods, revert to click-only editor
 
 ## Files Created This Session
-- `src/systems/DailyMutation.ts` — weekly physics mutations (bounce/friction/gravity per day-of-week)
-- `src/systems/ApiClient.ts` — lightweight API client (submit results, fetch stats/heatmap)
-- `C:\Users\kreyh\Projekte\appManager\dashboard\routes\kettenreaktion.js` — 3 Express routes for backend API
+- `src/systems/StorageManager.test.ts` — 21 test cases for streak, joker, score, sync logic
 
 ## Files Modified This Session
-- `src/game/CameraFX.ts` — NaN guards in followAction(), body velocity optional chaining, resetCamera() NaN recovery
-- `src/scenes/GameScene.ts` — NaN guards, dramatic near-miss camera, mutation integration, ghost placement rendering, simulate event emit
-- `src/scenes/ResultScene.ts` — API submission, global stats display, percentile badge, heatmap spots, placement in challenge URL
-- `src/scenes/MenuScene.ts` — ghost placement URL parsing (?p=type,x,y), parseGhostParam static method, pass to GameScene
-- `src/systems/ShareManager.ts` — placement param in share URLs, updated base URL to kettenreaktion.crelvo.dev
-- `src/game/TrailRenderer.ts` — defensive velocity optional chaining
-- `index.html` — updated OG tags, canonical URL, twitter cards to kettenreaktion.crelvo.dev
-- `vite.config.ts` — VITE_BASE_PATH=root sentinel for Windows bash compatibility
-- `C:\Users\kreyh\Projekte\appManager\dashboard\server.js` — import + register KR routes, add /api/kr to PUBLIC_PATHS + CSRF_EXEMPT
+- `src/scenes/GameScene.ts` — Object selector positioning (GAME_WIDTH-75), ghost preview pulse animation (0.6 alpha + tween)
+- `src/scenes/MenuScene.ts` — Button icons, equalized spacing, first-time player prompt
+- `src/scenes/ResultScene.ts` — Histogram bar chart, heatmap grid, server streak sync, countdown text size
+- `src/systems/ApiClient.ts` — fetchStreak(), StreakData interface, HeatmapData grid field
+- `src/systems/StorageManager.ts` — syncServerStreak() method
+- `src/systems/ShareManager.ts` — https:// in share URL, old URL fix
+- `src/constants/Physics.ts` — Added seesaw body properties
+- `src/game/PhysicsManager.ts` — Seesaw uses constants, rope frictionAir: 0.05
+- `src/scenes/EditorScene.ts` — Drag-to-move, undo (Ctrl+Z), undo button, redrawEntry()
+- `src/main.ts` — Global error/unhandledrejection handlers
+- `public/robots.txt` — Updated sitemap URL to production domain
+- `public/sitemap.xml` — Updated canonical URL to production domain
+- `public/sw.js` — Cache version bumped to v8
+- `BETA-POSTS.md` — All play links updated to production domain
+- `C:\Users\kreyh\Projekte\appManager\dashboard\routes\kettenreaktion.js` — GET /api/kr/streak endpoint (+93 lines)
 
 ## Infrastructure
 - **Production URL:** https://kettenreaktion.crelvo.dev
 - **VM:** deploy@91.99.104.132
 - **Webroot:** /home/deploy/kettenreaktion.crelvo.dev/
-- **Nginx config:** /home/deploy/nginx-configs/sites/kettenreaktion.crelvo.dev
-- **SSL cert:** /etc/letsencrypt/live/kettenreaktion.crelvo.dev/ (auto-renew via certbot)
 - **API proxy:** /api/kr/ → http://127.0.0.1:9091/api/kr/ (Dockfolio dashboard container)
-- **Analytics:** Plausible injected via nginx sub_filter
 - **Deploy process:** `VITE_BASE_PATH=root npm run build && scp -r ./dist/* deploy@91.99.104.132:/home/deploy/kettenreaktion.crelvo.dev/`
 - **Backend deploy:** scp route file + server.js to VM, then `cd /home/deploy/appmanager && docker compose build dashboard && docker compose up -d dashboard`
 
 ## Key Reference Docs
 - `ENHANCEMENT-PLAN.md` — 100% complete, all 42 sections implemented
-- `BETA-POSTS.md` — ready-to-post community announcements
+- `BETA-POSTS.md` — ready-to-post community announcements (URLs updated)
 - `CLAUDE.md` — project rules and conventions
 - `PRINCIPLES.md` — engineering principles
 - `docs/GAMEPLAN.md` — game design source of truth
 - `C:\Users\kreyh\Projekte\appManager\CLAUDE.md` — VM deploy guide, nginx config template, SSH rules
 
 ---
-**Last Updated:** 2026-03-30 (Session 8 — 10 commits, NaN fix + creative features + backend API + production deploy)
+**Last Updated:** 2026-03-30 (Session 9 — 10 commits, visual polish + histogram/heatmap + server streaks + editor drag/undo + beta readiness + asset audit)
