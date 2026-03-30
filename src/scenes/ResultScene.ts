@@ -12,6 +12,7 @@ import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 import { SceneTransition } from '../game/SceneTransition';
 import { submitResult, fetchDailyStats, fetchHeatmap } from '../systems/ApiClient';
+import type { DailyStats, HeatmapData } from '../systems/ApiClient';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface ResultData {
@@ -418,8 +419,8 @@ export class ResultScene extends Phaser.Scene {
 
     // Countdown
     const countdownText = this.add
-      .text(cx, GAME_HEIGHT - 30, '', {
-        fontSize: '12px',
+      .text(cx, GAME_HEIGHT - 14, '', {
+        fontSize: '10px',
         color: '#555577',
       })
       .setOrigin(0.5);
@@ -542,9 +543,9 @@ export class ResultScene extends Phaser.Scene {
     const [stats, heatmap] = await Promise.all([fetchDailyStats(), fetchHeatmap()]);
     if (!stats || stats.totalPlayers < 1) return;
 
-    const y = 488;
+    const y = 542;
 
-    // "Tagesauswertung" section
+    // Summary stats line
     const statsLine = `${stats.totalPlayers} Spieler heute  |  ${stats.solveRate}% geloest  |  Ø ${stats.avgScore.toLocaleString('de-DE')} Pkt`;
     const statsText = this.add.text(cx, y, statsLine, {
       fontSize: '10px', color: '#6688aa',
@@ -554,7 +555,7 @@ export class ResultScene extends Phaser.Scene {
 
     // Percentile badge
     if (stats.percentile !== null) {
-      const pctText = this.add.text(cx, y + 16,
+      const pctText = this.add.text(cx, y + 14,
         `Besser als ${stats.percentile}% der Spieler`, {
           fontSize: '11px', color: '#88aacc', fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(50).setAlpha(0);
@@ -562,18 +563,108 @@ export class ResultScene extends Phaser.Scene {
       this.tweens.add({ targets: pctText, alpha: 1, delay: 200, duration: 500 });
     }
 
-    // Heatmap top spots
-    if (heatmap && heatmap.topSpots.length > 0) {
-      const spotTexts = heatmap.topSpots.slice(0, 3).map((s, i) =>
-        `${['1.', '2.', '3.'][i]} (${s.x}, ${s.y}) — ${s.pct}%`
-      ).join('  ');
+    // Draw histogram and heatmap side by side below stats
+    const vizY = y + 32;
+    const hasHistogram = stats.histogram && stats.histogram.length > 0;
+    const hasHeatmap = heatmap && heatmap.topSpots.length > 0;
 
-      const heatText = this.add.text(cx, y + 34,
-        `Beliebteste Platzierungen: ${spotTexts}`, {
-          fontSize: '9px', color: '#556677',
-        }).setOrigin(0.5).setDepth(50).setAlpha(0);
-
-      this.tweens.add({ targets: heatText, alpha: 1, delay: 400, duration: 500 });
+    if (hasHistogram && hasHeatmap) {
+      this.drawHistogram(stats, cx - 120, vizY, 200, 50);
+      this.drawHeatmapGrid(heatmap, cx + 120, vizY, 80, 50);
+    } else if (hasHistogram) {
+      this.drawHistogram(stats, cx, vizY, 260, 50);
+    } else if (hasHeatmap) {
+      this.drawHeatmapGrid(heatmap, cx, vizY, 100, 60);
     }
+  }
+
+  /** Draw a compact score histogram bar chart. */
+  private drawHistogram(stats: DailyStats, cx: number, y: number, width: number, height: number): void {
+    const { histogram } = stats;
+    if (!histogram || histogram.length === 0) return;
+
+    const gfx = this.add.graphics().setDepth(50).setAlpha(0);
+    const barCount = histogram.length;
+    const barWidth = Math.floor((width - (barCount - 1) * 2) / barCount);
+    const gap = 2;
+    const startX = cx - width / 2;
+    const maxCount = Math.max(...histogram.map(h => h.count), 1);
+
+    // Background
+    gfx.fillStyle(0x1a1a2e, 0.6);
+    gfx.fillRoundedRect(startX - 6, y - 4, width + 12, height + 22, 4);
+
+    // Bars
+    histogram.forEach((bucket, i) => {
+      const barHeight = Math.max(2, (bucket.count / maxCount) * height);
+      const bx = startX + i * (barWidth + gap);
+      const by = y + height - barHeight;
+
+      // Color gradient: low=blue, high=green
+      const ratio = bucket.count / maxCount;
+      const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+        new Phaser.Display.Color(68, 102, 153),
+        new Phaser.Display.Color(68, 170, 102),
+        100,
+        Math.round(ratio * 100),
+      );
+      gfx.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), 0.9);
+      gfx.fillRect(bx, by, barWidth, barHeight);
+    });
+
+    // Label
+    const label = this.add.text(cx, y + height + 8, 'Punkteverteilung', {
+      fontSize: '8px', color: '#556677',
+    }).setOrigin(0.5).setDepth(50).setAlpha(0);
+
+    this.tweens.add({ targets: [gfx, label], alpha: 1, delay: 400, duration: 600 });
+  }
+
+  /** Draw a mini heatmap grid of placement positions. */
+  private drawHeatmapGrid(heatmap: HeatmapData, cx: number, y: number, width: number, height: number): void {
+    const { topSpots } = heatmap;
+    if (!topSpots || topSpots.length === 0) return;
+
+    const gfx = this.add.graphics().setDepth(50).setAlpha(0);
+    const gridCols = 8;
+    const gridRows = 6;
+    const cellW = width / gridCols;
+    const cellH = height / gridRows;
+    const startX = cx - width / 2;
+
+    // Background
+    gfx.fillStyle(0x1a1a2e, 0.6);
+    gfx.fillRoundedRect(startX - 6, y - 4, width + 12, height + 22, 4);
+
+    // Grid outline
+    gfx.lineStyle(1, 0x334455, 0.4);
+    gfx.strokeRect(startX, y, width, height);
+
+    // Map spots to grid cells (game coords 0-800, 0-600 → grid 8x6)
+    const maxPct = Math.max(...topSpots.map(s => s.pct), 1);
+
+    topSpots.forEach(spot => {
+      const col = Math.min(Math.floor(spot.x / (GAME_WIDTH / gridCols)), gridCols - 1);
+      const row = Math.min(Math.floor(spot.y / (GAME_HEIGHT / gridRows)), gridRows - 1);
+      const intensity = spot.pct / maxPct;
+
+      // Hot color: transparent orange → solid red
+      const alpha = 0.3 + intensity * 0.7;
+      const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+        new Phaser.Display.Color(255, 170, 50),
+        new Phaser.Display.Color(255, 50, 50),
+        100,
+        Math.round(intensity * 100),
+      );
+      gfx.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), alpha);
+      gfx.fillRect(startX + col * cellW, y + row * cellH, cellW, cellH);
+    });
+
+    // Label
+    const label = this.add.text(cx, y + height + 8, 'Platzierungen', {
+      fontSize: '8px', color: '#556677',
+    }).setOrigin(0.5).setDepth(50).setAlpha(0);
+
+    this.tweens.add({ targets: [gfx, label], alpha: 1, delay: 600, duration: 600 });
   }
 }
