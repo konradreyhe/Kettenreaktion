@@ -256,11 +256,12 @@ export class PhysicsManager {
       .tileSprite(cx, cy, staticObj.width, height, 'platform_tile')
       .setDepth(5);
 
+    const seesawProps = BODY_PROPERTIES.seesaw;
     const body = this.scene.matter.add.rectangle(cx, cy, staticObj.width, height, {
       isStatic: false,
-      friction: 0.5,
-      restitution: 0.1,
-      density: 0.005,
+      friction: seesawProps.friction,
+      restitution: seesawProps.restitution,
+      density: seesawProps.density,
       label: 'seesaw',
     });
 

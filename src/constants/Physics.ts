@@ -7,6 +7,7 @@ export const BODY_PROPERTIES: Record<string, BodyOptions> = {
   domino: { friction: 0.4, frictionAir: 0.01, restitution: 0.05, density: 0.002 },
   crate: { friction: 0.6, frictionAir: 0.01, restitution: 0.2, density: 0.003 },
   weight: { friction: 0.3, frictionAir: 0.01, restitution: 0.1, density: 0.005 },
+  seesaw: { friction: 0.5, restitution: 0.1, density: 0.005 },
   static: { isStatic: true, friction: 0.5, restitution: 0.1 },
 };
 

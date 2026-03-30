@@ -47,6 +47,7 @@ export interface HeatmapData {
   date: string;
   totalPlacements: number;
   topSpots: { x: number; y: number; count: number; pct: number }[];
+  grid?: { width: number; height: number; cells: number[] };
 }
 
 export interface StreakData {

@@ -637,15 +637,15 @@ export class ResultScene extends Phaser.Scene {
 
   /** Draw a mini heatmap grid of placement positions. */
   private drawHeatmapGrid(heatmap: HeatmapData, cx: number, y: number, width: number, height: number): void {
-    const { topSpots } = heatmap;
-    if (!topSpots || topSpots.length === 0) return;
-
     const gfx = this.add.graphics().setDepth(50).setAlpha(0);
-    const gridCols = 8;
-    const gridRows = 6;
+    const startX = cx - width / 2;
+
+    // Use full grid data if available, fall back to topSpots
+    const grid = heatmap.grid;
+    const gridCols = grid ? grid.width : 8;
+    const gridRows = grid ? grid.height : 6;
     const cellW = width / gridCols;
     const cellH = height / gridRows;
-    const startX = cx - width / 2;
 
     // Background
     gfx.fillStyle(0x1a1a2e, 0.6);
@@ -655,25 +655,46 @@ export class ResultScene extends Phaser.Scene {
     gfx.lineStyle(1, 0x334455, 0.4);
     gfx.strokeRect(startX, y, width, height);
 
-    // Map spots to grid cells (game coords 0-800, 0-600 → grid 8x6)
-    const maxPct = Math.max(...topSpots.map(s => s.pct), 1);
+    if (grid && grid.cells.length > 0) {
+      // Full grid rendering — every cell with heat color
+      const maxCount = Math.max(...grid.cells, 1);
 
-    topSpots.forEach(spot => {
-      const col = Math.min(Math.floor(spot.x / (GAME_WIDTH / gridCols)), gridCols - 1);
-      const row = Math.min(Math.floor(spot.y / (GAME_HEIGHT / gridRows)), gridRows - 1);
-      const intensity = spot.pct / maxPct;
+      for (let row = 0; row < gridRows; row++) {
+        for (let col = 0; col < gridCols; col++) {
+          const count = grid.cells[row * gridCols + col];
+          if (count === 0) continue;
 
-      // Hot color: transparent orange → solid red
-      const alpha = 0.3 + intensity * 0.7;
-      const color = Phaser.Display.Color.Interpolate.ColorWithColor(
-        new Phaser.Display.Color(255, 170, 50),
-        new Phaser.Display.Color(255, 50, 50),
-        100,
-        Math.round(intensity * 100),
-      );
-      gfx.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), alpha);
-      gfx.fillRect(startX + col * cellW, y + row * cellH, cellW, cellH);
-    });
+          const intensity = count / maxCount;
+          const alpha = 0.2 + intensity * 0.8;
+          const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+            new Phaser.Display.Color(255, 170, 50),
+            new Phaser.Display.Color(255, 50, 50),
+            100,
+            Math.round(intensity * 100),
+          );
+          gfx.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), alpha);
+          gfx.fillRect(startX + col * cellW, y + row * cellH, cellW, cellH);
+        }
+      }
+    } else if (heatmap.topSpots && heatmap.topSpots.length > 0) {
+      // Fallback: plot topSpots onto grid
+      const maxPct = Math.max(...heatmap.topSpots.map(s => s.pct), 1);
+
+      heatmap.topSpots.forEach(spot => {
+        const col = Math.min(Math.floor(spot.x / (GAME_WIDTH / gridCols)), gridCols - 1);
+        const row = Math.min(Math.floor(spot.y / (GAME_HEIGHT / gridRows)), gridRows - 1);
+        const intensity = spot.pct / maxPct;
+        const alpha = 0.3 + intensity * 0.7;
+        const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+          new Phaser.Display.Color(255, 170, 50),
+          new Phaser.Display.Color(255, 50, 50),
+          100,
+          Math.round(intensity * 100),
+        );
+        gfx.fillStyle(Phaser.Display.Color.GetColor(color.r, color.g, color.b), alpha);
+        gfx.fillRect(startX + col * cellW, y + row * cellH, cellW, cellH);
+      });
+    }
 
     // Label
     const label = this.add.text(cx, y + height + 8, 'Platzierungen', {
