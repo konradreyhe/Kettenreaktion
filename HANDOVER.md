@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 8 focused on visual verification and stability fixes. Verified all wipe transitions across every scene path (Boot->Menu, Menu->Game, Game retry cycle, Game->Result, Result->Menu, Menu->HowTo, Menu->Zen, Menu->Stats, Menu->Practice). **Found and fixed a critical NaN camera bug** that caused permanent blank screens during gameplay — `CameraFX.followAction()` corrupted `cam.scrollX/scrollY/zoom` with NaN when physics bodies had invalid velocity data. Also applied defensive NaN guards to collision FX, energy sampling, and trail rendering. **210 total levels, 1,712 tests pass, 269KB bundle.**
+Session 8 started with visual verification of wipe transitions, found and fixed a critical NaN camera bug, then brainstormed and implemented three creative features. **Fixed:** NaN camera corruption causing permanent blank screens. **Added:** (1) Dramatic near-miss camera with slow-mo zoom + vignette pulse, (2) Weekly physics mutations (Gummi-Dienstag = 2x bounce, Eis-Donnerstag = zero friction, Flip-Freitag = gravity flip), (3) Ghost placement sharing via URL params so friends can see where you placed. **210 total levels, 1,712 tests pass, 272KB bundle. 6 commits.**
 
 ## Completed This Session
 - [x] Visual verification of all wipe transitions across 7+ scene paths
@@ -10,8 +10,13 @@ Session 8 focused on visual verification and stability fixes. Verified all wipe 
 - [x] Defensive optional chaining on body.velocity in GameScene collision FX
 - [x] Defensive b.speed guard in GameScene energy graph sampling
 - [x] Defensive velocity guard in TrailRenderer.update()
-- [x] Production build verification (269KB bundle, zero errors)
-- [x] Full gameplay flow test (place, simulate, retry, result, menu)
+- [x] "KNAPP!" dramatic near-miss camera — slow-mo zoom, vignette pulse, red glow, bigger text
+- [x] Weekly physics mutations system (DailyMutation.ts) — Gummi-Dienstag, Eis-Donnerstag, Flip-Freitag
+- [x] Mutation badges in level intro overlay and HUD label
+- [x] Ghost placement sharing — ?p=type,x,y URL param shows friend's placement as pulsing hint
+- [x] Share URLs include placement data for ghost comparison
+- [x] Production build verification (272KB bundle, zero errors)
+- [x] Full gameplay flow test (place, simulate, retry, result, menu, ghost placement)
 
 ## Completed in Previous Sessions (Still Working)
 - [x] 210 levels (batches 1-8) including 12 mixed-constraint levels
@@ -57,15 +62,23 @@ Session 8 focused on visual verification and stability fixes. Verified all wipe 
 6. **Real percentile** — replace pseudo-percentile with actual data from Supabase (after Phase 2)
 
 ## Rollback Info
-- Last known good: `2337f90` (HEAD) — 1,712 tests pass, 269KB bundle
+- Last known good: `68b2fac` (HEAD) — 1,712 tests pass, 272KB bundle
+- Pre-brainstorm features: `2337f90` — NaN fixes only, 269KB bundle
 - Pre-session 8: `18834bb` — session 7 handover commit
-- Pre-NaN fix: `18834bb` — if NaN guards cause issues somehow
 - Session 7 last good: `8d989e4` — 1,712 tests pass, 268KB bundle
+- If mutations cause issues: remove DailyMutation.ts import and mutation code blocks in GameScene
+- If near-miss camera is too dramatic: revert checkNearMisses() to simple text popup (pre-brainstorm commit)
 - If wipe transitions break: revert `SceneTransition.ts` and all scene imports (commit `c15cefb` is pre-wipe)
+
+## Files Created This Session
+- `src/systems/DailyMutation.ts` — weekly physics mutations (bounce/friction/gravity per day-of-week)
 
 ## Files Modified This Session
 - `src/game/CameraFX.ts` — NaN guards in followAction(), body velocity optional chaining, resetCamera() NaN recovery
-- `src/scenes/GameScene.ts` — defensive optional chaining on collision velocity, energy b.speed guard
+- `src/scenes/GameScene.ts` — NaN guards, dramatic near-miss camera, mutation integration, ghost placement rendering
+- `src/scenes/MenuScene.ts` — ghost placement URL parsing (?p=type,x,y), pass to GameScene on SPIELEN
+- `src/scenes/ResultScene.ts` — include placement in challenge URL
+- `src/systems/ShareManager.ts` — placement param in share URLs
 - `src/game/TrailRenderer.ts` — defensive velocity optional chaining
 
 ## Key Reference Docs
@@ -77,4 +90,4 @@ Session 8 focused on visual verification and stability fixes. Verified all wipe 
 - `docs/ROADMAP.md` — development phases (Phase 1 MVP complete, Phase 2 = Supabase)
 
 ---
-**Last Updated:** 2026-03-30 (Session 8 — 2 commits, NaN camera bug fix + defensive guards)
+**Last Updated:** 2026-03-30 (Session 8 — 6 commits, NaN fix + 3 creative features)
