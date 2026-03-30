@@ -11,7 +11,7 @@ import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 import { SceneTransition } from '../game/SceneTransition';
-import { submitResult, fetchDailyStats, fetchHeatmap } from '../systems/ApiClient';
+import { submitResult, fetchDailyStats, fetchHeatmap, fetchStreak } from '../systems/ApiClient';
 import type { DailyStats, HeatmapData } from '../systems/ApiClient';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
@@ -32,6 +32,8 @@ interface ResultData {
 
 /** Displays final score, breakdown, sharing, and countdown. */
 export class ResultScene extends Phaser.Scene {
+  private streakText?: Phaser.GameObjects.Text;
+
   constructor() {
     super({ key: 'ResultScene' });
   }
@@ -230,9 +232,9 @@ export class ResultScene extends Phaser.Scene {
       },
     });
 
-    // Streak
+    // Streak (client-side, updated by server when available)
     if (streak > 0) {
-      this.add
+      this.streakText = this.add
         .text(cx, 370, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
           fontSize: '16px',
           color: '#ffaa44',
@@ -540,7 +542,20 @@ export class ResultScene extends Phaser.Scene {
 
   /** Fetch and display global daily stats (non-blocking). */
   private async loadGlobalStats(cx: number): Promise<void> {
-    const [stats, heatmap] = await Promise.all([fetchDailyStats(), fetchHeatmap()]);
+    const [stats, heatmap, serverStreak] = await Promise.all([
+      fetchDailyStats(), fetchHeatmap(), fetchStreak(),
+    ]);
+
+    // Update streak from server (authoritative source)
+    if (serverStreak && serverStreak.streak >= 0 && this.streakText) {
+      const s = serverStreak.streak;
+      this.streakText.setText(`Streak: ${s} ${s === 1 ? 'Tag' : 'Tage'}`);
+      if (s === 0) {
+        this.streakText.setAlpha(0.4);
+      }
+      // Sync server streak back to localStorage
+      StorageManager.syncServerStreak(s);
+    }
     if (!stats || stats.totalPlayers < 1) return;
 
     const y = 542;

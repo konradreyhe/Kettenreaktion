@@ -49,6 +49,12 @@ export interface HeatmapData {
   topSpots: { x: number; y: number; count: number; pct: number }[];
 }
 
+export interface StreakData {
+  streak: number;
+  bestStreak: number;
+  totalDays: number;
+}
+
 /** Submit daily puzzle result. Fire-and-forget — never blocks gameplay. */
 export async function submitResult(params: SubmitParams): Promise<void> {
   try {
@@ -77,6 +83,18 @@ export async function fetchDailyStats(): Promise<DailyStats | null> {
     const date = todayUTC();
     const playerId = getPlayerId();
     const res = await fetch(`${API_BASE}/stats?date=${date}&playerId=${playerId}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch server-validated streak for current player. */
+export async function fetchStreak(): Promise<StreakData | null> {
+  try {
+    const playerId = getPlayerId();
+    const res = await fetch(`${API_BASE}/streak?playerId=${playerId}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {

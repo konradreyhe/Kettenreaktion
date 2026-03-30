@@ -37,6 +37,14 @@ export class StorageManager {
     return StorageManager.load().jokers ?? 0;
   }
 
+  /** Sync streak from server (authoritative). Only updates if server value differs. */
+  static syncServerStreak(serverStreak: number): void {
+    const data = StorageManager.load();
+    if (data.streak !== serverStreak) {
+      StorageManager.save({ streak: serverStreak });
+    }
+  }
+
   static recordPuzzle(puzzleNumber: number, result: PuzzleResult): void {
     const data = StorageManager.load();
     const todayISO = new Date().toISOString().split('T')[0];
