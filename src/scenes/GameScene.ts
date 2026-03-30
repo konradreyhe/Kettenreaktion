@@ -405,7 +405,8 @@ export class GameScene extends Phaser.Scene {
       let energy = 0;
       for (const b of allBods) {
         if (!b.isStatic) {
-          energy += b.speed * b.speed * (b.mass ?? 1);
+          const spd = b.speed ?? 0;
+          energy += spd * spd * (b.mass ?? 1);
         }
       }
       this.energyHistory.push(energy);
@@ -909,8 +910,8 @@ export class GameScene extends Phaser.Scene {
           const cy = (bodyA.position.y + bodyB.position.y) / 2;
 
           // Collision velocity
-          const dvx = bodyA.velocity.x - bodyB.velocity.x;
-          const dvy = bodyA.velocity.y - bodyB.velocity.y;
+          const dvx = (bodyA.velocity?.x ?? 0) - (bodyB.velocity?.x ?? 0);
+          const dvy = (bodyA.velocity?.y ?? 0) - (bodyB.velocity?.y ?? 0);
           const impactSpeed = Math.sqrt(dvx * dvx + dvy * dvy);
 
           // Spark particles at collision point

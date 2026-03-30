@@ -49,8 +49,8 @@ export class TrailRenderer {
 
     for (const entry of this.tracked) {
       const { body, points, color } = entry;
-      const vx = body.velocity.x;
-      const vy = body.velocity.y;
+      const vx = body.velocity?.x ?? 0;
+      const vy = body.velocity?.y ?? 0;
       const speed = Math.sqrt(vx * vx + vy * vy);
 
       // Only record points when moving fast enough
