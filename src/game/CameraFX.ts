@@ -83,16 +83,22 @@ export class CameraFX {
     let cx = 0, cy = 0, totalWeight = 0;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const b of active) {
-      const speed = Math.sqrt(b.velocity.x ** 2 + b.velocity.y ** 2);
+      const vx = b.velocity?.x ?? 0;
+      const vy = b.velocity?.y ?? 0;
+      const px = b.position.x;
+      const py = b.position.y;
+      if (isNaN(vx) || isNaN(vy) || isNaN(px) || isNaN(py)) continue;
+      const speed = Math.sqrt(vx ** 2 + vy ** 2);
       const w = 1 + speed * 0.5;
-      cx += b.position.x * w;
-      cy += b.position.y * w;
+      cx += px * w;
+      cy += py * w;
       totalWeight += w;
-      minX = Math.min(minX, b.position.x);
-      maxX = Math.max(maxX, b.position.x);
-      minY = Math.min(minY, b.position.y);
-      maxY = Math.max(maxY, b.position.y);
+      minX = Math.min(minX, px);
+      maxX = Math.max(maxX, px);
+      minY = Math.min(minY, py);
+      maxY = Math.max(maxY, py);
     }
+    if (totalWeight === 0) return;
     cx /= totalWeight;
     cy /= totalWeight;
 
@@ -112,6 +118,15 @@ export class CameraFX {
     // Clamp to game bounds
     const clampedX = Math.max(-20, Math.min(targetScrollX, gameWidth * 0.3));
     const clampedY = Math.max(-20, Math.min(targetScrollY, gameHeight * 0.3));
+
+    // Guard against NaN — if any value is NaN, reset to safe defaults
+    if (isNaN(clampedX) || isNaN(clampedY) || isNaN(targetZoom)) return;
+    if (isNaN(cam.scrollX) || isNaN(cam.scrollY) || isNaN(cam.zoom)) {
+      cam.scrollX = 0;
+      cam.scrollY = 0;
+      cam.zoom = 1;
+      return;
+    }
 
     cam.scrollX += (clampedX - cam.scrollX) * lerpFactor;
     cam.scrollY += (clampedY - cam.scrollY) * lerpFactor;
@@ -143,6 +158,15 @@ export class CameraFX {
   /** Smoothly return camera to default position. */
   resetCamera(durationMs: number = 600): void {
     const cam = this.scene.cameras.main;
+
+    // If camera values are NaN, snap directly — tweening from NaN won't work
+    if (isNaN(cam.scrollX) || isNaN(cam.scrollY) || isNaN(cam.zoom)) {
+      cam.scrollX = 0;
+      cam.scrollY = 0;
+      cam.zoom = 1;
+      return;
+    }
+
     this.scene.tweens.add({
       targets: cam,
       scrollX: 0, scrollY: 0, zoom: 1,
