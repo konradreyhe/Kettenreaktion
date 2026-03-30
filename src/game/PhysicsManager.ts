@@ -416,6 +416,7 @@ export class PhysicsManager {
       const segBody = this.scene.matter.add.circle(sx, sy, segSize / 2, {
         density: 0.001,
         friction: 0.2,
+        frictionAir: 0.05,
         restitution: 0.0,
         label: 'rope_segment',
       });
