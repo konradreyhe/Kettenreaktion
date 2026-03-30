@@ -217,7 +217,7 @@ export class MenuScene extends Phaser.Scene {
         color: playColor,
         hoverColor: hasResult ? 0x334466 : 0x4466cc,
         onClick: () => {
-          SceneTransition.wipeOut(this, 'GameScene');
+          SceneTransition.wipeOut(this, 'GameScene', ghostPlacement ? { ghostPlacement } : undefined);
         },
       });
     }
