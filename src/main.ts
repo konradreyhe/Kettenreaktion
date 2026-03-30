@@ -33,6 +33,14 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, MenuScene, HowToScene, PracticeScene, StatsScene, GameScene, ResultScene, ReplayScene, ZenScene, EditorScene],
 };
 
+// Global error handlers — prevent silent crashes
+window.addEventListener('error', (e) => {
+  console.error('[KR] Unhandled error:', e.error ?? e.message);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[KR] Unhandled promise rejection:', e.reason);
+});
+
 const game = new Phaser.Game(config);
 
 // Expose for dev tools / automated testing

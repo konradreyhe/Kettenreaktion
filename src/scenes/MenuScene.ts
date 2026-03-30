@@ -268,6 +268,27 @@ export class MenuScene extends Phaser.Scene {
       }
     });
 
+    // First-time player: highlight tutorial
+    if (StorageManager.load().gamesPlayed === 0) {
+      const hint = this.add.text(cx, 430,
+        'Erstes Mal hier? Probiere die Anleitung!', {
+          fontSize: '11px', color: '#88aacc',
+        }).setOrigin(0.5).setDepth(10).setAlpha(0);
+
+      this.tweens.add({
+        targets: hint, alpha: 1, delay: 1200, duration: 800,
+      });
+
+      // Pulse the Anleitung button area
+      const pulse = this.add.rectangle(cx - 40, 390, 114, 40, 0x88ccff, 0)
+        .setDepth(8);
+      this.tweens.add({
+        targets: pulse,
+        alpha: { from: 0, to: 0.15 },
+        duration: 1000, yoyo: true, repeat: 3, delay: 1500,
+      });
+    }
+
     // Yesterday's replay button (only if yesterday's puzzle has replay data)
     const yesterdayNum = puzzleNum - 1;
     const yesterdayResult = yesterdayNum > 0 ? StorageManager.getPuzzleResult(yesterdayNum) : null;

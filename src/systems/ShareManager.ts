@@ -68,7 +68,7 @@ export class ShareManager {
     }
 
     // Share URL with optional ghost placement
-    const baseUrl = 'kettenreaktion.crelvo.dev';
+    const baseUrl = 'https://kettenreaktion.crelvo.dev';
     if (params.placement) {
       const p = params.placement;
       lines.push('', `${baseUrl}?p=${p.type},${Math.round(p.x)},${Math.round(p.y)}`);
