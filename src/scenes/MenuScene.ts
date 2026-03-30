@@ -16,6 +16,17 @@ export class MenuScene extends Phaser.Scene {
     super({ key: 'MenuScene' });
   }
 
+  /** Parse ghost placement from URL param (e.g., "ball,125,175"). */
+  private static parseGhostParam(param: string | null): { type: string; x: number; y: number } | undefined {
+    if (!param) return undefined;
+    const parts = param.split(',');
+    if (parts.length !== 3) return undefined;
+    const x = parseInt(parts[1], 10);
+    const y = parseInt(parts[2], 10);
+    if (isNaN(x) || isNaN(y)) return undefined;
+    return { type: parts[0], x, y };
+  }
+
   create(): void {
     const cx = GAME_WIDTH / 2;
 
@@ -23,17 +34,20 @@ export class MenuScene extends Phaser.Scene {
     const params = new URLSearchParams(window.location.search);
     window.history.replaceState({}, '', window.location.pathname);
 
+    // Parse ghost placement from shared URL (?p=ball,125,175)
+    const ghostPlacement = MenuScene.parseGhostParam(params.get('p'));
+
     const challengeParam = params.get('challenge');
     if (challengeParam !== null) {
       const levelIndex = parseInt(challengeParam, 10);
       if (!isNaN(levelIndex) && levelIndex >= 0) {
         const challengeScore = parseInt(params.get('score') ?? '', 10) || undefined;
-        this.scene.start('GameScene', { practiceIndex: levelIndex, challengeScore });
+        this.scene.start('GameScene', { practiceIndex: levelIndex, challengeScore, ghostPlacement });
         return;
       }
     }
     if (params.get('play') === 'today') {
-      this.scene.start('GameScene');
+      this.scene.start('GameScene', { ghostPlacement });
       return;
     }
     if (params.get('mode') === 'zen') {

@@ -20,6 +20,7 @@ export interface ShareParams {
   totalTargets: number;
   title?: string;
   replay?: ReplayFrame[];
+  placement?: { type: string; x: number; y: number };
 }
 
 /** Generates share text and handles sharing via Web Share API / Clipboard. */
@@ -66,7 +67,14 @@ export class ShareManager {
       lines.push(`\u{1F3C6} ${params.title}`);
     }
 
-    lines.push('', 'konradreyhe.github.io/Kettenreaktion');
+    // Share URL with optional ghost placement
+    const baseUrl = 'konradreyhe.github.io/Kettenreaktion';
+    if (params.placement) {
+      const p = params.placement;
+      lines.push('', `${baseUrl}?p=${p.type},${Math.round(p.x)},${Math.round(p.y)}`);
+    } else {
+      lines.push('', baseUrl);
+    }
 
     return lines.join('\n');
   }

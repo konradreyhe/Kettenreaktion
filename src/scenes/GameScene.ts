@@ -9,6 +9,7 @@ import { SceneTransition } from '../game/SceneTransition';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { EventManager } from '../systems/EventManager';
+import { getTodaysMutation, hasMutation } from '../systems/DailyMutation';
 import { MusicEngine } from '../systems/MusicEngine';
 import { HUD } from '../ui/HUD';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
@@ -109,12 +110,14 @@ export class GameScene extends Phaser.Scene {
   private editorLevel: Level | null = null;
 
   private challengeScore: number | null = null;
+  private ghostPlacement: { type: string; x: number; y: number } | null = null;
 
-  init(data?: { practiceIndex?: number; editorLevel?: Level; challengeScore?: number }): void {
+  init(data?: { practiceIndex?: number; editorLevel?: Level; challengeScore?: number; ghostPlacement?: { type: string; x: number; y: number } }): void {
     this.isPractice = data?.practiceIndex !== undefined;
     this.practiceIndex = data?.practiceIndex ?? 0;
     this.editorLevel = data?.editorLevel ?? null;
     this.challengeScore = data?.challengeScore ?? null;
+    this.ghostPlacement = data?.ghostPlacement ?? null;
   }
 
   create(): void {
@@ -144,12 +147,17 @@ export class GameScene extends Phaser.Scene {
         ? LevelLoader.loadByIndex(this.practiceIndex)
         : LevelLoader.loadToday();
 
-    // Gravity Flip Friday — invert gravity and mirror level on Fridays (UTC)
-    const isFriday = new Date().getUTCDay() === 5;
-    this.isGravityFlipped = isFriday && !this.isPractice;
-    if (this.isGravityFlipped) {
-      this.matter.world.setGravity(0, -1);
-      this.mirrorLevelY();
+    // Weekly physics mutations (daily puzzle only)
+    const mutation = !this.isPractice ? getTodaysMutation() : null;
+    this.isGravityFlipped = mutation?.flipY ?? false;
+    if (mutation && mutation.name !== '') {
+      if (mutation.gravityScale !== 1) {
+        this.matter.world.setGravity(0, mutation.gravityScale);
+      }
+      if (mutation.flipY) {
+        this.mirrorLevelY();
+      }
+      this.applyMutationToPhysics(mutation);
     }
 
     this.createTextures();
@@ -180,11 +188,9 @@ export class GameScene extends Phaser.Scene {
     if (this.isPractice) {
       this.hud.updateLabel(`Uebung: ${this.level.name}`);
     } else {
-      const label = isFriday
-        ? `\u{1F504} Flip Friday #${DailySystem.getPuzzleNumber()}`
-        : undefined;
-      if (label) {
-        this.hud.updateLabel(label);
+      const mutationForLabel = getTodaysMutation();
+      if (mutationForLabel.name !== '') {
+        this.hud.updateLabel(`${mutationForLabel.icon} ${mutationForLabel.name} #${DailySystem.getPuzzleNumber()}`);
       } else {
         this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
       }
@@ -200,6 +206,24 @@ export class GameScene extends Phaser.Scene {
         targets: target, alpha: 0.8, duration: 600, delay: 500,
         yoyo: true, hold: 3000,
       });
+    }
+
+    // Ghost placement from shared URL — show friend's placement as transparent hint
+    if (this.ghostPlacement) {
+      const gp = this.ghostPlacement;
+      const ghost = this.add.circle(gp.x, gp.y, 10,
+        gp.type === 'ball' ? 0x8888ff : 0xddaa44, 0.2)
+        .setDepth(4);
+      const label = this.add.text(gp.x, gp.y - 18, 'Freund', {
+        fontSize: '9px', color: '#8888aa',
+      }).setOrigin(0.5).setDepth(4).setAlpha(0.5);
+      // Pulse animation
+      this.tweens.add({
+        targets: ghost, alpha: 0.1, duration: 800,
+        yoyo: true, repeat: -1,
+      });
+      // Clean up after first placement
+      this.events.once('simulate', () => { ghost.destroy(); label.destroy(); });
     }
 
     // Pause physics when tab is hidden to prevent time accumulation
@@ -280,6 +304,37 @@ export class GameScene extends Phaser.Scene {
       .setDepth(201)
       .setAlpha(0);
 
+    // Mutation badge (if today has a physics twist)
+    const introElements: Phaser.GameObjects.GameObject[] = [overlay, levelName, diffText, info, hint];
+    const mutation = !this.isPractice ? getTodaysMutation() : null;
+    if (mutation && mutation.name !== '') {
+      const mutBadge = this.add
+        .text(cx, cy + 100, `${mutation.icon} ${mutation.name}`, {
+          fontFamily: FONT_TITLE,
+          fontSize: '14px',
+          color: '#ff8844',
+          fontStyle: 'bold',
+          stroke: '#111122',
+          strokeThickness: 2,
+        })
+        .setOrigin(0.5)
+        .setDepth(201)
+        .setAlpha(0);
+
+      const mutDesc = this.add
+        .text(cx, cy + 120, mutation.description, {
+          fontSize: '11px',
+          color: '#aa6633',
+        })
+        .setOrigin(0.5)
+        .setDepth(201)
+        .setAlpha(0);
+
+      this.tweens.add({ targets: mutBadge, alpha: 1, delay: 600, duration: 300 });
+      this.tweens.add({ targets: mutDesc, alpha: 1, delay: 700, duration: 300 });
+      introElements.push(mutBadge, mutDesc);
+    }
+
     // Animate in
     this.tweens.add({
       targets: levelName,
@@ -306,18 +361,15 @@ export class GameScene extends Phaser.Scene {
       duration: 300,
     });
 
-    // Fade out after 2s
-    this.time.delayedCall(2200, () => {
+    // Fade out after 2.5s (slightly longer if mutation shown)
+    const introDuration = mutation && mutation.name !== '' ? 2800 : 2200;
+    this.time.delayedCall(introDuration, () => {
       this.tweens.add({
-        targets: [overlay, levelName, diffText, info, hint],
+        targets: introElements,
         alpha: 0,
         duration: 400,
         onComplete: () => {
-          overlay.destroy();
-          levelName.destroy();
-          diffText.destroy();
-          info.destroy();
-          hint.destroy();
+          introElements.forEach(el => el.destroy());
           this.introActive = false;
         },
       });
@@ -548,6 +600,20 @@ export class GameScene extends Phaser.Scene {
     // Mirror targets
     for (const target of this.level.targets) {
       target.y = flipY(target.y);
+    }
+  }
+
+  /** Apply mutation physics multipliers to all bodies in the world. */
+  private applyMutationToPhysics(mutation: import('../systems/DailyMutation').PhysicsMutation): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    for (const body of bodies) {
+      if (mutation.bounceMult !== 1) {
+        body.restitution *= mutation.bounceMult;
+      }
+      if (mutation.frictionMult !== 1) {
+        body.friction *= mutation.frictionMult;
+      }
     }
   }
 
@@ -1246,6 +1312,7 @@ export class GameScene extends Phaser.Scene {
     this.isSimulating = true;
     this.simulationStartTime = Date.now();
     this.music.start();
+    this.events.emit('simulate');
 
     this.previewGhost?.setVisible(false);
     this.placementZoneBorder?.setAlpha(0.1);
@@ -1286,6 +1353,14 @@ export class GameScene extends Phaser.Scene {
     const objectType = this.selectedObjectType;
     this.placementData = { type: objectType, x, y };
     this.placedSprite = this.physicsManager.createPlayerObject(objectType, x, y);
+
+    // Apply daily mutation to placed object
+    const placeMutation = !this.isPractice ? getTodaysMutation() : null;
+    if (placeMutation && placeMutation.name !== '' && this.placedSprite.body) {
+      const body = this.placedSprite.body as MatterJS.BodyType;
+      if (placeMutation.bounceMult !== 1) body.restitution *= placeMutation.bounceMult;
+      if (placeMutation.frictionMult !== 1) body.friction *= placeMutation.frictionMult;
+    }
 
     // Add glow PostFX to placed object (WebGL only)
     if (this.isWebGL && this.placedSprite) {
@@ -1552,14 +1627,36 @@ export class GameScene extends Phaser.Scene {
         if (dist < NEAR_MISS_PX + 15) {
           AudioManager.playImpact(0, target.x);
 
+          // Dramatic near-miss camera: slow-mo + zoom + vignette pulse
+          if (!AccessibilityManager.prefersReducedMotion()) {
+            this.cameraFX.slowMotion(0.15, 600);
+            this.cameraFX.zoomTo(1.4, 200);
+            this.cameraFX.addTrauma(0.25);
+
+            // Red-tinted vignette pulse for drama
+            if (this.cameraVignette) {
+              const prevStrength = this.cameraVignette.strength;
+              this.cameraVignette.strength = 0.7;
+              this.time.delayedCall(400, () => {
+                if (this.cameraVignette) this.cameraVignette.strength = prevStrength;
+              });
+            }
+
+            // Snap zoom back after slow-mo ends
+            this.time.delayedCall(600 * 0.15, () => {
+              this.cameraFX.resetZoom(400);
+            });
+          }
+
           const nearMiss = this.add
-            .text(target.x, target.y - 25, 'Knapp!', {
+            .text(target.x, target.y - 25, 'KNAPP!', {
               fontFamily: FONT_TITLE,
-              fontSize: '14px',
-              color: AccessibilityManager.nearMissHex,
+              fontSize: '18px',
+              color: '#ff4444',
               fontStyle: 'bold',
               stroke: '#111122',
-              strokeThickness: 2,
+              strokeThickness: 3,
+              shadow: { offsetX: 0, offsetY: 0, color: '#ff444488', blur: 12, fill: false, stroke: true },
             })
             .setOrigin(0.5)
             .setDepth(55)
@@ -1567,8 +1664,8 @@ export class GameScene extends Phaser.Scene {
 
           this.tweens.add({
             targets: nearMiss,
-            scaleX: 1,
-            scaleY: 1,
+            scaleX: 1.3,
+            scaleY: 1.3,
             duration: 200,
             ease: 'Back.easeOut',
           });
@@ -1576,8 +1673,10 @@ export class GameScene extends Phaser.Scene {
             targets: nearMiss,
             y: target.y - 65,
             alpha: 0,
-            delay: 300,
-            duration: 900,
+            scaleX: 1.6,
+            scaleY: 1.6,
+            delay: 400,
+            duration: 800,
             onComplete: () => nearMiss.destroy(),
           });
           break;
