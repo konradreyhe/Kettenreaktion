@@ -11,6 +11,7 @@ import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 import { SceneTransition } from '../game/SceneTransition';
+import { getTomorrowsMutation } from '../systems/DailyMutation';
 import { submitResult, fetchDailyStats, fetchHeatmap, fetchStreak } from '../systems/ApiClient';
 import type { DailyStats, HeatmapData } from '../systems/ApiClient';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
@@ -445,6 +446,29 @@ export class ResultScene extends Phaser.Scene {
         this.showAchievementToast(achievement.icon, achievement.name, achievement.description);
       });
     });
+
+    // Mutation forecast for tomorrow (daily mode only)
+    if (!isPractice) {
+      const tomorrow = getTomorrowsMutation();
+      if (tomorrow.name !== '') {
+        const forecastText = this.add
+          .text(cx, GAME_HEIGHT - 30, `Morgen: ${tomorrow.icon} ${tomorrow.name}`, {
+            fontFamily: FONT_UI,
+            fontSize: '9px',
+            color: '#556688',
+            letterSpacing: 1,
+          })
+          .setOrigin(0.5)
+          .setAlpha(0);
+
+        this.tweens.add({
+          targets: forecastText,
+          alpha: 1,
+          delay: 1000,
+          duration: 500,
+        });
+      }
+    }
 
     // Countdown
     const countdownText = this.add

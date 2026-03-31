@@ -523,16 +523,20 @@ export class GameScene extends Phaser.Scene {
   private applyThemeTint(): void {
     const theme = this.level.theme;
     let tintColor = 0x1a1a2e; // default
+    let tintAlpha = 0.3;
 
     switch (theme) {
       case 'wood':
-        tintColor = 0x1e1a14; // warm dark brown
+        tintColor = 0x2a2010; // warm amber overlay
+        tintAlpha = 0.4;
         break;
       case 'stone':
-        tintColor = 0x181c22; // cool dark blue-grey
+        tintColor = 0x1a1a24; // cool blue-grey
+        tintAlpha = 0.35;
         break;
       case 'metal':
-        tintColor = 0x141418; // near-black with purple hint
+        tintColor = 0x0a0a14; // near-black with blue
+        tintAlpha = 0.4;
         break;
     }
 
@@ -540,11 +544,12 @@ export class GameScene extends Phaser.Scene {
     const event = EventManager.getCurrentEvent();
     if (event) {
       tintColor = Phaser.Display.Color.HexStringToColor(event.theme.bgColor).color;
+      tintAlpha = 0.3;
     }
 
     // Subtle full-screen color overlay
     this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, tintColor, 0.3)
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, tintColor, tintAlpha)
       .setDepth(1);
   }
 
@@ -1052,7 +1057,7 @@ export class GameScene extends Phaser.Scene {
           if (newChain > prevChain) {
             AudioManager.playChainUp(newChain, cx);
           } else {
-            AudioManager.playImpact(newChain, cx);
+            AudioManager.playMaterialImpact(this.level.theme, newChain, cx);
           }
         }
 
@@ -1677,7 +1682,7 @@ export class GameScene extends Phaser.Scene {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < NEAR_MISS_PX + 15) {
-          AudioManager.playImpact(0, target.x);
+          AudioManager.playMaterialImpact(this.level.theme, 0, target.x);
 
           // Dramatic near-miss camera: slow-mo + zoom + vignette pulse
           if (!AccessibilityManager.prefersReducedMotion()) {

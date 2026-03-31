@@ -20,6 +20,7 @@ export class PhysicsManager {
   /** Map dynamic object IDs to their Matter bodies for constraint lookup. */
   private dynamicBodyMap: Map<string, MatterJS.BodyType> = new Map();
   private gravityFlipped = false;
+  private theme: string = 'wood';
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -33,6 +34,7 @@ export class PhysicsManager {
   buildLevel(level: Level, gravityFlipped = false): void {
     this.clearLevel();
     this.gravityFlipped = gravityFlipped;
+    this.theme = level.theme ?? 'wood';
     this.buildFloor(level.world.width, level.world.height, gravityFlipped);
     this.buildWalls(level.world.width, level.world.height);
 
@@ -126,9 +128,21 @@ export class PhysicsManager {
     const cy = obj.y + height / 2;
     const angleDeg = obj.angle ?? 0;
 
-    // Choose tile texture based on type
-    const tileKey = obj.type === 'ramp' ? 'ramp_tile' : 'platform_tile';
-    const borderColor = obj.type === 'ramp' ? 0x6666aa : 0x77aaaa;
+    // Choose tile texture based on type and theme
+    const themeSuffix = `_${this.theme}`;
+    const rawRampKey = `ramp_tile${themeSuffix}`;
+    const rawPlatformKey = `platform_tile${themeSuffix}`;
+    const tileKey = obj.type === 'ramp'
+      ? (this.scene.textures.exists(rawRampKey) ? rawRampKey : 'ramp_tile')
+      : (this.scene.textures.exists(rawPlatformKey) ? rawPlatformKey : 'platform_tile');
+
+    // Border color per theme
+    const borderColors: Record<string, number> = {
+      wood: 0xaa8855,
+      stone: 0x777788,
+      metal: 0x6688aa,
+    };
+    const borderColor = borderColors[this.theme] ?? (obj.type === 'ramp' ? 0x6666aa : 0x77aaaa);
 
     // Tiled sprite for textured look
     const tileSprite = this.scene.add
@@ -150,10 +164,16 @@ export class PhysicsManager {
       border.clear();
     }
 
-    // Top surface highlight for platforms
+    // Top surface highlight for platforms (themed)
     if (obj.type === 'platform' && angleDeg === 0) {
+      const highlightColors: Record<string, number> = {
+        wood: 0xccaa77,
+        stone: 0x888899,
+        metal: 0x88aacc,
+      };
+      const highlightColor = highlightColors[this.theme] ?? 0xaadddd;
       const highlight = this.scene.add.graphics().setDepth(7);
-      highlight.lineStyle(2, 0xaadddd, 0.25);
+      highlight.lineStyle(2, highlightColor, 0.25);
       highlight.moveTo(cx - obj.width / 2, cy - height / 2);
       highlight.lineTo(cx + obj.width / 2, cy - height / 2);
       highlight.strokePath();
@@ -176,8 +196,10 @@ export class PhysicsManager {
     const floorY = flipped ? floorH / 2 : h - floorH / 2;
     const edgeY = flipped ? floorH : h - floorH;
 
+    const themedFloorKey = `floor_tile_${this.theme}`;
+    const floorKey = this.scene.textures.exists(themedFloorKey) ? themedFloorKey : 'floor_tile';
     const tileSprite = this.scene.add
-      .tileSprite(w / 2, floorY, w, floorH, 'floor_tile')
+      .tileSprite(w / 2, floorY, w, floorH, floorKey)
       .setDepth(5);
 
     const edge = this.scene.add.graphics().setDepth(7);
@@ -251,9 +273,11 @@ export class PhysicsManager {
       this.tracked.splice(existingIdx, 1);
     }
 
-    // Create dynamic body for the seesaw plank
+    // Create dynamic body for the seesaw plank (themed)
+    const themedPlatKey = `platform_tile_${this.theme}`;
+    const seesawTileKey = this.scene.textures.exists(themedPlatKey) ? themedPlatKey : 'platform_tile';
     const tileSprite = this.scene.add
-      .tileSprite(cx, cy, staticObj.width, height, 'platform_tile')
+      .tileSprite(cx, cy, staticObj.width, height, seesawTileKey)
       .setDepth(5);
 
     const seesawProps = BODY_PROPERTIES.seesaw;

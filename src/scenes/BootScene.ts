@@ -81,8 +81,17 @@ export class BootScene extends Phaser.Scene {
     this.genWeight();
     this.genStar();
     this.genPlatform();
+    this.genPlatformWood();
+    this.genPlatformStone();
+    this.genPlatformMetal();
     this.genRamp();
+    this.genRampWood();
+    this.genRampStone();
+    this.genRampMetal();
     this.genFloor();
+    this.genFloorWood();
+    this.genFloorStone();
+    this.genFloorMetal();
   }
 
   /** Ball — gradient blue sphere with specular highlights. */
@@ -415,6 +424,322 @@ export class BootScene extends Phaser.Scene {
     gfx.strokePath();
 
     gfx.generateTexture('ramp_tile', s, s);
+    gfx.destroy();
+  }
+
+  /** Platform (wood) — warm brown with horizontal grain lines and knot. */
+  private genPlatformWood(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const s = 10;
+
+    // Base — warm brown
+    gfx.fillStyle(0x8b6b3d);
+    gfx.fillRect(0, 0, s, s);
+
+    // Horizontal wood grain lines
+    gfx.lineStyle(1, 0x6b4e2a, 0.3);
+    gfx.moveTo(0, 3);
+    gfx.lineTo(s, 3);
+    gfx.moveTo(0, 6);
+    gfx.lineTo(s, 6);
+    gfx.moveTo(0, 9);
+    gfx.lineTo(s, 9);
+    gfx.strokePath();
+
+    // Subtle knot circle at center
+    gfx.lineStyle(1, 0x6b4e2a, 0.25);
+    gfx.strokeCircle(s / 2, s / 2, 2);
+
+    // Top edge warm highlight
+    gfx.lineStyle(1, 0xccaa77, 0.4);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(s, 0);
+    gfx.strokePath();
+
+    // Bottom edge shadow
+    gfx.lineStyle(1, 0x4a3520, 0.3);
+    gfx.moveTo(0, s - 1);
+    gfx.lineTo(s, s - 1);
+    gfx.strokePath();
+
+    gfx.generateTexture('platform_tile_wood', s, s);
+    gfx.destroy();
+  }
+
+  /** Platform (stone) — cool grey with noise dots and rough edges. */
+  private genPlatformStone(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const s = 10;
+
+    // Base — cool grey
+    gfx.fillStyle(0x5a5a6a);
+    gfx.fillRect(0, 0, s, s);
+
+    // Random-looking noise dots (fixed positions for determinism)
+    gfx.fillStyle(0x6a6a7a, 0.5);
+    gfx.fillRect(2, 3, 1, 1);
+    gfx.fillRect(7, 1, 1, 1);
+    gfx.fillRect(4, 7, 1, 1);
+    gfx.fillStyle(0x4a4a5a, 0.5);
+    gfx.fillRect(1, 6, 1, 1);
+    gfx.fillRect(8, 5, 1, 1);
+
+    // Rough top edge
+    gfx.lineStyle(1, 0x6e6e7e, 0.4);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(s, 0);
+    gfx.strokePath();
+
+    // Rough bottom edge — slightly different color
+    gfx.lineStyle(1, 0x44444e, 0.3);
+    gfx.moveTo(0, s - 1);
+    gfx.lineTo(s, s - 1);
+    gfx.strokePath();
+
+    gfx.generateTexture('platform_tile_stone', s, s);
+    gfx.destroy();
+  }
+
+  /** Platform (metal) — dark blue-grey with brushed lines and rivet dots. */
+  private genPlatformMetal(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const s = 10;
+
+    // Base — dark blue-grey
+    gfx.fillStyle(0x3a3a4a);
+    gfx.fillRect(0, 0, s, s);
+
+    // Horizontal brushed-metal lines
+    gfx.lineStyle(1, 0x8899aa, 0.15);
+    gfx.moveTo(0, 2);
+    gfx.lineTo(s, 2);
+    gfx.moveTo(0, 5);
+    gfx.lineTo(s, 5);
+    gfx.moveTo(0, 8);
+    gfx.lineTo(s, 8);
+    gfx.strokePath();
+
+    // Single bright specular dot
+    gfx.fillStyle(0xffffff, 0.2);
+    gfx.fillCircle(s / 2, s / 2, 1);
+
+    // Sharp top highlight
+    gfx.lineStyle(1, 0x88aacc, 0.5);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(s, 0);
+    gfx.strokePath();
+
+    // Bottom edge
+    gfx.lineStyle(1, 0x222233, 0.4);
+    gfx.moveTo(0, s - 1);
+    gfx.lineTo(s, s - 1);
+    gfx.strokePath();
+
+    // Rivet dots at corners
+    gfx.fillStyle(0x667788, 0.4);
+    gfx.fillCircle(1, 1, 0.8);
+    gfx.fillCircle(s - 1, 1, 0.8);
+    gfx.fillCircle(1, s - 1, 0.8);
+    gfx.fillCircle(s - 1, s - 1, 0.8);
+
+    gfx.generateTexture('platform_tile_metal', s, s);
+    gfx.destroy();
+  }
+
+  /** Ramp (wood) — brown with wood grain chevron. */
+  private genRampWood(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const s = 8;
+
+    // Base — warm brown
+    gfx.fillStyle(0x8b6b3d);
+    gfx.fillRect(0, 0, s, s);
+
+    // Wood grain lines
+    gfx.lineStyle(1, 0x6b4e2a, 0.3);
+    gfx.moveTo(0, 2);
+    gfx.lineTo(s, 2);
+    gfx.moveTo(0, 5);
+    gfx.lineTo(s, 5);
+    gfx.strokePath();
+
+    // Chevron hint
+    gfx.lineStyle(1, 0xccaa77, 0.2);
+    gfx.moveTo(0, s * 0.7);
+    gfx.lineTo(s / 2, s * 0.3);
+    gfx.lineTo(s, s * 0.7);
+    gfx.strokePath();
+
+    gfx.generateTexture('ramp_tile_wood', s, s);
+    gfx.destroy();
+  }
+
+  /** Ramp (stone) — grey with rough feel. */
+  private genRampStone(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const s = 8;
+
+    // Base — cool grey
+    gfx.fillStyle(0x5a5a6a);
+    gfx.fillRect(0, 0, s, s);
+
+    // Noise dots
+    gfx.fillStyle(0x6a6a7a, 0.4);
+    gfx.fillRect(2, 2, 1, 1);
+    gfx.fillRect(5, 6, 1, 1);
+    gfx.fillStyle(0x4a4a5a, 0.4);
+    gfx.fillRect(6, 1, 1, 1);
+
+    // Chevron hint
+    gfx.lineStyle(1, 0x6e6e7e, 0.25);
+    gfx.moveTo(0, s * 0.7);
+    gfx.lineTo(s / 2, s * 0.3);
+    gfx.lineTo(s, s * 0.7);
+    gfx.strokePath();
+
+    gfx.generateTexture('ramp_tile_stone', s, s);
+    gfx.destroy();
+  }
+
+  /** Ramp (metal) — dark metallic with brushed lines. */
+  private genRampMetal(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const s = 8;
+
+    // Base — dark blue-grey
+    gfx.fillStyle(0x3a3a4a);
+    gfx.fillRect(0, 0, s, s);
+
+    // Brushed lines
+    gfx.lineStyle(1, 0x8899aa, 0.15);
+    gfx.moveTo(0, 2);
+    gfx.lineTo(s, 2);
+    gfx.moveTo(0, 5);
+    gfx.lineTo(s, 5);
+    gfx.strokePath();
+
+    // Chevron hint
+    gfx.lineStyle(1, 0x88aacc, 0.25);
+    gfx.moveTo(0, s * 0.7);
+    gfx.lineTo(s / 2, s * 0.3);
+    gfx.lineTo(s, s * 0.7);
+    gfx.strokePath();
+
+    gfx.generateTexture('ramp_tile_metal', s, s);
+    gfx.destroy();
+  }
+
+  /** Floor (wood) — warm planks. */
+  private genFloorWood(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const w = 16;
+    const h = 16;
+
+    // Base — warm brown
+    gfx.fillStyle(0x7a5c30);
+    gfx.fillRect(0, 0, w, h);
+
+    // Plank lines — horizontal
+    gfx.lineStyle(1, 0x5a3e1c, 0.4);
+    gfx.moveTo(0, 4);
+    gfx.lineTo(w, 4);
+    gfx.moveTo(0, 8);
+    gfx.lineTo(w, 8);
+    gfx.moveTo(0, 12);
+    gfx.lineTo(w, 12);
+    gfx.strokePath();
+
+    // Vertical plank gap (offset)
+    gfx.lineStyle(1, 0x5a3e1c, 0.3);
+    gfx.moveTo(w / 2, 0);
+    gfx.lineTo(w / 2, h);
+    gfx.strokePath();
+
+    // Top highlight
+    gfx.lineStyle(1, 0xccaa77, 0.3);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(w, 0);
+    gfx.strokePath();
+
+    gfx.generateTexture('floor_tile_wood', w, h);
+    gfx.destroy();
+  }
+
+  /** Floor (stone) — cold grey flagstones. */
+  private genFloorStone(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const w = 16;
+    const h = 16;
+
+    // Base — cold grey
+    gfx.fillStyle(0x4a4a58);
+    gfx.fillRect(0, 0, w, h);
+
+    // Flagstone grid lines
+    gfx.lineStyle(1, 0x3a3a48, 0.5);
+    gfx.moveTo(0, h / 2);
+    gfx.lineTo(w, h / 2);
+    gfx.moveTo(w / 2, 0);
+    gfx.lineTo(w / 2, h);
+    gfx.strokePath();
+
+    // Noise dots for rough surface
+    gfx.fillStyle(0x5a5a68, 0.4);
+    gfx.fillRect(3, 3, 1, 1);
+    gfx.fillRect(11, 5, 1, 1);
+    gfx.fillRect(6, 12, 1, 1);
+    gfx.fillStyle(0x404050, 0.4);
+    gfx.fillRect(9, 2, 1, 1);
+    gfx.fillRect(2, 10, 1, 1);
+
+    // Top highlight
+    gfx.lineStyle(1, 0x5e5e6e, 0.3);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(w, 0);
+    gfx.strokePath();
+
+    gfx.generateTexture('floor_tile_stone', w, h);
+    gfx.destroy();
+  }
+
+  /** Floor (metal) — dark industrial grating. */
+  private genFloorMetal(): void {
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+    const w = 16;
+    const h = 16;
+
+    // Base — dark steel
+    gfx.fillStyle(0x2a2a3a);
+    gfx.fillRect(0, 0, w, h);
+
+    // Grating grid lines
+    gfx.lineStyle(1, 0x4a5566, 0.3);
+    gfx.moveTo(0, 4);
+    gfx.lineTo(w, 4);
+    gfx.moveTo(0, 8);
+    gfx.lineTo(w, 8);
+    gfx.moveTo(0, 12);
+    gfx.lineTo(w, 12);
+    gfx.moveTo(4, 0);
+    gfx.lineTo(4, h);
+    gfx.moveTo(8, 0);
+    gfx.lineTo(8, h);
+    gfx.moveTo(12, 0);
+    gfx.lineTo(12, h);
+    gfx.strokePath();
+
+    // Top highlight
+    gfx.lineStyle(1, 0x88aacc, 0.3);
+    gfx.moveTo(0, 0);
+    gfx.lineTo(w, 0);
+    gfx.strokePath();
+
+    // Subtle specular dots at intersections
+    gfx.fillStyle(0xffffff, 0.08);
+    gfx.fillCircle(4, 4, 0.8);
+    gfx.fillCircle(12, 12, 0.8);
+
+    gfx.generateTexture('floor_tile_metal', w, h);
     gfx.destroy();
   }
 }
