@@ -979,13 +979,14 @@ export class GameScene extends Phaser.Scene {
     }).setDepth(45);
 
     this.dustEmitter = this.add.particles(0, 0, 'particle', {
-      speed: { min: 10, max: 40 },
-      scale: { start: 0.8, end: 0 },
-      lifespan: 500,
-      tint: [0x888899, 0x666677],
+      speed: { min: 15, max: 60 },
+      scale: { start: 1, end: 0 },
+      lifespan: 600,
+      tint: [0x888899, 0x666677, 0x99aabb],
       emitting: false,
-      quantity: 4,
-      alpha: { start: 0.4, end: 0 },
+      quantity: 6,
+      alpha: { start: 0.5, end: 0 },
+      angle: { min: 230, max: 310 },
     }).setDepth(40);
 
     this.isSimulating = false;
@@ -1095,6 +1096,11 @@ export class GameScene extends Phaser.Scene {
                 onComplete: () => ripple.destroy(),
               });
             }
+          }
+
+          // Background brightness pulse on heavy hits
+          if (impactSpeed > 5) {
+            this.cameras.main.flash(60, 40, 40, 60);
           }
 
           // Screen shake proportional to impact + chain length
@@ -1320,17 +1326,34 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Shower of particles from multiple positions
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8;
-      const px = cx + Math.cos(angle) * 100;
-      const py = cy + Math.sin(angle) * 80;
-      this.time.delayedCall(i * 50, () => {
+    for (let i = 0; i < 12; i++) {
+      const angle = (Math.PI * 2 * i) / 12;
+      const px = cx + Math.cos(angle) * 120;
+      const py = cy + Math.sin(angle) * 90;
+      this.time.delayedCall(i * 40, () => {
         this.hitEmitter?.emitParticleAt(px, py);
+        this.sparkEmitter?.emitParticleAt(px, py);
       });
     }
 
+    // Confetti rain from top
+    if (this.textures.exists('particle')) {
+      this.add.particles(cx, -20, 'particle', {
+        x: { min: -cx, max: cx },
+        speedY: { min: 60, max: 160 },
+        speedX: { min: -40, max: 40 },
+        scale: { start: 0.8, end: 0.2 },
+        rotate: { min: 0, max: 360 },
+        lifespan: 3000,
+        frequency: 40,
+        quantity: 4,
+        tint: [0xffdd44, 0xff5544, 0x44ee88, 0x4488ff, 0xff44cc],
+        duration: 2000,
+      }).setDepth(100);
+    }
+
     // Big screen flash in gold
-    this.cameras.main.flash(300, 255, 220, 80);
+    this.cameras.main.flash(400, 255, 220, 100);
 
     // Big slow-mo moment
     this.cameraFX.slowMotion(0.15, 800);
@@ -1351,6 +1374,22 @@ export class GameScene extends Phaser.Scene {
           this.cameras.main.postFX.remove(this.cameraBokeh);
           this.cameraBokeh = null;
         }
+      });
+    }
+
+    // Sub-text showing chain achievement
+    const chain = this.chainDetector.getChainLength();
+    if (chain >= 3) {
+      const subText = this.add.text(cx, cy + 20, `${chain}x Kette!`, {
+        fontFamily: FONT_UI, fontSize: '14px', color: '#ffaa44',
+        stroke: '#221100', strokeThickness: 2,
+      }).setOrigin(0.5).setDepth(102).setAlpha(0);
+      this.tweens.add({
+        targets: subText, alpha: 1, delay: 300, duration: 300,
+      });
+      this.tweens.add({
+        targets: subText, alpha: 0, y: cy, delay: 1000, duration: 400,
+        onComplete: () => subText.destroy(),
       });
     }
 
