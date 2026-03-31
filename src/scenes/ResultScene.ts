@@ -330,6 +330,7 @@ export class ResultScene extends Phaser.Scene {
           title: StorageManager.getTitle(),
           replay: data.replay,
           placement: data.placement ?? undefined,
+          predictions: data.predictions,
         });
 
         try {

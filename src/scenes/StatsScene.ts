@@ -34,31 +34,35 @@ export class StatsScene extends Phaser.Scene {
     const jokers = data.jokers ?? 0;
     const jokerLabel = jokers > 0 ? ` (+${jokers} Joker)` : '';
     const streakVal = `${data.streak} ${data.streak === 1 ? 'Tag' : 'Tage'}${jokerLabel}`;
+    const bestChain = data.bestChainLength ?? 0;
     const stats = [
       { label: 'Spiele', value: `${data.gamesPlayed}`, color: '#aaaacc' },
       { label: 'Bester Score', value: `${data.bestScore.toLocaleString('de-DE')}`, color: '#ffdd44' },
       { label: 'Geloest', value: `${computed.totalSolved} (${computed.solveRate}%)`, color: '#88cc88' },
       { label: 'Streak', value: streakVal, color: '#ffaa44' },
+      { label: 'Beste Kette', value: bestChain > 0 ? `${bestChain}x` : '-', color: '#44ccff' },
+      { label: 'Gesamtpunkte', value: `${data.totalScore.toLocaleString('de-DE')}`, color: '#ddaaff' },
     ];
 
     stats.forEach((s, i) => {
-      const bx = 100 + (i % 2) * 300;
-      const by = 90 + Math.floor(i / 2) * 70;
+      const cols = 3;
+      const bx = 60 + (i % cols) * 230;
+      const by = 85 + Math.floor(i / cols) * 65;
 
       // Card background
-      this.add.rectangle(bx + 70, by + 5, 180, 55, 0x151530, 0.6)
+      this.add.rectangle(bx + 65, by + 5, 155, 50, 0x151530, 0.6)
         .setStrokeStyle(1, 0x334466, 0.25);
 
       this.add
         .text(bx + 10, by, s.value, {
           fontFamily: FONT_TITLE,
-          fontSize: '24px', color: s.color, fontStyle: 'bold',
+          fontSize: '20px', color: s.color, fontStyle: 'bold',
           stroke: '#111122', strokeThickness: 3,
         })
         .setOrigin(0, 0.5);
 
       this.add
-        .text(bx + 10, by + 22, s.label, {
+        .text(bx + 10, by + 20, s.label, {
           fontFamily: FONT_UI,
           fontSize: '9px', color: COLOR.textDim,
           letterSpacing: 2,

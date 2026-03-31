@@ -1083,6 +1083,18 @@ export class GameScene extends Phaser.Scene {
           // Spark particles at collision point
           if (impactSpeed > 1.5) {
             this.sparkEmitter?.emitParticleAt(cx, cy);
+
+            // Impact ripple ring — scales with speed
+            if (impactSpeed > 3) {
+              const rippleSize = Math.min(40, 15 + impactSpeed * 2);
+              const ripple = this.add.circle(cx, cy, rippleSize, 0x000000, 0)
+                .setStrokeStyle(1.5, 0x88aacc, 0.4).setDepth(9).setScale(0.2);
+              this.tweens.add({
+                targets: ripple, scaleX: 1.5, scaleY: 1.5, alpha: 0,
+                duration: 300, ease: 'Quad.easeOut',
+                onComplete: () => ripple.destroy(),
+              });
+            }
           }
 
           // Screen shake proportional to impact + chain length
@@ -1362,10 +1374,26 @@ export class GameScene extends Phaser.Scene {
         this.cameraFX.addTrauma(0.4);
         this.cameraFX.slowMotion(0.25, 500);
 
-        // Particle burst
+        // Particle burst — gold explosion
         this.hitEmitter?.emitParticleAt(target.x, target.y);
+        // Extra spark ring around target
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI * 2 * i) / 6;
+          const sx = target.x + Math.cos(angle) * 20;
+          const sy = target.y + Math.sin(angle) * 20;
+          this.sparkEmitter?.emitParticleAt(sx, sy);
+        }
 
-        // Flash the whole screen briefly
+        // Expanding golden ring at target position
+        const hitRing = this.add.circle(target.x, target.y, 20, 0x000000, 0)
+          .setStrokeStyle(3, 0xffdd00, 0.9).setDepth(54).setScale(0.3);
+        this.tweens.add({
+          targets: hitRing, scaleX: 3, scaleY: 3, alpha: 0,
+          duration: 500, ease: 'Quad.easeOut',
+          onComplete: () => hitRing.destroy(),
+        });
+
+        // Flash the whole screen briefly (gold tint for targets)
         this.cameras.main.flash(150, 255, 220, 50);
 
         // Target hit animation

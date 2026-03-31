@@ -21,6 +21,7 @@ export interface ShareParams {
   title?: string;
   replay?: ReplayFrame[];
   placement?: { type: string; x: number; y: number };
+  predictions?: { solve: boolean | null; chain5: boolean | null };
 }
 
 /** Generates share text and handles sharing via Web Share API / Clipboard. */
@@ -65,6 +66,22 @@ export class ShareManager {
 
     if (params.title) {
       lines.push(`\u{1F3C6} ${params.title}`);
+    }
+
+    // Prediction badges
+    if (params.predictions) {
+      const badges: string[] = [];
+      if (params.predictions.solve !== null) {
+        const correct = params.predictions.solve === solved;
+        badges.push(correct ? '\u{1F3AF}\u2705' : '\u{1F3AF}\u274C');
+      }
+      if (params.predictions.chain5 !== null) {
+        const correct = params.predictions.chain5 === (chainLength >= 5);
+        badges.push(correct ? '\u{1F517}\u2705' : '\u{1F517}\u274C');
+      }
+      if (badges.length > 0) {
+        lines.push(`Wette: ${badges.join(' ')}`);
+      }
     }
 
     // Share URL with optional ghost placement
