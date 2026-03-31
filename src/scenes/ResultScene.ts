@@ -30,6 +30,7 @@ interface ResultData {
   levelId?: string;
   difficulty?: number;
   trailArtUrl?: string;
+  predictions?: { solve: boolean | null; chain5: boolean | null };
 }
 
 /** Displays final score, breakdown, sharing, and countdown. */
@@ -287,6 +288,28 @@ export class ResultScene extends Phaser.Scene {
           fontSize: '11px', color: COLOR.textMuted,
         })
         .setOrigin(0.5);
+    }
+
+    // Daily bet results
+    if (data.predictions && (data.predictions.solve !== null || data.predictions.chain5 !== null)) {
+      let betY = streak > 0 ? 400 : 380;
+      if (!isPractice && data.difficulty) betY += 10;
+
+      const results: string[] = [];
+      if (data.predictions.solve !== null) {
+        const correct = data.predictions.solve === data.solved;
+        results.push(`${correct ? '\u2705' : '\u274C'} Schaffe ich: ${correct ? 'Richtig!' : 'Falsch'}`);
+      }
+      if (data.predictions.chain5 !== null) {
+        const correct = data.predictions.chain5 === (data.chainLength >= 5);
+        results.push(`${correct ? '\u2705' : '\u274C'} Kette > 5: ${correct ? 'Richtig!' : 'Falsch'}`);
+      }
+
+      const betText = this.add.text(cx, betY, results.join('   '), {
+        fontFamily: FONT_UI, fontSize: '9px', color: '#88aacc', letterSpacing: 1,
+      }).setOrigin(0.5).setAlpha(0);
+
+      this.tweens.add({ targets: betText, alpha: 1, delay: 1500, duration: 500 });
     }
 
     // Share button

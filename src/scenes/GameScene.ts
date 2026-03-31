@@ -98,6 +98,10 @@ export class GameScene extends Phaser.Scene {
   // PostFX references
   private cameraVignette: Phaser.FX.Vignette | null = null;
   private cameraBokeh: Phaser.FX.Bokeh | null = null;
+
+  // Daily bet predictions
+  private predictions: { solve: boolean | null; chain5: boolean | null } = { solve: null, chain5: null };
+  private predictionMade = false;
   private isWebGL = false;
 
   // Music
@@ -383,7 +387,61 @@ export class GameScene extends Phaser.Scene {
         onComplete: () => {
           introElements.forEach(el => el.destroy());
           this.introActive = false;
+          // Show daily bet for first attempt in daily mode
+          if (!this.isPractice && this.attempts === 0 && !this.predictionMade) {
+            this.showDailyBet();
+          }
         },
+      });
+    });
+  }
+
+  /** Show daily bet prediction overlay — quick yes/no toggles. */
+  private showDailyBet(): void {
+    const cx = GAME_WIDTH / 2;
+    const betY = 75;
+    this.predictions = { solve: null, chain5: null };
+
+    const panel = this.add.rectangle(cx, betY, 320, 50, 0x111125, 0.8)
+      .setStrokeStyle(1, 0x334466, 0.3).setDepth(150).setAlpha(0);
+    const title = this.add.text(cx, betY - 16, 'TAGES-WETTE', {
+      fontFamily: FONT_UI, fontSize: '8px', color: '#556688', letterSpacing: 3,
+    }).setOrigin(0.5).setDepth(151).setAlpha(0);
+
+    // Two prediction toggles
+    const solveBtn = this.add.text(cx - 70, betY + 5, '\u{1F3AF} Schaffe ich!', {
+      fontFamily: FONT_UI, fontSize: '10px', color: '#667788',
+    }).setOrigin(0.5).setDepth(151).setAlpha(0).setInteractive({ useHandCursor: true });
+
+    const chainBtn = this.add.text(cx + 70, betY + 5, '\u{1F517} Kette > 5', {
+      fontFamily: FONT_UI, fontSize: '10px', color: '#667788',
+    }).setOrigin(0.5).setDepth(151).setAlpha(0).setInteractive({ useHandCursor: true });
+
+    const elements = [panel, title, solveBtn, chainBtn];
+
+    solveBtn.on('pointerdown', () => {
+      this.predictions.solve = !this.predictions.solve;
+      solveBtn.setColor(this.predictions.solve ? '#44dd88' : '#667788');
+      solveBtn.setText(this.predictions.solve ? '\u2705 Schaffe ich!' : '\u{1F3AF} Schaffe ich!');
+      AudioManager.playClick();
+    });
+
+    chainBtn.on('pointerdown', () => {
+      this.predictions.chain5 = !this.predictions.chain5;
+      chainBtn.setColor(this.predictions.chain5 ? '#44dd88' : '#667788');
+      chainBtn.setText(this.predictions.chain5 ? '\u2705 Kette > 5' : '\u{1F517} Kette > 5');
+      AudioManager.playClick();
+    });
+
+    // Fade in
+    this.tweens.add({ targets: elements, alpha: 1, duration: 300 });
+
+    // Auto-dismiss after 4 seconds
+    this.time.delayedCall(4000, () => {
+      this.predictionMade = true;
+      this.tweens.add({
+        targets: elements, alpha: 0, duration: 300,
+        onComplete: () => elements.forEach(el => el.destroy()),
       });
     });
   }
@@ -1053,6 +1111,27 @@ export class GameScene extends Phaser.Scene {
             }
           }
 
+          // Combo text popup at collision point for chains >= 2
+          if (newChain > prevChain && newChain >= 2) {
+            const comboColor = newChain >= 10 ? '#ffdd00' : newChain >= 5 ? '#ff8844' : '#44ccff';
+            const comboSize = Math.min(18, 10 + newChain);
+            const combo = this.add.text(cx, cy - 15, `${newChain}x`, {
+              fontFamily: FONT_TITLE, fontSize: `${comboSize}px`,
+              color: comboColor, fontStyle: 'bold',
+              stroke: '#111122', strokeThickness: 2,
+            }).setOrigin(0.5).setDepth(55).setScale(0);
+
+            this.tweens.add({
+              targets: combo,
+              scaleX: 1, scaleY: 1, y: cy - 35, duration: 200, ease: 'Back.easeOut',
+            });
+            this.tweens.add({
+              targets: combo,
+              alpha: 0, y: cy - 55, delay: 300, duration: 300,
+              onComplete: () => combo.destroy(),
+            });
+          }
+
           // Audio (spatially panned based on collision x position)
           if (newChain > prevChain) {
             AudioManager.playChainUp(newChain, cx);
@@ -1598,6 +1677,7 @@ export class GameScene extends Phaser.Scene {
             levelId: this.level.id,
             difficulty: this.level.difficulty,
             trailArtUrl,
+            predictions: this.predictions,
           }, 'down', 500);
       });
     } else {
@@ -1709,6 +1789,28 @@ export class GameScene extends Phaser.Scene {
             this.time.delayedCall(600 * 0.15, () => {
               this.cameraFX.resetZoom(400);
             });
+          }
+
+          // Pulsing warning ring at near-miss location
+          const ring = this.add.circle(target.x, target.y, 25, 0x000000, 0)
+            .setStrokeStyle(2, 0xff4444, 0.8).setDepth(54).setScale(0.5);
+          this.tweens.add({
+            targets: ring, scaleX: 2, scaleY: 2, alpha: 0,
+            duration: 600, ease: 'Quad.easeOut',
+            onComplete: () => ring.destroy(),
+          });
+
+          // Red particle burst
+          if (this.textures.exists('particle')) {
+            this.add.particles(target.x, target.y, 'particle', {
+              speed: { min: 30, max: 80 },
+              scale: { start: 0.5, end: 0 },
+              alpha: { start: 0.6, end: 0 },
+              lifespan: 500,
+              quantity: 8,
+              tint: [0xff4444, 0xff6644, 0xffaa44],
+              emitting: false,
+            }).explode(8, target.x, target.y);
           }
 
           const nearMiss = this.add

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 8;
+const CACHE_VERSION = 9;
 const CACHE_NAME = `kettenreaktion-v${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
