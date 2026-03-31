@@ -23,7 +23,7 @@ I've been building **Kettenreaktion** (German for "chain reaction") — a daily 
 
 **What makes it different:**
 - One puzzle per day — like Wordle, but physics
-- 150 hand-crafted levels (5 months of daily content)
+- 210 hand-crafted levels (7 months of daily content)
 - Real physics simulation (Matter.js)
 - Works on desktop and mobile (landscape)
 - No login, no ads, no download — just play
@@ -50,7 +50,7 @@ I'm looking for beta testers for my daily physics puzzle game **Kettenreaktion**
 
 The concept is simple: each day you get one puzzle. Place a single object, watch the chain reaction unfold, try to hit all the stars. Same puzzle for everyone — compare your results with friends.
 
-150 levels ready, runs in the browser, no account needed.
+210 levels ready, runs in the browser, no account needed.
 
 Play: https://kettenreaktion.crelvo.dev/
 
@@ -60,7 +60,7 @@ Would love feedback on difficulty, feel, and any bugs you find!
 
 ## r/playmygame (Reddit)
 
-**Title:** [Browser] Kettenreaktion — Daily physics chain reaction puzzle (150 levels, free, no login)
+**Title:** [Browser] Kettenreaktion — Daily physics chain reaction puzzle (210 levels, free, no login)
 
 **Body:**
 
@@ -77,7 +77,7 @@ Would love feedback on difficulty, feel, and any bugs you find!
 - UX issues — anything confusing or broken?
 - Sharing — does the emoji share / GIF export work well?
 
-**Tech:** TypeScript, Phaser 3, Matter.js physics. 150 hand-crafted levels. GIF replays exported via Web Worker. Works offline via service worker.
+**Tech:** TypeScript, Phaser 3, Matter.js physics. 210 hand-crafted levels. GIF replays exported via Web Worker. Works offline via service worker.
 
 Thanks for playing!
 
@@ -89,7 +89,7 @@ Thanks for playing!
 
 **Kettenreaktion** — Daily physics puzzle browser game
 Place ONE object, watch the chain reaction, hit all the stars.
-New puzzle every day, 150 levels, free, no login.
+New puzzle every day, 210 levels, free, no login.
 Looking for beta feedback!
 https://kettenreaktion.crelvo.dev/
 
@@ -101,7 +101,7 @@ Kettenreaktion — my daily physics puzzle game is ready for beta testing!
 
 Place one object. Watch the chain reaction. Hit all the stars.
 
-New puzzle every day. 150 levels. Free. No login. Browser only.
+New puzzle every day. 210 levels. Free. No login. Browser only.
 
 Looking for feedback!
 https://kettenreaktion.crelvo.dev/
@@ -122,7 +122,7 @@ Each day there's one puzzle. You place a single object in a highlighted zone, an
 
 It's a browser game — TypeScript + Phaser 3 + Matter.js, no backend needed for the core game. Levels are baked into the build. GIF replay export runs in a Web Worker so it doesn't block the UI.
 
-150 hand-designed levels covering 5 difficulty tiers. Works offline via service worker. No account, no ads.
+210 hand-designed levels covering 5 difficulty tiers. Works offline via service worker. No account, no ads.
 
 https://kettenreaktion.crelvo.dev/
 
