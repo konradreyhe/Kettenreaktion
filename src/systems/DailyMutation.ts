@@ -26,6 +26,24 @@ const NORMAL: PhysicsMutation = {
 
 /** Day-of-week mutations (0=Sunday, 1=Monday, ... 6=Saturday) */
 const MUTATIONS: Record<number, PhysicsMutation> = {
+  0: { // Sunday — Moon Gravity
+    name: 'Sonntags-Schwebe',
+    description: 'Leichte Schwerkraft — alles schwebt!',
+    gravityScale: 0.3,
+    bounceMult: 1,
+    frictionMult: 1,
+    flipY: false,
+    icon: '🌙',
+  },
+  1: { // Monday — Heavy
+    name: 'Montags-Masse',
+    description: 'Erhoehte Schwerkraft — alles ist schwerer!',
+    gravityScale: 1.5,
+    bounceMult: 1,
+    frictionMult: 1,
+    flipY: false,
+    icon: '⚡',
+  },
   2: { // Tuesday — Bouncy
     name: 'Gummi-Dienstag',
     description: 'Alles springt doppelt so hoch!',
@@ -34,6 +52,15 @@ const MUTATIONS: Record<number, PhysicsMutation> = {
     frictionMult: 1,
     flipY: false,
     icon: '🟡',
+  },
+  3: { // Wednesday — Mix
+    name: 'Mittwochs-Mix',
+    description: 'Etwas Bounce + wenig Reibung!',
+    gravityScale: 1,
+    bounceMult: 1.5,
+    frictionMult: 0.3,
+    flipY: false,
+    icon: '🎲',
   },
   4: { // Thursday — Ice
     name: 'Eis-Donnerstag',
@@ -44,7 +71,7 @@ const MUTATIONS: Record<number, PhysicsMutation> = {
     flipY: false,
     icon: '🧊',
   },
-  5: { // Friday — Gravity Flip (existing)
+  5: { // Friday — Gravity Flip
     name: 'Flip-Freitag',
     description: 'Die Schwerkraft ist umgekehrt!',
     gravityScale: -1,
@@ -52,6 +79,15 @@ const MUTATIONS: Record<number, PhysicsMutation> = {
     frictionMult: 1,
     flipY: true,
     icon: '🔄',
+  },
+  6: { // Saturday — Chaos
+    name: 'Samstags-Chaos',
+    description: 'Wenig Schwerkraft + viel Bounce — Chaos!',
+    gravityScale: 0.5,
+    bounceMult: 1.8,
+    frictionMult: 1,
+    flipY: false,
+    icon: '🎪',
   },
 };
 

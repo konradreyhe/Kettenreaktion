@@ -43,6 +43,7 @@ export class ResultScene extends Phaser.Scene {
     const puzzleNum = DailySystem.getPuzzleNumber();
 
     SceneTransition.wipeIn(this);
+    this.createAtmosphere(data.solved);
 
     const isPractice = data.isPractice ?? false;
     const previousBest = StorageManager.load().bestScore;
@@ -144,6 +145,7 @@ export class ResultScene extends Phaser.Scene {
 
     breakdownItems.forEach((item, i) => {
       const y = 130 + i * 32;
+      const baseDelay = 400 + i * 200;
 
       const row = this.add
         .text(cx - 120, y, `${item.label}:  ${item.value}`, {
@@ -154,7 +156,7 @@ export class ResultScene extends Phaser.Scene {
         .setAlpha(0);
 
       const scoreVal = this.add
-        .text(cx + 120, y, `+${item.score}`, {
+        .text(cx + 120, y, '+0', {
           fontFamily: FONT_UI,
           fontSize: '12px',
           color: item.score > 0 ? '#aaddaa' : '#666688',
@@ -162,12 +164,30 @@ export class ResultScene extends Phaser.Scene {
         .setOrigin(1, 0)
         .setAlpha(0);
 
+      // Slide in
       this.tweens.add({
         targets: [row, scoreVal],
         alpha: 1,
         x: '+=10',
-        delay: 400 + i * 150,
+        delay: baseDelay,
         duration: 300,
+        onComplete: () => {
+          // Count up the individual score value
+          if (item.score > 0) {
+            this.tweens.addCounter({
+              from: 0,
+              to: item.score,
+              duration: Math.min(400, item.score * 2),
+              ease: 'Quad.easeOut',
+              onUpdate: (tween) => {
+                scoreVal.setText(`+${Math.floor(tween.getValue() ?? 0)}`);
+              },
+              onComplete: () => {
+                scoreVal.setText(`+${item.score}`);
+              },
+            });
+          }
+        },
       });
     });
 
@@ -547,6 +567,74 @@ export class ResultScene extends Phaser.Scene {
       tint: [0xffffff, 0xffddaa],
       duration: 2000,
     });
+  }
+
+  /** Distinct visual atmosphere for win vs lose. */
+  private createAtmosphere(solved: boolean): void {
+    const cx = GAME_WIDTH / 2;
+
+    if (solved) {
+      // Warm golden radial glow behind score area
+      if (!this.textures.exists('result_glow')) {
+        const size = 256;
+        const gfx = this.make.graphics({ x: 0, y: 0 });
+        for (let i = size / 2; i > 0; i--) {
+          const alpha = 0.15 * (1 - (i / (size / 2)));
+          gfx.fillStyle(0xffdd44, alpha);
+          gfx.fillEllipse(size / 2, size / 2, i * 2, i * 1.5);
+        }
+        gfx.generateTexture('result_glow', size, size);
+        gfx.destroy();
+      }
+      const glow = this.add.image(cx, 200, 'result_glow')
+        .setDisplaySize(500, 300).setDepth(0).setAlpha(0.4);
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0.3, to: 0.5 },
+        duration: 2500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+
+      // Slow ambient floating particles
+      if (!this.textures.exists('confetti_dot')) {
+        const gfx = this.make.graphics({ x: 0, y: 0 });
+        gfx.fillStyle(0xffffff);
+        gfx.fillCircle(3, 3, 3);
+        gfx.generateTexture('confetti_dot', 6, 6);
+        gfx.destroy();
+      }
+      this.add.particles(cx, GAME_HEIGHT + 10, 'confetti_dot', {
+        x: { min: -cx, max: cx },
+        speedY: { min: -15, max: -35 },
+        speedX: { min: -8, max: 8 },
+        scale: { start: 0.3, end: 0 },
+        alpha: { start: 0.3, end: 0 },
+        lifespan: 4000,
+        frequency: 300,
+        tint: [0xffdd44, 0xffaa22, 0xffffff],
+      }).setDepth(0);
+    } else {
+      // Cool blue/grey muted atmosphere for failure
+      this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0a0a1e, 0.3)
+        .setDepth(0);
+
+      // Subtle falling dust
+      if (!this.textures.exists('confetti_dot')) {
+        const gfx = this.make.graphics({ x: 0, y: 0 });
+        gfx.fillStyle(0xffffff);
+        gfx.fillCircle(3, 3, 3);
+        gfx.generateTexture('confetti_dot', 6, 6);
+        gfx.destroy();
+      }
+      this.add.particles(cx, -10, 'confetti_dot', {
+        x: { min: -cx, max: cx },
+        speedY: { min: 8, max: 20 },
+        scale: { start: 0.2, end: 0 },
+        alpha: { start: 0.15, end: 0 },
+        lifespan: 5000,
+        frequency: 500,
+        tint: [0x4455aa, 0x334466],
+      }).setDepth(0);
+    }
   }
 
   /** Fetch and display global daily stats (non-blocking). */

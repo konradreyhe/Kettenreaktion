@@ -62,6 +62,9 @@ export class MenuScene extends Phaser.Scene {
     SceneTransition.wipeIn(this);
     this.createBackgroundParticles();
 
+    // Start ambient audio atmosphere
+    AudioManager.startMenuAmbient();
+
     // Title glow accent — radial gradient for soft halo
     if (!this.textures.exists('title_glow')) {
       const size = 256;
@@ -251,12 +254,13 @@ export class MenuScene extends Phaser.Scene {
     divGfx.fillStyle(0x4466aa, 0.15);
     divGfx.fillRect(cx - 130, 363, 260, 1);
 
-    // Secondary buttons — four evenly spaced, each with distinct accent
+    // Secondary buttons — four evenly spaced, each with distinct accent, staggered entrance
     new Button(this, {
       x: cx - 160, y: 390, text: '\u{1F3AF} Uebung',
       width: 100, height: 36, fontSize: '12px',
       color: 0x3a3020, hoverColor: 0x4a4030,
       textColor: '#ccaa66',
+      delay: 300,
       onClick: () => {
         SceneTransition.wipeOut(this, 'PracticeScene');
       },
@@ -267,6 +271,7 @@ export class MenuScene extends Phaser.Scene {
       width: 100, height: 36, fontSize: '12px',
       color: 0x203a30, hoverColor: 0x304a40,
       textColor: '#66ccaa',
+      delay: 400,
       onClick: () => this.scene.start('HowToScene'),
     });
 
@@ -275,6 +280,7 @@ export class MenuScene extends Phaser.Scene {
       width: 100, height: 36, fontSize: '12px',
       color: 0x302040, hoverColor: 0x403050,
       textColor: '#aa88cc',
+      delay: 500,
       onClick: () => {
         SceneTransition.wipeOut(this, 'ZenScene');
       },
@@ -285,6 +291,7 @@ export class MenuScene extends Phaser.Scene {
       width: 100, height: 36, fontSize: '12px',
       color: 0x203040, hoverColor: 0x304050,
       textColor: '#6699cc',
+      delay: 600,
       onClick: () => {
         SceneTransition.wipeOut(this, 'StatsScene');
       },
@@ -568,5 +575,9 @@ export class MenuScene extends Phaser.Scene {
       lifespan: 5000, frequency: 150,
       tint: [0x4466cc, 0x6688dd, 0x3355bb, 0x5577cc],
     });
+  }
+
+  shutdown(): void {
+    AudioManager.stopMenuAmbient();
   }
 }

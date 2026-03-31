@@ -1349,6 +1349,7 @@ export class GameScene extends Phaser.Scene {
     this.isSimulating = true;
     this.simulationStartTime = Date.now();
     this.music.start();
+    this.hud.startTimer();
     this.events.emit('simulate');
 
     this.previewGhost?.setVisible(false);
@@ -1437,12 +1438,26 @@ export class GameScene extends Phaser.Scene {
       this.cameraFX.addTrauma(0.1);
     }
 
+    // Placement burst particles — satisfying pop
+    if (this.textures.exists('particle')) {
+      this.add.particles(x, y, 'particle', {
+        speed: { min: 40, max: 120 },
+        scale: { start: 0.6, end: 0 },
+        alpha: { start: 0.7, end: 0 },
+        lifespan: 400,
+        quantity: 12,
+        tint: [0x88ccff, 0xaaddff, 0x4488ff, 0xffffff],
+        emitting: false,
+      }).explode(12, x, y);
+    }
+
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
   }
 
   private endSimulation(): void {
     this.isSimulating = false;
     this.music.stop();
+    this.hud.stopTimer();
 
     // Fade out energy graph
     if (this.energyGraph) {

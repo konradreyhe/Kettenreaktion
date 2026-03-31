@@ -13,6 +13,7 @@ interface ButtonConfig {
   hoverColor?: number;
   textColor?: string;
   depth?: number;
+  delay?: number;
   onClick: () => void;
 }
 
@@ -21,6 +22,7 @@ export class Button {
   private bg: Phaser.GameObjects.Rectangle;
   private label: Phaser.GameObjects.Text;
   private border: Phaser.GameObjects.Rectangle;
+  private glowLine: Phaser.GameObjects.Rectangle;
 
   constructor(scene: Phaser.Scene, config: ButtonConfig) {
     const {
@@ -32,13 +34,16 @@ export class Button {
       hoverColor = 0x4466bb,
       textColor = '#ffffff',
       depth = 10,
+      delay = 0,
       onClick,
     } = config;
+
+    const borderColor = this.lighten(color);
 
     // Border (fake rounded corners via slightly larger rect)
     this.border = scene.add
       .rectangle(x, y, width + 2, height + 2, 0x000000, 0)
-      .setStrokeStyle(2, this.lighten(color))
+      .setStrokeStyle(2, borderColor)
       .setDepth(depth);
 
     // Background
@@ -60,13 +65,46 @@ export class Button {
       .setOrigin(0.5)
       .setDepth(depth + 1);
 
+    // Glow line (thin highlight at bottom, hidden by default)
+    this.glowLine = scene.add
+      .rectangle(x, y + height / 2 - 1, width, 2, borderColor, 0)
+      .setDepth(depth + 1);
+
+    // Entrance animation: start hidden and offset, tween in
+    const entranceTargets = [this.bg, this.border, this.label, this.glowLine];
+    for (const target of entranceTargets) {
+      target.setAlpha(0);
+      target.setY(target.y + 8);
+    }
+
+    scene.tweens.add({
+      targets: entranceTargets,
+      alpha: { from: 0, to: 1 },
+      y: `-=8`,
+      duration: 250,
+      delay,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Reset glow line alpha to 0 after entrance (it should be invisible until hover)
+        this.glowLine.setAlpha(0);
+      },
+    });
+
     // Hover
     this.bg.on('pointerover', () => {
+      AudioManager.playHover();
       this.bg.setFillStyle(hoverColor);
       scene.tweens.add({
         targets: [this.bg, this.border, this.label],
         scaleX: 1.04, scaleY: 1.04,
         duration: 80,
+        ease: 'Quad.easeOut',
+      });
+      // Fade in glow line
+      scene.tweens.add({
+        targets: this.glowLine,
+        alpha: 0.3,
+        duration: 120,
         ease: 'Quad.easeOut',
       });
     });
@@ -77,6 +115,13 @@ export class Button {
         targets: [this.bg, this.border, this.label],
         scaleX: 1, scaleY: 1,
         duration: 80,
+      });
+      // Fade out glow line
+      scene.tweens.add({
+        targets: this.glowLine,
+        alpha: 0,
+        duration: 120,
+        ease: 'Quad.easeIn',
       });
     });
 
@@ -105,6 +150,7 @@ export class Button {
     this.bg.setVisible(visible);
     this.label.setVisible(visible);
     this.border.setVisible(visible);
+    this.glowLine.setVisible(visible);
   }
 
   setText(text: string): void {
