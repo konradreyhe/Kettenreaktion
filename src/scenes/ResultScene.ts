@@ -29,6 +29,7 @@ interface ResultData {
   placement?: { type: string; x: number; y: number };
   levelId?: string;
   difficulty?: number;
+  trailArtUrl?: string;
 }
 
 /** Displays final score, breakdown, sharing, and countdown. */
@@ -62,6 +63,12 @@ export class ResultScene extends Phaser.Scene {
         placement: data.placement,
         levelId: data.levelId,
       });
+
+      // Track best chain length for achievements
+      const stored = StorageManager.load();
+      if (data.chainLength > (stored.bestChainLength ?? 0)) {
+        StorageManager.save({ bestChainLength: data.chainLength });
+      }
 
       // Submit to global leaderboard (fire-and-forget)
       submitResult({
@@ -355,6 +362,42 @@ export class ResultScene extends Phaser.Scene {
           },
         });
       }
+    }
+
+    // Trail art share button (Photon Gallery)
+    if (data.trailArtUrl) {
+      const artBtn = new Button(this, {
+        x: cx, y: 490, text: '\u{1F3A8} Kunstwerk teilen',
+        width: 180, height: 34, fontSize: '12px',
+        color: 0x2a2a55, hoverColor: 0x3a3a66, textColor: '#aa88dd',
+        delay: 200,
+        onClick: async () => {
+          try {
+            // Convert data URL to blob
+            const response = await fetch(data.trailArtUrl!);
+            const blob = await response.blob();
+            const file = new File([blob], `kettenreaktion-${puzzleNum}.jpg`, { type: 'image/jpeg' });
+
+            if (navigator.canShare?.({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: `Kettenreaktion #${puzzleNum} — Mein Kunstwerk`,
+              });
+              artBtn.setText('Geteilt!');
+            } else {
+              // Fallback: download
+              const a = document.createElement('a');
+              a.href = data.trailArtUrl!;
+              a.download = `kettenreaktion-${puzzleNum}.jpg`;
+              a.click();
+              artBtn.setText('Gespeichert!');
+            }
+            this.time.delayedCall(2000, () => artBtn.setText('\u{1F3A8} Kunstwerk teilen'));
+          } catch {
+            // Share cancelled
+          }
+        },
+      });
     }
 
     // WhatsApp share button (DACH market)

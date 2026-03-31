@@ -1578,6 +1578,11 @@ export class GameScene extends Phaser.Scene {
         });
       }
 
+      // Export trail art before transitioning (must be done while graphics exist)
+      const trailArtUrl = this.trailRenderer.hasArt()
+        ? this.trailRenderer.exportArtAsImage(GAME_WIDTH, GAME_HEIGHT, `#${DailySystem.getPuzzleNumber()}`)
+        : undefined;
+
       this.time.delayedCall(isPerfect ? 1000 : 600, () => {
         SceneTransition.wipeOut(this, 'ResultScene', {
             score: this.bestScore!,
@@ -1592,6 +1597,7 @@ export class GameScene extends Phaser.Scene {
             placement: this.bestPlacement,
             levelId: this.level.id,
             difficulty: this.level.difficulty,
+            trailArtUrl,
           }, 'down', 500);
       });
     } else {

@@ -7,6 +7,7 @@ const DEFAULTS: GameStorage = {
   totalScore: 0,
   gamesPlayed: 0,
   bestScore: 0,
+  bestChainLength: 0,
   puzzleHistory: {},
 };
 

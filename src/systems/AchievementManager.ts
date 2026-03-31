@@ -66,6 +66,22 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: 'total_25000', name: 'Punktemagnat', description: '25.000 Gesamtpunkte', icon: '\u{1F3F0}',
     check: () => StorageManager.load().totalScore >= 25000 },
 
+  // Chain mastery
+  { id: 'chain_5', name: 'Kettenreaktion', description: 'Kette von 5 erreicht', icon: '\u{1F517}',
+    check: () => (StorageManager.load().bestChainLength ?? 0) >= 5 },
+  { id: 'chain_10', name: 'Kettensaege', description: 'Kette von 10 erreicht', icon: '\u26D3',
+    check: () => (StorageManager.load().bestChainLength ?? 0) >= 10 },
+  { id: 'chain_15', name: 'Kettenmeister', description: 'Kette von 15 erreicht', icon: '\u{1F525}',
+    check: () => (StorageManager.load().bestChainLength ?? 0) >= 15 },
+
+  // Difficulty
+  { id: 'solve_hard', name: 'Harter Brocken', description: 'Schweres Puzzle (Stufe 5) geloest', icon: '\u{1F48E}',
+    check: () => {
+      const history = StorageManager.load().puzzleHistory;
+      return Object.values(history).some((r) => r.solved && r.levelId !== undefined);
+    },
+  },
+
   // Practice
   { id: 'practice_10', name: 'Uebungsfleiss', description: '10 Level im Uebungsmodus gespielt', icon: '\u{1F3CB}',
     check: () => {

@@ -121,6 +121,63 @@ export class TrailRenderer {
     return this.artSegments.length > 0;
   }
 
+  /** Export the photon trail art as a data URL (JPEG). */
+  exportArtAsImage(width: number, height: number, puzzleLabel?: string): string | null {
+    if (this.artSegments.length === 0) return null;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Dark background
+    ctx.fillStyle = '#0a0a1a';
+    ctx.fillRect(0, 0, width, height);
+
+    // Subtle vignette
+    const grad = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, width * 0.6);
+    grad.addColorStop(0, 'rgba(10,10,26,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.5)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw trail segments
+    const maxSpeed = Math.max(...this.artSegments.map(s => s.speed), 1);
+    for (const seg of this.artSegments) {
+      const t = Math.min(seg.speed / maxSpeed, 1);
+      const r = Math.floor(t > 0.5 ? 255 : t * 2 * 255);
+      const g = Math.floor(t < 0.3 ? t / 0.3 * 255 : t > 0.7 ? (1 - t) / 0.3 * 255 : 255);
+      const b = Math.floor(t < 0.5 ? (1 - t * 2) * 255 : 0);
+      const lineWidth = 1.5 + t * 3;
+      const alpha = 0.4 + t * 0.5;
+
+      ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(seg.x1, seg.y1);
+      ctx.lineTo(seg.x2, seg.y2);
+      ctx.stroke();
+    }
+
+    // Puzzle label watermark
+    if (puzzleLabel) {
+      ctx.font = '10px monospace';
+      ctx.fillStyle = 'rgba(100,120,160,0.5)';
+      ctx.textAlign = 'right';
+      ctx.fillText(puzzleLabel, width - 10, height - 10);
+    }
+
+    // Branding
+    ctx.font = '8px monospace';
+    ctx.fillStyle = 'rgba(80,100,140,0.4)';
+    ctx.textAlign = 'left';
+    ctx.fillText('kettenreaktion.crelvo.dev', 10, height - 10);
+
+    return canvas.toDataURL('image/jpeg', 0.85);
+  }
+
   /** Stop tracking all bodies and clear trails. */
   clear(): void {
     this.tracked = [];
