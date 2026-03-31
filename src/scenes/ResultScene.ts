@@ -129,6 +129,10 @@ export class ResultScene extends Phaser.Scene {
       this.createCelebrationParticles();
     }
 
+    // Score breakdown panel background
+    this.add.rectangle(cx, 177, 280, 140, 0x111125, 0.5)
+      .setStrokeStyle(1, 0x334466, 0.2);
+
     // Score breakdown — animate in sequentially
     const savedAttempts = data.score.efficiencyBonus / 200;
     const breakdownItems = [
@@ -235,9 +239,12 @@ export class ResultScene extends Phaser.Scene {
     // Streak (client-side, updated by server when available)
     if (streak > 0) {
       this.streakText = this.add
-        .text(cx, 370, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
-          fontSize: '16px',
-          color: '#ffaa44',
+        .text(cx, 370, `\u{1F525} Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}`, {
+          fontFamily: FONT_UI,
+          fontSize: '14px',
+          color: COLOR.streak,
+          stroke: '#331100',
+          strokeThickness: 2,
         })
         .setOrigin(0.5);
     }
@@ -422,8 +429,10 @@ export class ResultScene extends Phaser.Scene {
     // Countdown
     const countdownText = this.add
       .text(cx, GAME_HEIGHT - 14, '', {
+        fontFamily: FONT_UI,
         fontSize: '11px',
-        color: '#555577',
+        color: '#6666aa',
+        letterSpacing: 1,
       })
       .setOrigin(0.5);
 
@@ -561,9 +570,9 @@ export class ResultScene extends Phaser.Scene {
     const y = 542;
 
     // Summary stats line
-    const statsLine = `${stats.totalPlayers} Spieler heute  |  ${stats.solveRate}% geloest  |  Ø ${stats.avgScore.toLocaleString('de-DE')} Pkt`;
+    const statsLine = `${stats.totalPlayers} Spieler heute  |  ${stats.solveRate}% geloest  |  \u00D8 ${stats.avgScore.toLocaleString('de-DE')} Pkt`;
     const statsText = this.add.text(cx, y, statsLine, {
-      fontSize: '10px', color: '#6688aa',
+      fontFamily: FONT_UI, fontSize: '9px', color: '#6688aa', letterSpacing: 1,
     }).setOrigin(0.5).setDepth(50).setAlpha(0);
 
     this.tweens.add({ targets: statsText, alpha: 1, duration: 500 });
@@ -629,7 +638,7 @@ export class ResultScene extends Phaser.Scene {
 
     // Label
     const label = this.add.text(cx, y + height + 8, 'Punkteverteilung', {
-      fontSize: '8px', color: '#556677',
+      fontFamily: FONT_UI, fontSize: '7px', color: '#556677', letterSpacing: 1,
     }).setOrigin(0.5).setDepth(50).setAlpha(0);
 
     this.tweens.add({ targets: [gfx, label], alpha: 1, delay: 400, duration: 600 });
@@ -698,7 +707,7 @@ export class ResultScene extends Phaser.Scene {
 
     // Label
     const label = this.add.text(cx, y + height + 8, 'Platzierungen', {
-      fontSize: '8px', color: '#556677',
+      fontFamily: FONT_UI, fontSize: '7px', color: '#556677', letterSpacing: 1,
     }).setOrigin(0.5).setDepth(50).setAlpha(0);
 
     this.tweens.add({ targets: [gfx, label], alpha: 1, delay: 600, duration: 600 });

@@ -19,9 +19,13 @@ export class HUD {
       .setOrigin(0.5, 0)
       .setDepth(99);
 
-    // Bottom edge glow
+    // Bottom edge glow — two-layer for softer falloff
     scene.add
-      .rectangle(GAME_WIDTH / 2, 50, GAME_WIDTH, 2, 0x4466aa, 0.2)
+      .rectangle(GAME_WIDTH / 2, 50, GAME_WIDTH, 3, 0x4466aa, 0.3)
+      .setOrigin(0.5, 0.5)
+      .setDepth(99);
+    scene.add
+      .rectangle(GAME_WIDTH / 2, 52, GAME_WIDTH, 2, 0x3355aa, 0.1)
       .setOrigin(0.5, 0.5)
       .setDepth(99);
 

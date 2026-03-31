@@ -45,8 +45,12 @@ export class StatsScene extends Phaser.Scene {
       const bx = 100 + (i % 2) * 300;
       const by = 90 + Math.floor(i / 2) * 70;
 
+      // Card background
+      this.add.rectangle(bx + 70, by + 5, 180, 55, 0x151530, 0.6)
+        .setStrokeStyle(1, 0x334466, 0.25);
+
       this.add
-        .text(bx, by, s.value, {
+        .text(bx + 10, by, s.value, {
           fontFamily: FONT_TITLE,
           fontSize: '24px', color: s.color, fontStyle: 'bold',
           stroke: '#111122', strokeThickness: 3,
@@ -54,7 +58,7 @@ export class StatsScene extends Phaser.Scene {
         .setOrigin(0, 0.5);
 
       this.add
-        .text(bx, by + 22, s.label, {
+        .text(bx + 10, by + 22, s.label, {
           fontFamily: FONT_UI,
           fontSize: '9px', color: COLOR.textDim,
           letterSpacing: 2,
@@ -87,14 +91,19 @@ export class StatsScene extends Phaser.Scene {
         .setOrigin(0.5);
     } else {
       // Header
-      this.add.text(80, 275, 'Puzzle', { fontSize: '11px', color: '#666688' });
-      this.add.text(200, 275, 'Score', { fontSize: '11px', color: '#666688' });
-      this.add.text(320, 275, 'Versuche', { fontSize: '11px', color: '#666688' });
-      this.add.text(440, 275, 'Status', { fontSize: '11px', color: '#666688' });
+      this.add.text(80, 275, 'Puzzle', { fontFamily: FONT_UI, fontSize: '10px', color: '#666688', letterSpacing: 1 });
+      this.add.text(200, 275, 'Score', { fontFamily: FONT_UI, fontSize: '10px', color: '#666688', letterSpacing: 1 });
+      this.add.text(320, 275, 'Versuche', { fontFamily: FONT_UI, fontSize: '10px', color: '#666688', letterSpacing: 1 });
+      this.add.text(440, 275, 'Status', { fontFamily: FONT_UI, fontSize: '10px', color: '#666688', letterSpacing: 1 });
 
       puzzleNums.forEach((num, i) => {
         const result = data.puzzleHistory[num];
         const y = 300 + i * 24;
+
+        // Alternating row backgrounds
+        if (i % 2 === 0) {
+          this.add.rectangle(cx, y + 6, 460, 22, 0x1a1a30, 0.4);
+        }
 
         this.add.text(80, y, `#${num}`, { fontSize: '12px', color: '#aaaacc' });
         this.add.text(200, y, `${result.score.toLocaleString('de-DE')}`, {

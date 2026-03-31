@@ -15,6 +15,7 @@ export class PracticeScene extends Phaser.Scene {
   private indexText!: Phaser.GameObjects.Text;
   private bestScoreText!: Phaser.GameObjects.Text;
   private constraintText!: Phaser.GameObjects.Text;
+  private cardBorder!: Phaser.GameObjects.Rectangle;
   private filterBtns: Phaser.GameObjects.Text[] = [];
   private activeFilter: number | null = null;
   private filteredIndices: number[] = [];
@@ -44,7 +45,9 @@ export class PracticeScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Level preview card
-    this.add.rectangle(cx, 220, 400, 200, 0x222244).setStrokeStyle(1, 0x444466);
+    this.add.rectangle(cx, 220, 400, 200, 0x222244);
+    this.cardBorder = this.add.rectangle(cx, 220, 400, 200)
+      .setFillStyle(0x000000, 0).setStrokeStyle(1, 0x444466);
 
     this.indexText = this.add.text(cx, 145, '', {
       fontSize: '13px', color: '#666688',
@@ -145,7 +148,7 @@ export class PracticeScene extends Phaser.Scene {
     const solved = Object.values(practiceScores).filter(s => s.solved).length;
     if (played > 0) {
       this.add.text(cx, 500, `Geuebt: ${played}/${this.totalLevels}  |  Geloest: ${solved}`, {
-        fontSize: '10px', color: '#555577',
+        fontFamily: FONT_UI, fontSize: '10px', color: '#6666aa', letterSpacing: 1,
       }).setOrigin(0.5);
     }
 
@@ -193,12 +196,20 @@ export class PracticeScene extends Phaser.Scene {
     });
   }
 
+  private static readonly DIFF_COLORS: Record<number, number> = {
+    1: 0x44aa66, 2: 0x66aa44, 3: 0xaaaa44, 4: 0xcc7733, 5: 0xcc4444,
+  };
+
   private updatePreview(): void {
     const level = LevelLoader.loadByIndex(this.currentIndex);
     this.levelNameText.setText(level.name);
     this.diffText.setText(
       '\u2605'.repeat(level.difficulty) + '\u2606'.repeat(5 - level.difficulty)
     );
+
+    // Tint card border by difficulty
+    const borderColor = PracticeScene.DIFF_COLORS[level.difficulty] ?? 0x444466;
+    this.cardBorder.setStrokeStyle(1, borderColor, 0.5);
 
     const filterInfo = this.activeFilter !== null
       ? `${this.filteredIndices.indexOf(this.currentIndex) + 1}/${this.filteredIndices.length}`

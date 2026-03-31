@@ -251,6 +251,12 @@ export class GameScene extends Phaser.Scene {
       .rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x1a1a2e, 0.85)
       .setDepth(200);
 
+    // Intro content panel
+    const introPanel = this.add
+      .rectangle(cx, cy + 20, 340, 140, 0x111125, 0.4)
+      .setStrokeStyle(1, 0x334466, 0.2)
+      .setDepth(200);
+
     const levelName = this.add
       .text(cx, cy - 30, this.level.name, {
         fontFamily: FONT_TITLE,
@@ -271,6 +277,9 @@ export class GameScene extends Phaser.Scene {
       .text(cx, cy + 15, diffStars, {
         fontSize: '20px',
         color: '#ffaa44',
+        letterSpacing: 4,
+        stroke: '#553300',
+        strokeThickness: 1,
       })
       .setOrigin(0.5)
       .setDepth(201)
@@ -288,8 +297,10 @@ export class GameScene extends Phaser.Scene {
 
     const info = this.add
       .text(cx, cy + 45, infoLine, {
-        fontSize: '12px',
+        fontFamily: FONT_UI,
+        fontSize: '11px',
         color: '#6688aa',
+        letterSpacing: 1,
       })
       .setOrigin(0.5)
       .setDepth(201)
@@ -297,15 +308,16 @@ export class GameScene extends Phaser.Scene {
 
     const hint = this.add
       .text(cx, cy + 70, AccessibilityManager.isColorblind() ? 'Klicke in die blaue Zone' : 'Klicke in die gruene Zone', {
-        fontSize: '13px',
-        color: '#888899',
+        fontFamily: FONT_UI,
+        fontSize: '12px',
+        color: '#7788aa',
       })
       .setOrigin(0.5)
       .setDepth(201)
       .setAlpha(0);
 
     // Mutation badge (if today has a physics twist)
-    const introElements: Phaser.GameObjects.GameObject[] = [overlay, levelName, diffText, info, hint];
+    const introElements: Phaser.GameObjects.GameObject[] = [overlay, introPanel, levelName, diffText, info, hint];
     const mutation = !this.isPractice ? getTodaysMutation() : null;
     if (mutation && mutation.name !== '') {
       const mutBadge = this.add
@@ -546,8 +558,8 @@ export class GameScene extends Phaser.Scene {
           Math.pow(x - GAME_WIDTH / 2, 2) + Math.pow(y - GAME_HEIGHT / 2, 2)
         );
         const fade = Math.max(0, 1 - distFromCenter / 450);
-        gfx.fillStyle(0x4455aa, 0.04 + fade * 0.06);
-        gfx.fillCircle(x, y, 1);
+        gfx.fillStyle(0x4466bb, 0.06 + fade * 0.08);
+        gfx.fillCircle(x, y, 1.2);
       }
     }
   }
@@ -668,9 +680,22 @@ export class GameScene extends Phaser.Scene {
         zone.width,
         zone.height,
         zoneColor,
-        0.06
+        0.08
       )
       .setDepth(2);
+
+    // Soft center highlight via multiple layers
+    for (let i = 3; i > 0; i--) {
+      const scale = 0.4 + i * 0.15;
+      this.add.rectangle(
+        zone.x + zone.width / 2,
+        zone.y + zone.height / 2,
+        zone.width * scale,
+        zone.height * scale,
+        zoneColor,
+        0.015
+      ).setDepth(2);
+    }
 
     this.placementZoneBorder = this.add
       .rectangle(
@@ -1728,8 +1753,13 @@ export class GameScene extends Phaser.Scene {
     const startY = 80;
     const spacing = 50;
 
+    // Panel background behind selector
+    const panelH = 40 + allowed.length * spacing;
+    this.add.rectangle(startX, startY + (allowed.length - 1) * spacing / 2 - 5, 60, panelH, 0x0a0a1a, 0.5)
+      .setDepth(49).setStrokeStyle(1, 0x334466, 0.3);
+
     const label = this.add.text(startX, startY - 30, 'Objekt:', {
-      fontFamily: 'monospace', fontSize: '12px', color: '#aaaaaa',
+      fontFamily: FONT_UI, fontSize: '10px', color: '#8888aa',
     }).setOrigin(0.5).setDepth(50);
     const labelContainer = this.add.container(0, 0, [label]).setDepth(50);
     this.selectorButtons.push(labelContainer);
@@ -1741,7 +1771,7 @@ export class GameScene extends Phaser.Scene {
       const bg = this.add.circle(startX, y, 18, isSelected ? 0x446644 : 0x333344, 0.8);
       const icon = this.add.circle(startX, y, 10, this.getObjectColor(type), isSelected ? 1 : 0.5);
       const nameText = this.add.text(startX, y + 22, type.charAt(0).toUpperCase() + type.slice(1), {
-        fontFamily: 'monospace', fontSize: '10px', color: '#cccccc',
+        fontFamily: FONT_UI, fontSize: '9px', color: '#aabbcc',
       }).setOrigin(0.5);
 
       const container = this.add.container(0, 0, [bg, icon, nameText]).setDepth(50);

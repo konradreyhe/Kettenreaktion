@@ -80,7 +80,7 @@ export class ReplayScene extends Phaser.Scene {
     // Frame counter text
     const frameText = this.add
       .text(cx, GAME_HEIGHT - 38, '', {
-        fontSize: '10px', color: '#555577',
+        fontFamily: FONT_UI, fontSize: '10px', color: '#6666aa',
       })
       .setOrigin(0.5).setDepth(50);
 
@@ -128,6 +128,10 @@ export class ReplayScene extends Phaser.Scene {
       this.frameIndex = Math.floor(ratio * (this.replayFrames.length - 1));
       this.renderFrame(this.frameIndex, barFill, frameText);
     });
+
+    // Control panel background
+    this.add.rectangle(cx, GAME_HEIGHT - 18, 300, 36, 0x0a0a1a, 0.5)
+      .setDepth(49).setStrokeStyle(1, 0x334466, 0.2);
 
     // Control buttons row
     let playbackSpeed = 1;

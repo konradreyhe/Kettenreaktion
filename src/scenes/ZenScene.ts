@@ -40,7 +40,7 @@ export class ZenScene extends Phaser.Scene {
 
     // Object count
     this.countText = this.add.text(GAME_WIDTH / 2, 40, '', {
-      fontSize: '10px', color: '#334466',
+      fontFamily: FONT_UI, fontSize: '10px', color: '#445577',
     }).setOrigin(0.5).setDepth(50);
 
     // Object selector (bottom center)
@@ -171,7 +171,7 @@ export class ZenScene extends Phaser.Scene {
 
       const icon = this.add.sprite(0, -3, t.type).setDisplaySize(18, 18);
       const label = this.add.text(0, 12, t.label, {
-        fontSize: '8px', color: isSelected ? '#88ccff' : '#667788',
+        fontFamily: FONT_UI, fontSize: '8px', color: isSelected ? '#88ccff' : '#667788',
       }).setOrigin(0.5);
 
       container.add([bg, icon, label]);

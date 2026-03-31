@@ -55,13 +55,27 @@ export class SceneTransition {
     else if (direction === 'up') targetY = -h;
     else if (direction === 'down') targetY = h * 2;
 
+    // Leading edge accent line
+    const isHorizontal = direction === 'left' || direction === 'right';
+    const edgeX = direction === 'left' ? 0 : direction === 'right' ? w : w / 2;
+    const edgeY = direction === 'up' ? 0 : direction === 'down' ? h : h / 2;
+    const edge = scene.add.rectangle(edgeX, edgeY,
+      isHorizontal ? 3 : w, isHorizontal ? h : 3, 0x4488ff, 0.5)
+      .setDepth(1000);
+
     scene.tweens.add({
       targets: rect,
       x: targetX,
       y: targetY,
       duration,
       ease: 'Quad.easeInOut',
-      onComplete: () => rect.destroy(),
+    });
+    scene.tweens.add({
+      targets: edge,
+      alpha: 0,
+      delay: duration * 0.3,
+      duration: duration * 0.7,
+      onComplete: () => { rect.destroy(); edge.destroy(); },
     });
   }
 }

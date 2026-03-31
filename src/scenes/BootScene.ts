@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
-import { FONT_TITLE, COLOR, TEXT_SHADOW } from '../constants/Style';
+import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
 import { StorageManager } from '../systems/StorageManager';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { SceneTransition } from '../game/SceneTransition';
@@ -46,8 +46,11 @@ export class BootScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Subtle glow behind title
+    this.add.ellipse(cx, cy - 30, 300, 140, 0x223366, 0.1);
+
     const dotsText = this.add
-      .text(cx, cy + 30, '.', { fontSize: '24px', color: COLOR.textDim })
+      .text(cx, cy + 30, '.', { fontFamily: FONT_UI, fontSize: '20px', color: COLOR.textDim })
       .setOrigin(0.5);
 
     let dots = 1;
@@ -64,6 +67,11 @@ export class BootScene extends Phaser.Scene {
     const bar = this.add.rectangle(cx - barWidth / 2, cy + 60, 0, 8, 0x4488ff).setOrigin(0, 0.5);
     this.load.on('progress', (v: number) => { bar.width = barWidth * v; });
     this.load.on('complete', () => { bar.width = barWidth; });
+
+    // Version badge
+    this.add.text(cx, cy + 80, 'Beta', {
+      fontFamily: FONT_UI, fontSize: '8px', color: '#334466', letterSpacing: 2,
+    }).setOrigin(0.5);
   }
 
   private generateAllTextures(): void {

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
-import { FONT_TITLE, COLOR } from '../constants/Style';
+import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { AudioManager } from '../systems/AudioManager';
 import { SceneTransition } from '../game/SceneTransition';
 import type { Level, StaticObject, DynamicObject, Target, ObjectType } from '../types/Level';
@@ -262,7 +262,7 @@ export class EditorScene extends Phaser.Scene {
 
     // Label
     this.add.text(x, y - size.h / 2 - 8, obj.id, {
-      fontSize: '8px', color: '#aaaacc',
+      fontFamily: FONT_UI, fontSize: '8px', color: '#8899bb',
     }).setOrigin(0.5).setDepth(11);
 
     this.entries.push({ kind: 'dynamic', gfx, data: obj });
