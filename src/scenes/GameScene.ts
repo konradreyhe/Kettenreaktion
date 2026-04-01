@@ -104,6 +104,7 @@ export class GameScene extends Phaser.Scene {
   // Magnets: position + config for force application + visual field
   private magnets: { x: number; y: number; strength: number; radius: number; fieldRing?: Phaser.GameObjects.Arc }[] = [];
   private explodedBombs: Set<MatterJS.BodyType> = new Set();
+  private ghostMoveHandler: (() => void) | null = null;
 
   // PostFX references
   private cameraVignette: Phaser.FX.Vignette | null = null;
@@ -470,10 +471,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(): void {
-    this.cameraFX.update();
     this.trailRenderer.update();
 
-    if (!this.isSimulating) return;
+    if (!this.isSimulating) {
+      this.cameraFX.update(); // Decay residual trauma when not simulating
+      return;
+    }
 
     // Magnet force application
     if (this.magnets.length > 0) {
@@ -578,6 +581,8 @@ export class GameScene extends Phaser.Scene {
       const activeBodies = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
       this.cameraFX.followAction(activeBodies, GAME_WIDTH, GAME_HEIGHT);
     }
+    // Apply trauma shake AFTER followAction (re-run to add offset on top of follow position)
+    this.cameraFX.update();
 
     // Minimum 1.5s before checking sleep
     if (elapsed < 1500) return;
@@ -1090,13 +1095,17 @@ export class GameScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
     });
 
-    // Sync glow ring with ghost position
-    this.input.on('pointermove', () => {
+    // Sync glow ring with ghost position (remove previous handler to prevent leaks)
+    if (this.ghostMoveHandler) {
+      this.input.off('pointermove', this.ghostMoveHandler);
+    }
+    this.ghostMoveHandler = () => {
       if (this.previewGhost) {
         ghostGlow.setPosition(this.previewGhost.x, this.previewGhost.y);
         ghostGlow.setVisible(this.previewGhost.visible);
       }
-    });
+    };
+    this.input.on('pointermove', this.ghostMoveHandler);
 
     // Particle emitters — tinted per material theme
     const palette = this.getParticlePalette();

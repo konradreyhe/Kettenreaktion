@@ -38,7 +38,7 @@ export class CameraFX {
     });
   }
 
-  /** Call every frame to apply trauma shake. */
+  /** Call every frame to apply trauma shake. Adds offset to current scroll position. */
   update(): void {
     if (this.trauma <= 0) return;
 
@@ -46,13 +46,12 @@ export class CameraFX {
     const offsetX = (Math.random() * 2 - 1) * this.maxOffset * shake;
     const offsetY = (Math.random() * 2 - 1) * this.maxOffset * shake;
 
-    this.scene.cameras.main.setScroll(offsetX, offsetY);
+    // Add shake offset to current scroll (don't overwrite followAction position)
+    const cam = this.scene.cameras.main;
+    cam.scrollX += offsetX;
+    cam.scrollY += offsetY;
 
     this.trauma = Math.max(0, this.trauma - this.traumaDecay);
-
-    if (this.trauma <= 0) {
-      this.scene.cameras.main.setScroll(0, 0);
-    }
   }
 
   /** Smooth zoom toward a point. */
