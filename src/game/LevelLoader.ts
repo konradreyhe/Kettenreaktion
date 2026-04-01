@@ -35,11 +35,12 @@ export class LevelLoader {
     const pool = eligible.length > 0 ? eligible : LEVEL_TEMPLATES;
     let index = DailySystem.getLevelIndex(seed, pool.length);
 
-    // Prevent same level two days in a row
+    // Prevent same level two days in a row (compare by template ID, not pool index)
     if (pool.length > 1) {
       const yesterdaySeed = seed - 1;
-      const yesterdayIndex = DailySystem.getLevelIndex(yesterdaySeed, pool.length);
-      if (index === yesterdayIndex) {
+      const yesterdayIndex = DailySystem.getLevelIndex(yesterdaySeed, LEVEL_TEMPLATES.length);
+      const yesterdayId = LEVEL_TEMPLATES[yesterdayIndex]?.id;
+      if (pool[index]?.id === yesterdayId) {
         index = (index + 1) % pool.length;
       }
     }

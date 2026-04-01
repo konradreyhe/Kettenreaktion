@@ -57,6 +57,7 @@ export class GameScene extends Phaser.Scene {
   private isGravityFlipped = false;
   private practiceIndex = 0;
   private simulationStartTime = 0;
+  private simulationElapsedMs = 0;
   private bestScore: ScoreResult | null = null;
   private bestChainLength = 0;
   private totalTargetsHitBest = 0;
@@ -470,13 +471,16 @@ export class GameScene extends Phaser.Scene {
     panel.setInteractive().on('pointerdown', dismissBet);
   }
 
-  update(): void {
+  update(_time: number, delta: number): void {
     this.trailRenderer.update();
 
     if (!this.isSimulating) {
       this.cameraFX.update(); // Decay residual trauma when not simulating
       return;
     }
+
+    // Track simulation time using frame delta (immune to tab backgrounding)
+    this.simulationElapsedMs += delta;
 
     // Magnet force application
     if (this.magnets.length > 0) {
@@ -512,7 +516,7 @@ export class GameScene extends Phaser.Scene {
       this.recordReplayFrame();
     }
 
-    const elapsed = Date.now() - this.simulationStartTime;
+    const elapsed = this.simulationElapsedMs;
     const chain = this.chainDetector.getChainLength();
     this.hud.updateChain(chain);
     this.music.updateChain(chain);
@@ -1490,7 +1494,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Check and apply portal teleportation. Called every physics frame during simulation. */
   private checkPortals(): void {
-    const now = Date.now();
+    const now = this.simulationElapsedMs;
     const COOLDOWN_MS = 500; // prevent re-teleport loops
 
     for (const portal of this.portalPairs) {
@@ -1887,6 +1891,7 @@ export class GameScene extends Phaser.Scene {
     this.attempts++;
     this.isSimulating = true;
     this.simulationStartTime = Date.now();
+    this.simulationElapsedMs = 0;
     this.music.start();
     this.hud.startTimer();
     this.events.emit('simulate');
@@ -2025,7 +2030,7 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    const elapsed = (Date.now() - this.simulationStartTime) / 1000;
+    const elapsed = this.simulationElapsedMs / 1000;
     const chainLength = this.chainDetector.getChainLength();
 
     this.checkNearMisses();
