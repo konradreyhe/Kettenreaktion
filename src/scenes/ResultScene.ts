@@ -473,6 +473,7 @@ export class ResultScene extends Phaser.Scene {
               placementB: yesterdayResult.placement,
               labelB: 'Gestern',
               levelId: data.levelId,
+              levelIdB: yesterdayResult.levelId,
               returnScene: 'MenuScene',
             });
           },

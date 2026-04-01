@@ -344,9 +344,9 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // Sound toggle
-    let soundOn = true;
+    let soundOn = AudioManager.isEnabled();
     const soundBtn = this.add
-      .text(GAME_WIDTH - 20, 20, '\u{1F50A}', {
+      .text(GAME_WIDTH - 20, 20, soundOn ? '\u{1F50A}' : '\u{1F507}', {
         fontSize: '20px', color: '#666688',
       })
       .setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(10);

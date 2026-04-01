@@ -16,8 +16,10 @@ interface ButterflyData {
   replayB: ReplayFrame[];
   placementB?: { type: string; x: number; y: number };
   labelB: string;
-  /** Level to draw as backdrop */
+  /** Level to draw as backdrop (replay A) */
   levelId: string;
+  /** Level for replay B (if different from A, e.g. yesterday's level) */
+  levelIdB?: string;
   /** Where to return */
   returnScene: string;
   returnData?: Record<string, unknown>;
@@ -66,10 +68,18 @@ export class ButterflyScene extends Phaser.Scene {
       fontFamily: FONT_UI, fontSize: '10px', color: '#ffcc44',
     }).setOrigin(0, 0.5).setDepth(50);
 
-    // Draw level layout
+    // Draw level layout — use replay A's level as primary backdrop
     const level = LevelLoader.loadById(data.levelId);
     if (level) {
       this.drawLevelLayout(level);
+    }
+
+    // If replay B has a different level, draw its layout as a faint overlay
+    if (data.levelIdB && data.levelIdB !== data.levelId) {
+      const levelB = LevelLoader.loadById(data.levelIdB);
+      if (levelB) {
+        this.drawLevelLayout(levelB);
+      }
     }
 
     // Draw placement markers

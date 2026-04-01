@@ -156,6 +156,9 @@ export class StatsScene extends Phaser.Scene {
     const cellW = 40;
     const startX = cx - ((cols - 1) * cellW) / 2;
 
+    let activeTooltipBg: Phaser.GameObjects.Rectangle | null = null;
+    let activeTooltipText: Phaser.GameObjects.Text | null = null;
+
     allAch.forEach((ach, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
@@ -173,16 +176,22 @@ export class StatsScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       hitArea.on('pointerover', () => {
-        const tooltipBg = this.add.rectangle(ax, ay - 30, 140, 28, 0x2a2a4e, 0.95)
+        // Destroy any existing tooltip before creating a new one
+        activeTooltipBg?.destroy();
+        activeTooltipText?.destroy();
+
+        activeTooltipBg = this.add.rectangle(ax, ay - 30, 140, 28, 0x2a2a4e, 0.95)
           .setStrokeStyle(1, unlocked ? 0xffdd00 : 0x444466).setDepth(300);
-        const tooltipText = this.add.text(ax, ay - 30, unlocked ? ach.name : '???', {
+        activeTooltipText = this.add.text(ax, ay - 30, unlocked ? ach.name : '???', {
           fontSize: '9px', color: unlocked ? '#ffdd00' : '#666688',
         }).setOrigin(0.5).setDepth(301);
+      });
 
-        hitArea.once('pointerout', () => {
-          tooltipBg.destroy();
-          tooltipText.destroy();
-        });
+      hitArea.on('pointerout', () => {
+        activeTooltipBg?.destroy();
+        activeTooltipText?.destroy();
+        activeTooltipBg = null;
+        activeTooltipText = null;
       });
     });
 
