@@ -1,30 +1,24 @@
 # Handover
 
 ## Summary
-Session 12 was a massive feature session. Implemented 20+ features spanning 4 new object types (bell, bomb, portal, magnet), replay enhancements (Director camera modes, Butterfly Effect comparison), editor improvements (constraints, portals, magnets, property editing), gameplay polish (material particles, mutation exemption, daily bet timing, gravity flip fixes), and 3 bomb-choice strategy levels. Added 15 new levels total. Spread bell targets across all batches. Updated CLAUDE.md, ROADMAP.md. Deleted stale manifest.json. 225 levels total, 1,853 tests pass. 4 commits on master, needs push.
+Session 13 was a quality-focused session. Fixed 20+ bugs across the entire codebase found through systematic auditing — critical gameplay bugs (mutations never applied, solved flag wrong, portal velocity zeroed), resource leaks (6 separate leak sources in GameScene/HowToScene/ReplayScene), data integrity issues (gamesPlayed inflation, localStorage crashes, puzzle number collisions), and UI bugs (button overlaps, HUD chain not resetting, share silent failure). Also added a structural level validator, Lighthouse accessibility/performance improvements (viewport meta, color contrast, loading screen, dynamic imports), and 5 new tests. 9 commits on master, 1,865 tests pass, build clean. Needs push.
 
 ## Completed This Session
-- [x] Material-specific particle themes (wood/stone/metal tinted hit/spark/dust/ripple)
-- [x] Replay Director (3 camera modes: overview/follow/cinematic + keyboard 1/2/3)
-- [x] Bell target type (copper texture, sway animation, 3-harmonic chime)
-- [x] 17 bell targets spread across batches 2-8
-- [x] New player mutation exemption (gamesPlayed < 7 = baseline physics)
-- [x] Butterfly Effect scene (side-by-side replay overlay comparison)
-- [x] Editor constraint editing (seesaw/spring/rope tools with visual indicators)
-- [x] Editor property editing (width/height/angle/type/points for selected objects)
-- [x] Daily bet timing fix (4s to 6s + tap-to-dismiss)
-- [x] Gravity flip constraint anchor fix (mirrorLevelY now flips anchorA/B and portals)
-- [x] Bomb object type (explosion physics, blast force, texture, audio, 4 levels)
-- [x] Portal object type (linked pairs, teleportation with cooldown, texture, whoosh audio, 4 levels)
-- [x] Magnet object type (static attractor, inverse-distance force, texture, 4 levels)
-- [x] Editor bomb/portal/magnet tools
-- [x] Portal rendering in ReplayScene and ButterflyScene
-- [x] Stale manifest.json + assets/levels/ directory deleted
-- [x] CLAUDE.md updated (removed stale manifest refs, updated level info, current focus)
-- [x] ROADMAP.md rewritten (all phases updated with completion status)
+- [x] 20+ bug fixes across GameScene, ReplayScene, ButterflyScene, PracticeScene, HowToScene, ResultScene, StorageManager, DailySystem, ShareManager, CameraFX, HUD, PhysicsManager, LevelLoader
+- [x] Critical: applyMutationToPhysics moved after setupLevel (bounce/friction mutations now work)
+- [x] Critical: solved flag requires all targets hit (was: any single target)
+- [x] Critical: portal teleportation preserves velocity (was: zeroed momentum)
+- [x] Critical: score timer uses frame delta instead of Date.now (immune to tab backgrounding)
+- [x] Resource leaks: magnet bodies tracked, shutdown cleans portals/targets/magnets, pointermove handler stored, keyboard listeners removed in replay scenes, HowToScene shutdown added
+- [x] Data: gamesPlayed/totalScore deduplication, localStorage try-catch, puzzle number pre/post-launch offset
+- [x] UI: ResultScene dynamic button stacking, HUD chain text/color reset, ShareManager returns success boolean
+- [x] Code: 7 any-casts consolidated into getAllMatterBodies helper, bomb __exploded uses typed Set
+- [x] Level validator (structural checks for all 225 levels — constraints, portals, bounds, targets)
+- [x] Lighthouse: viewport meta (allow zoom), color contrast (#99aabb = 7.17:1), HTML loading screen, dynamic imports, scene-level code splitting
+- [x] 5 new tests for storage dedup, puzzle numbering, quota handling
 
 ## Completed in Previous Sessions (Still Working)
-- [x] 222 levels (batches 1-8) including bomb, portal, magnet levels
+- [x] 225 levels (batches 1-8) including bomb, portal, magnet levels
 - [x] All 42 enhancement plan sections complete
 - [x] Material themes (wood/stone/metal) with 9 procedural textures + themed collision audio
 - [x] PostFX bloom/glow/vignette/bokeh pipeline
@@ -34,7 +28,7 @@ Session 12 was a massive feature session. Implemented 20+ features spanning 4 ne
 - [x] Replay scrubber with play/pause/speed/seek + Director camera modes
 - [x] 23-badge achievement system
 - [x] PWA shortcuts and challenge URLs
-- [x] Level editor with constraints + portals + magnets + bombs
+- [x] Level editor with constraints + portals + magnets + bombs + property editing
 - [x] Monthly themed events framework
 - [x] Wipe scene transitions with edge accent
 - [x] Spatial audio panning + material-differentiated collision audio
@@ -51,72 +45,70 @@ Session 12 was a massive feature session. Implemented 20+ features spanning 4 ne
 - [x] Photon Gallery (shareable trail art)
 - [x] HUD attempt pips + live timer
 - [x] Butterfly Effect (side-by-side replay comparison)
+- [x] Bell, bomb, portal, magnet object types
+- [x] Editor magnet strength/radius sliders (was listed as missing — already implemented)
 
 ## In Progress
 - [ ] Beta testing — game is feature-complete and deployed. BETA-POSTS.md has ready-to-post drafts.
-- [ ] **Needs push** — 4 commits on master, not yet pushed to origin.
+- [ ] **Needs push** — 9 commits on master, not yet pushed to origin.
 
 ## Decisions Made
 | Decision | Why | Alternatives Rejected | Why Rejected |
 |----------|-----|-----------------------|--------------|
-| Magnet as StaticObject (not dynamic) | Magnets are fixed attractors — no physics body, just force application | Dynamic magnet body | Would bounce around and be unpredictable |
-| Portal cooldown 500ms | Prevents infinite teleport loops | No cooldown | Body would teleport back and forth every frame |
-| Bomb detonates on any collision | Simpler, more predictable gameplay | Speed threshold | Confusing when bomb doesn't explode |
-| Bell sways instead of pulses | Visual differentiation from star targets | Same pulse as star | Would look identical |
-| 6s daily bet (was 4s) | Slow readers complained | Longer timer | Takes too long for experienced players |
+| Structural level validator (not physics sim) | Headless Matter.js diverges from Phaser's integrated physics — ball trajectories differ significantly | Headless Matter.js solvability simulation | Ball never reaches targets from placement zone in standalone Matter.js; 206/225 levels "unsolvable" despite working in game. Physics integration differences are fundamental. |
+| Dynamic imports for Phaser + scenes | Allows HTML loading screen to paint before heavy JS blocks main thread | Synchronous imports | Blocks FCP/LCP for 2.9s while Phaser evaluates |
+| Frame delta for sim timer instead of Date.now() | Immune to tab backgrounding inflating score timer | Date.now() | Keeps ticking when tab hidden but physics paused |
+| Bomb setStatic + move off-world instead of world.remove | Preserves body array indices for replay recording | world.remove | Shifts array indices, corrupting all subsequent replay frames |
+| getAllMatterBodies() helper | Single point for the localWorld.bodies any-cast, removes 6 eslint-disable comments | Inline any-casts | 7 duplicate patterns across GameScene |
+| buttonY dynamic stacking in ResultScene | Prevents overlap when multiple buttons visible (GIF + trail art + WhatsApp + butterfly) | Fixed Y positions | Buttons overlap when multiple conditional buttons render |
+| ShareManager returns boolean | Caller can show appropriate feedback (success vs failure) | Void return with silent fail | User gets false "Kopiert!" even when nothing was copied |
 
 ## Known Issues
-- **Editor magnet redraw** — magnet radius indicator circle not redrawn on undo (cosmetic only)
-- **Editor limitations** — no magnet strength/radius editing in properties panel (uses defaults)
-- **Gravity Flip + magnets** — magnet positions flip with other statics, but force direction stays "toward magnet" which should work correctly
-- **Emoji rendering in buttons** — platform-dependent, some emojis render as squares
-- **Playwright can't interact with Phaser input** — automated gameplay testing not possible
-- **Daily bet auto-dismisses in 6s** — still may be fast for some users
+- **ButterflyScene level mismatch** — passes today's levelId for yesterday's replay backdrop. Bodies appear to float through platforms that weren't there. Needs separate levelId per replay.
+- **StatsScene tooltip leak** — rapid hover creates multiple tooltip objects before cleanup fires. Store tooltip ref and destroy at start of pointerover.
+- **MenuScene sound toggle desync** — initializes `soundOn = true` regardless of AudioManager state on re-entry.
+- **ReplayExporter canvas context** — non-null assertion on getContext('2d') could crash if browser exhausts canvas context limit.
+- **Emoji rendering in buttons** — platform-dependent, some emojis render as squares.
+- **Playwright can't interact with Phaser input** — automated gameplay testing not possible.
+- **Phaser bundle size** — 340KB gzipped, inherent to the library. Lighthouse perf score limited.
+- **Redirect in Lighthouse** — 3.3s intermittent redirect, server-side issue not fixable in code.
 
 ## Next Steps (Priority Order)
-1. **Commit session 12 changes** — `git add` + commit + push
-2. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
-3. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX
-4. **Editor magnet properties** — Add strength/radius sliders to properties panel
-5. **Gravity Flip + constraints full test** — Wait for a Friday
-6. **Level validation** — Automated solvability check for all 222 levels
-7. **Lighthouse audit** — Target > 90 all categories
-8. **Supabase leaderboard** — Top 10 + own rank on ResultScene
+1. **Push 9 commits** — `git push origin master`
+2. **Deploy to production** — `VITE_BASE_PATH=root npm run build && scp -r ./dist/* deploy@91.99.104.132:/home/deploy/kettenreaktion.crelvo.dev/`
+3. **Fix ButterflyScene level mismatch** — store yesterday's levelId in replay data, pass separately
+4. **Fix MenuScene sound toggle** — init from AudioManager.isEnabled()
+5. **Fix StatsScene tooltip leak** — store ref, destroy existing before creating new
+6. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
+7. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX
+8. **Supabase leaderboard** — Top 10 + own rank on ResultScene (API + UI)
 
 ## Rollback Info
-- Last known good: `916c181` (HEAD) — 1,853 tests pass, 225 levels
+- Last known good: `f7d63d2` (HEAD) — 1,865 tests pass, 225 levels, all bugs fixed
+- Pre-session 13: `2e694d2` — 1,853 tests pass, session 12 handover
 - Pre-session 12: `65c44bb` — 1,733 tests pass, 210 levels
 
 ## Files Modified This Session
-- `CLAUDE.md` — Updated status, removed stale manifest refs, updated level info
-- `HANDOVER.md` — This file
-- `docs/ROADMAP.md` — Complete rewrite reflecting current state
-- `src/types/Level.ts` — Added bomb to ObjectType, PortalPair interface, magnet to StaticObject
-- `src/constants/Physics.ts` — Added bomb body properties
-- `src/scenes/BootScene.ts` — Added genBell, genBomb, genPortal, genMagnet textures
-- `src/scenes/GameScene.ts` — Material particles, bell/bomb/portal/magnet logic, mutation exemption, bet timing
-- `src/scenes/ReplayScene.ts` — Replay Director camera modes, portal rendering
-- `src/scenes/ResultScene.ts` — Butterfly Effect button
-- `src/scenes/ButterflyScene.ts` — **NEW** side-by-side comparison scene
-- `src/scenes/EditorScene.ts` — Constraint/portal/magnet/bomb tools, property editing
-- `src/systems/AudioManager.ts` — Bell chime, bomb explosion, portal whoosh
-- `src/game/PhysicsManager.ts` — Bomb circle shape, magnet static body creation
-- `src/game/LevelTemplates2.ts` — 3 bell targets added
-- `src/game/LevelTemplates3.ts` — 3 bell targets added
-- `src/game/LevelTemplates4.ts` — 3 bell targets added
-- `src/game/LevelTemplates5.ts` — 2 bell targets added (previous session)
-- `src/game/LevelTemplates6.ts` — 3 bell targets added
-- `src/game/LevelTemplates8.ts` — 2 bell + 4 bomb + 4 portal + 4 magnet levels
-- `src/game/LevelLoader.test.ts` — Updated level count to 222
-- `src/ui/Button.ts` — Added setStyle() method
-- `src/main.ts` — Registered ButterflyScene
-
-## Files Created This Session
-- `src/scenes/ButterflyScene.ts` — Side-by-side replay comparison
-
-## Files Deleted This Session
-- `assets/levels/manifest.json` — Stale, no code referenced it
-- `assets/levels/templates/` — Empty directory
+- `index.html` — Viewport meta (allow zoom), color contrast fix, HTML loading screen
+- `src/main.ts` — Dynamic imports for Phaser + all scenes, loading screen dismiss
+- `src/game/LevelValidator.ts` — **NEW** structural level validator
+- `src/game/LevelValidator.test.ts` — **NEW** 7 tests for validator
+- `src/game/PhysicsManager.ts` — Track magnet body/sprite in this.tracked for cleanup
+- `src/game/CameraFX.ts` — Additive shake offset instead of absolute setScroll
+- `src/game/LevelLoader.ts` — Anti-repeat uses template IDs from full pool
+- `src/scenes/GameScene.ts` — 10+ fixes: mutation ordering, solved flag, portal velocity, sim timer, bomb handling, shutdown cleanup, explodedBombs Set, ghostMoveHandler, getAllMatterBodies helper
+- `src/scenes/ResultScene.ts` — Dynamic button Y stacking, share failure feedback
+- `src/scenes/ReplayScene.ts` — Keyboard cleanup in shutdown, hide sprites for missing bodies
+- `src/scenes/ButterflyScene.ts` — Keyboard cleanup in shutdown, hide sprites for missing bodies
+- `src/scenes/PracticeScene.ts` — Guard navigate() against empty filter
+- `src/scenes/HowToScene.ts` — Added shutdown() for Matter.js body cleanup
+- `src/systems/StorageManager.ts` — gamesPlayed/totalScore dedup, localStorage try-catch
+- `src/systems/DailySystem.ts` — Pre-launch puzzle number offset (10000+)
+- `src/systems/ShareManager.ts` — share() returns boolean, clipboard try-catch
+- `src/systems/DailySystem.test.ts` — Pre-launch puzzle number test
+- `src/systems/StorageManager.test.ts` — 4 tests: dedup, totalScore adjustment, quota handling
+- `src/ui/HUD.ts` — Chain text/color reset on 0 and between attempts
+- `src/constants/Physics.ts` — Added frictionAir to seesaw body properties
 
 ## Infrastructure
 - **Production URL:** https://kettenreaktion.crelvo.dev
@@ -130,7 +122,7 @@ Session 12 was a massive feature session. Implemented 20+ features spanning 4 ne
 - `PRINCIPLES.md` — engineering principles
 - `BETA-POSTS.md` — ready-to-post community announcements
 - `docs/GAMEPLAN.md` — game design source of truth
-- `docs/ROADMAP.md` — development phases and milestones (updated this session)
+- `docs/ROADMAP.md` — development phases and milestones
 
 ---
-**Last Updated:** 2026-04-01 (Session 12 — 20+ features, 15 new levels, 4 new object types)
+**Last Updated:** 2026-04-01 (Session 13 — 20+ bug fixes, quality audit, Lighthouse improvements)
