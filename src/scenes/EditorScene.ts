@@ -381,10 +381,16 @@ export class EditorScene extends Phaser.Scene {
     const data = entry.data as { x: number; y: number };
 
     // For platforms/ramps, x is top-left corner — offset so drag feels centered
+    // Magnets use center position
     if (entry.kind === 'static') {
       const s = data as StaticObject;
-      s.x = x - (s.width ?? 200) / 2;
-      s.y = y;
+      if (s.type === 'magnet') {
+        s.x = x;
+        s.y = y;
+      } else {
+        s.x = x - (s.width ?? 200) / 2;
+        s.y = y;
+      }
     } else {
       data.x = x;
       data.y = y;
@@ -422,6 +428,13 @@ export class EditorScene extends Phaser.Scene {
           cx + hw * cos - 6 * sin, cy + hw * sin + 6 * cos,
           cx - hw * cos - 6 * sin, cy - hw * sin + 6 * cos,
         );
+      } else if (obj.type === 'magnet') {
+        gfx.fillStyle(TOOL_COLORS.magnet, 0.4);
+        gfx.fillCircle(obj.x, obj.y, 14);
+        gfx.lineStyle(2, TOOL_COLORS.magnet, 0.7);
+        gfx.strokeCircle(obj.x, obj.y, 14);
+        gfx.lineStyle(0.5, TOOL_COLORS.magnet, 0.15);
+        gfx.strokeCircle(obj.x, obj.y, obj.radius ?? 120);
       } else {
         gfx.fillStyle(TOOL_COLORS.platform, 0.8);
         gfx.fillRect(obj.x, obj.y, obj.width, obj.height ?? 12);
@@ -935,6 +948,16 @@ export class EditorScene extends Phaser.Scene {
           </label>
         `;
       }
+      if (s.type === 'magnet') {
+        fieldsHTML = `
+          <label style="display:block;margin:3px 0;font-size:9px">Staerke:
+            <input id="ed-prop-str" type="number" value="${s.strength ?? 0.0005}" min="0.0001" max="0.005" step="0.0001" style="${inputStyle}">
+          </label>
+          <label style="display:block;margin:3px 0;font-size:9px">Radius:
+            <input id="ed-prop-rad" type="number" value="${s.radius ?? 120}" min="40" max="300" step="10" style="${inputStyle}">
+          </label>
+        `;
+      }
     } else if (entry.kind === 'target') {
       const t = d as Target;
       fieldsHTML = `
@@ -987,6 +1010,15 @@ export class EditorScene extends Phaser.Scene {
     propsDiv.querySelector('#ed-prop-pts')?.addEventListener('change', (e) => {
       this.pushUndo();
       (entry.data as Target).points = parseInt((e.target as HTMLInputElement).value, 10);
+    });
+    propsDiv.querySelector('#ed-prop-str')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as StaticObject).strength = parseFloat((e.target as HTMLInputElement).value);
+    });
+    propsDiv.querySelector('#ed-prop-rad')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as StaticObject).radius = parseInt((e.target as HTMLInputElement).value, 10);
+      this.redrawEntry(entry);
     });
   }
 

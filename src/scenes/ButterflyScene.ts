@@ -293,10 +293,21 @@ export class ButterflyScene extends Phaser.Scene {
     }
 
     for (const target of level.targets) {
-      gfx.fillStyle(0xffdd44, 0.2);
+      const color = target.type === 'bell' ? 0xdd8844 : 0xffdd44;
+      gfx.fillStyle(color, 0.2);
       gfx.fillCircle(target.x, target.y, 12);
-      gfx.lineStyle(1, 0xffdd44, 0.4);
+      gfx.lineStyle(1, color, 0.4);
       gfx.strokeCircle(target.x, target.y, 12);
+    }
+
+    // Magnets
+    for (const obj of level.staticObjects) {
+      if (obj.type === 'magnet') {
+        gfx.fillStyle(0xcc44cc, 0.15);
+        gfx.fillCircle(obj.x, obj.y, 14);
+        gfx.lineStyle(1, 0xcc44cc, 0.3);
+        gfx.strokeCircle(obj.x, obj.y, 14);
+      }
     }
 
     // Portals

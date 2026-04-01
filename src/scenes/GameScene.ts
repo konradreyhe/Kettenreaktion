@@ -101,8 +101,8 @@ export class GameScene extends Phaser.Scene {
   private portalPairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType; cooldowns: Map<number, number> }[] = [];
   private portalVisuals: Phaser.GameObjects.GameObject[] = [];
 
-  // Magnets: position + config for force application
-  private magnets: { x: number; y: number; strength: number; radius: number }[] = [];
+  // Magnets: position + config for force application + visual field
+  private magnets: { x: number; y: number; strength: number; radius: number; fieldRing?: Phaser.GameObjects.Arc }[] = [];
 
   // PostFX references
   private cameraVignette: Phaser.FX.Vignette | null = null;
@@ -909,13 +909,22 @@ export class GameScene extends Phaser.Scene {
     this.applyThemeTint();
 
     // Magnets
+    this.magnets.forEach((m) => m.fieldRing?.destroy());
     this.magnets = [];
     for (const obj of this.level.staticObjects) {
       if (obj.type === 'magnet') {
+        const radius = obj.radius ?? 120;
+        // Pulsing field ring (visible during gameplay)
+        const fieldRing = this.add.circle(obj.x, obj.y, radius, 0x000000, 0)
+          .setStrokeStyle(1, 0xcc44cc, 0.12).setDepth(3);
+        this.tweens.add({
+          targets: fieldRing, scaleX: 1.1, scaleY: 1.1, alpha: 0.6,
+          duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        });
         this.magnets.push({
           x: obj.x, y: obj.y,
           strength: obj.strength ?? 0.0005,
-          radius: obj.radius ?? 120,
+          radius, fieldRing,
         });
       }
     }
@@ -1390,6 +1399,7 @@ export class GameScene extends Phaser.Scene {
   private applyMagnetForces(): void {
     const allBodies = this.matter.world.getAllBodies();
     for (const magnet of this.magnets) {
+      let pulling = false;
       for (const body of allBodies) {
         if (body.isStatic || body.isSensor) continue;
         const dx = magnet.x - body.position.x;
@@ -1398,11 +1408,19 @@ export class GameScene extends Phaser.Scene {
         const dist = Math.sqrt(distSq);
         if (dist > magnet.radius || dist < 5) continue;
 
+        pulling = true;
         // Inverse-distance falloff (stronger closer)
         const forceMag = magnet.strength * (1 - dist / magnet.radius);
         const fx = (dx / dist) * forceMag;
         const fy = (dy / dist) * forceMag;
         this.matter.body.applyForce(body, body.position, { x: fx, y: fy });
+      }
+
+      // Intensify field ring when actively pulling
+      if (magnet.fieldRing) {
+        const targetAlpha = pulling ? 0.25 : 0.12;
+        const currentStroke = magnet.fieldRing.strokeAlpha;
+        magnet.fieldRing.setStrokeStyle(1, 0xcc44cc, currentStroke + (targetAlpha - currentStroke) * 0.1);
       }
     }
   }
@@ -1501,6 +1519,17 @@ export class GameScene extends Phaser.Scene {
       targets: flash, alpha: 0, scaleX: 2, scaleY: 2,
       duration: 200, onComplete: () => flash.destroy(),
     });
+
+    // Particle trail from source to destination (3 dots traveling the path)
+    for (let i = 0; i < 3; i++) {
+      const dot = this.add.circle(fromX, fromY, 3, 0x8844ff, 0.7).setDepth(55);
+      this.tweens.add({
+        targets: dot,
+        x: toX, y: toY, alpha: 0, scaleX: 0.3, scaleY: 0.3,
+        duration: 250, delay: i * 40, ease: 'Quad.easeIn',
+        onComplete: () => dot.destroy(),
+      });
+    }
 
     // Burst at destination
     this.sparkEmitter?.emitParticleAt(toX, toY);
