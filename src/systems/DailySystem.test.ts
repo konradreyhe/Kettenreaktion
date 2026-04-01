@@ -35,6 +35,16 @@ describe('DailySystem', () => {
   it('returns positive puzzle number', () => {
     const num = DailySystem.getPuzzleNumber();
     expect(typeof num).toBe('number');
+    expect(num).toBeGreaterThan(0);
+  });
+
+  it('pre-launch puzzle numbers do not collide with post-launch numbers', () => {
+    // Pre-launch numbers should be in 10000+ range (offset)
+    // Post-launch numbers should be 1, 2, 3, ...
+    // Current date (April 2026) is before launch (August 2026)
+    const num = DailySystem.getPuzzleNumber();
+    // Pre-launch: 10000 + negative daysSinceLaunch → large positive number
+    expect(num).toBeGreaterThan(9000);
   });
 
   it('returns positive time until reset', () => {

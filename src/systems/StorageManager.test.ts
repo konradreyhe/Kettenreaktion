@@ -225,5 +225,53 @@ describe('StorageManager', () => {
       });
       expect(StorageManager.load().puzzleHistory[1].score).toBe(500);
     });
+
+    it('does not inflate gamesPlayed on same-puzzle replay', () => {
+      StorageManager.recordPuzzle(1, {
+        score: 300, attempts: 1, solved: true,
+        date: new Date().toISOString().split('T')[0],
+      });
+      StorageManager.recordPuzzle(1, {
+        score: 200, attempts: 2, solved: false,
+        date: new Date().toISOString().split('T')[0],
+      });
+      expect(StorageManager.load().gamesPlayed).toBe(1);
+    });
+
+    it('does not inflate totalScore on same-puzzle lower score', () => {
+      StorageManager.recordPuzzle(1, {
+        score: 500, attempts: 1, solved: true,
+        date: new Date().toISOString().split('T')[0],
+      });
+      StorageManager.recordPuzzle(1, {
+        score: 200, attempts: 2, solved: false,
+        date: new Date().toISOString().split('T')[0],
+      });
+      expect(StorageManager.load().totalScore).toBe(500);
+    });
+
+    it('adjusts totalScore correctly when improving a puzzle score', () => {
+      StorageManager.recordPuzzle(1, {
+        score: 300, attempts: 2, solved: true,
+        date: new Date().toISOString().split('T')[0],
+      });
+      StorageManager.recordPuzzle(1, {
+        score: 500, attempts: 1, solved: true,
+        date: new Date().toISOString().split('T')[0],
+      });
+      // totalScore should be 500 (not 300+500=800)
+      expect(StorageManager.load().totalScore).toBe(500);
+      expect(StorageManager.load().gamesPlayed).toBe(1);
+    });
+
+    it('handles localStorage.setItem throwing gracefully', () => {
+      localStorageMock.setItem.mockImplementationOnce(() => {
+        throw new Error('QuotaExceededError');
+      });
+      // Should not throw
+      expect(() => {
+        StorageManager.save({ streak: 5 });
+      }).not.toThrow();
+    });
   });
 });
