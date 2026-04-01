@@ -2497,6 +2497,33 @@ export class GameScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    // Clean up target sensor bodies and visuals
+    this.targets.forEach((t) => {
+      t.sprite.destroy();
+      t.glow.destroy();
+      this.matter.world.remove(t.body);
+    });
+    this.targets = [];
+
+    // Clean up portal sensor bodies and visuals
+    for (const portal of this.portalPairs) {
+      this.matter.world.remove(portal.bodyA);
+      this.matter.world.remove(portal.bodyB);
+    }
+    this.portalPairs = [];
+    this.portalVisuals.forEach((v) => v.destroy());
+    this.portalVisuals = [];
+
+    // Clean up magnet field rings
+    this.magnets.forEach((m) => m.fieldRing?.destroy());
+    this.magnets = [];
+
+    // Clean up ghost move handler
+    if (this.ghostMoveHandler) {
+      this.input.off('pointermove', this.ghostMoveHandler);
+      this.ghostMoveHandler = null;
+    }
+
     this.physicsManager.clearLevel();
     this.trailRenderer.destroy();
     for (const btn of this.selectorButtons) btn.destroy();
