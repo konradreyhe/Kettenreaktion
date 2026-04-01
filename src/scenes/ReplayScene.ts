@@ -13,6 +13,9 @@ interface ReplayData {
   result: PuzzleResult;
 }
 
+/** Camera angle presets for Replay Director. */
+type CameraMode = 'overview' | 'follow' | 'cinematic';
+
 /** Replays yesterday's solution as a ghost animation over the level layout. */
 export class ReplayScene extends Phaser.Scene {
   private replayFrames: ReplayFrame[] = [];
@@ -20,6 +23,8 @@ export class ReplayScene extends Phaser.Scene {
   private dots: Phaser.GameObjects.GameObject[] = [];
   private isPlaying = false;
   private playTimer: Phaser.Time.TimerEvent | null = null;
+  private cameraMode: CameraMode = 'overview';
+  private cameraModeButtons: Map<CameraMode, Button> = new Map();
 
   constructor() {
     super({ key: 'ReplayScene' });
@@ -187,6 +192,25 @@ export class ReplayScene extends Phaser.Scene {
       },
     });
 
+    // Camera mode selector — Replay Director
+    this.cameraModeButtons.clear();
+    const modes: { mode: CameraMode; label: string }[] = [
+      { mode: 'overview', label: '\u{1F4F7}' },    // 📷 Overview
+      { mode: 'follow', label: '\u{1F3AF}' },       // 🎯 Follow
+      { mode: 'cinematic', label: '\u{1F3AC}' },    // 🎬 Cinematic
+    ];
+    modes.forEach((m, i) => {
+      const isActive = m.mode === this.cameraMode;
+      const btn = new Button(this, {
+        x: cx + 130 + i * 32, y: GAME_HEIGHT - 18, text: m.label,
+        width: 28, height: 28, fontSize: '12px',
+        color: isActive ? 0x446688 : 0x333355, hoverColor: 0x445577,
+        textColor: isActive ? '#ffffff' : '#8888aa',
+        onClick: () => this.setCameraMode(m.mode),
+      });
+      this.cameraModeButtons.set(m.mode, btn);
+    });
+
     // Keyboard controls
     this.input.keyboard?.on('keydown-SPACE', () => {
       this.isPlaying = !this.isPlaying;
@@ -203,6 +227,77 @@ export class ReplayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => {
       SceneTransition.wipeOut(this, 'MenuScene');
     });
+
+    // Camera mode keyboard shortcuts: 1/2/3
+    this.input.keyboard?.on('keydown-ONE', () => this.setCameraMode('overview'));
+    this.input.keyboard?.on('keydown-TWO', () => this.setCameraMode('follow'));
+    this.input.keyboard?.on('keydown-THREE', () => this.setCameraMode('cinematic'));
+  }
+
+  /** Switch camera angle and update button highlights. */
+  private setCameraMode(mode: CameraMode): void {
+    this.cameraMode = mode;
+    this.cameraModeButtons.forEach((btn, m) => {
+      const isActive = m === mode;
+      btn.setStyle(isActive ? 0x446688 : 0x333355, isActive ? '#ffffff' : '#8888aa');
+    });
+
+    // Reset camera when switching to overview
+    if (mode === 'overview') {
+      this.tweens.add({
+        targets: this.cameras.main,
+        scrollX: 0, scrollY: 0, zoom: 1,
+        duration: 400, ease: 'Sine.easeInOut',
+      });
+    }
+  }
+
+  /** Apply camera angle based on current mode and frame data. */
+  private updateCamera(frame: ReplayFrame): void {
+    const cam = this.cameras.main;
+
+    if (this.cameraMode === 'overview') return; // Fixed default view
+
+    if (this.cameraMode === 'follow') {
+      // Track the player-placed object (last body in frame)
+      const player = frame[frame.length - 1];
+      if (!player) return;
+      const [px, py] = player;
+      const targetZoom = 1.6;
+      const targetX = px - GAME_WIDTH / (2 * targetZoom);
+      const targetY = py - GAME_HEIGHT / (2 * targetZoom);
+      const clampedX = Phaser.Math.Clamp(targetX, -20, GAME_WIDTH * 0.3);
+      const clampedY = Phaser.Math.Clamp(targetY, -20, GAME_HEIGHT * 0.3);
+
+      cam.scrollX += (clampedX - cam.scrollX) * 0.08;
+      cam.scrollY += (clampedY - cam.scrollY) * 0.08;
+      cam.zoom += (targetZoom - cam.zoom) * 0.06;
+      return;
+    }
+
+    if (this.cameraMode === 'cinematic') {
+      // Follow centroid of all bodies with gentle zoom based on spread
+      let cx = 0, cy = 0;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const [x, y] of frame) {
+        cx += x; cy += y;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+      cx /= frame.length;
+      cy /= frame.length;
+
+      const spread = Math.sqrt((maxX - minX) ** 2 + (maxY - minY) ** 2);
+      const targetZoom = Phaser.Math.Clamp(300 / Math.max(spread, 60), 1.0, 1.8);
+      const targetX = cx - GAME_WIDTH / (2 * targetZoom);
+      const targetY = cy - GAME_HEIGHT / (2 * targetZoom);
+      const clampedX = Phaser.Math.Clamp(targetX, -20, GAME_WIDTH * 0.3);
+      const clampedY = Phaser.Math.Clamp(targetY, -20, GAME_HEIGHT * 0.3);
+
+      cam.scrollX += (clampedX - cam.scrollX) * 0.05;
+      cam.scrollY += (clampedY - cam.scrollY) * 0.05;
+      cam.zoom += (targetZoom - cam.zoom) * 0.04;
+    }
   }
 
   private renderFrame(
@@ -222,6 +317,9 @@ export class ReplayScene extends Phaser.Scene {
     const progress = idx / Math.max(1, this.replayFrames.length - 1);
     barFill.setSize(400 * progress, 6);
     frameText.setText(`${Math.round(progress * 100)}%`);
+
+    // Apply camera angle
+    this.updateCamera(frame);
   }
 
   private drawLevelLayout(level: Level): void {
@@ -252,6 +350,20 @@ export class ReplayScene extends Phaser.Scene {
       gfx.strokeCircle(target.x, target.y, 12);
     }
 
+    // Portals
+    for (const pair of level.portals ?? []) {
+      gfx.fillStyle(0x4488ff, 0.15);
+      gfx.fillCircle(pair.a.x, pair.a.y, 14);
+      gfx.lineStyle(1, 0x4488ff, 0.4);
+      gfx.strokeCircle(pair.a.x, pair.a.y, 14);
+      gfx.fillStyle(0xff8844, 0.15);
+      gfx.fillCircle(pair.b.x, pair.b.y, 14);
+      gfx.lineStyle(1, 0xff8844, 0.4);
+      gfx.strokeCircle(pair.b.x, pair.b.y, 14);
+      gfx.lineStyle(1, 0x8844ff, 0.15);
+      gfx.lineBetween(pair.a.x, pair.a.y, pair.b.x, pair.b.y);
+    }
+
     // Placement zone
     const zone = level.placementZone;
     gfx.lineStyle(1, 0x44ff44, 0.2);
@@ -265,5 +377,13 @@ export class ReplayScene extends Phaser.Scene {
     }
     this.dots = [];
     this.replayFrames = [];
+    this.cameraModeButtons.clear();
+    this.cameraMode = 'overview';
+
+    // Reset camera to default
+    const cam = this.cameras.main;
+    cam.scrollX = 0;
+    cam.scrollY = 0;
+    cam.zoom = 1;
   }
 }

@@ -118,7 +118,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 500, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 450, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 450, y: 555, points: 100 },
     ],
   },
   { id: 't100', name: 'Gewichtsprobe', difficulty: 2, theme: 'metal',
@@ -329,7 +329,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 250, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 420, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 420, y: 555, points: 100 },
       { id: 't3', type: 'star', x: 700, y: 555, points: 100 },
     ],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
@@ -533,7 +533,7 @@ export const LEVEL_TEMPLATES_4: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 350, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 700, y: 555, points: 100 },
       { id: 't3', type: 'star', x: 750, y: 140, points: 100 },
     ],
   },

@@ -3,7 +3,7 @@
 ## Project Identity
 Daily physics puzzle browser game. One new puzzle per day. Player places ONE object, chain reaction starts. All players worldwide solve the same puzzle. Share results as emoji text + GIF replay.
 
-**Status:** Beta-ready (180 levels, feature-complete, deployed)
+**Status:** Beta-ready (222 levels, feature-complete, deployed)
 **Maintainer:** Crelvo
 **Launch Target:** August 2026
 
@@ -32,9 +32,6 @@ assets/
   kenney/          CC0 sprites from kenney.nl
   audio/           Sound effects
   fonts/           Local Google Fonts
-  levels/
-    templates/     Level JSON files
-    manifest.json  Level index
 ```
 
 ## Key Commands
@@ -72,10 +69,9 @@ npm run test       # Vitest unit tests
 - Interfaces for all public contracts
 
 ### Asset Rules
-- ALWAYS read `assets/levels/manifest.json` before referencing asset keys
 - All assets from Kenney (CC0 license) — no attribution needed but appreciated
 - Sprites: PNG format. Audio: OGG format.
-- No invented filenames — check manifest first
+- Levels are defined in TypeScript batch files (`src/game/LevelTemplates*.ts`), not JSON
 
 ## Architecture (Clean/Hexagonal)
 ```
@@ -88,9 +84,9 @@ Never:
   - Game logic in UI components
 ```
 
-## Level JSON Schema
-Levels live in `assets/levels/templates/`. Schema defined in `src/types/Level.ts`.
-Key fields: `id`, `difficulty` (1-5), `placementZone`, `staticObjects`, `dynamicObjects`, `targets`, `seed_variations`.
+## Level Schema
+Levels are defined in `src/game/LevelTemplates*.ts` (8 batch files, 210 levels total). Schema in `src/types/Level.ts`.
+Key fields: `id`, `difficulty` (1-5), `theme`, `placementZone`, `staticObjects`, `dynamicObjects`, `targets`, `constraints`, `seed_variations`.
 
 ## Anti-Patterns to Avoid
 - Magic numbers anywhere (use `constants/Physics.ts` and `constants/Game.ts`)
@@ -102,7 +98,7 @@ Key fields: `id`, `difficulty` (1-5), `placementZone`, `staticObjects`, `dynamic
 - Silent error swallowing (`catch(e) {}`)
 
 ## Current Focus
-Phase 1 MVP: Core gameplay loop — place object, simulate physics, score result.
+Beta-ready. 210 levels, feature-complete, deployed at kettenreaktion.crelvo.dev. Launch target: August 2026.
 
 ## Reference Docs
 - `PRINCIPLES.md` — Engineering principles (source of truth for HOW we build)
@@ -115,4 +111,4 @@ Phase 1 MVP: Core gameplay loop — place object, simulate physics, score result
 - `docs/plans/DEPLOYMENT.md` — Deployment and infrastructure
 
 ---
-**Last Updated:** 2026-03-26
+**Last Updated:** 2026-04-01

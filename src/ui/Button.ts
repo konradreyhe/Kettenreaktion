@@ -156,4 +156,11 @@ export class Button {
   setText(text: string): void {
     this.label.setText(text);
   }
+
+  /** Update button background color and text color (for toggle states). */
+  setStyle(bgColor: number, textColor: string): void {
+    this.bg.setFillStyle(bgColor);
+    this.label.setColor(textColor);
+    this.border.setStrokeStyle(2, this.lighten(bgColor));
+  }
 }

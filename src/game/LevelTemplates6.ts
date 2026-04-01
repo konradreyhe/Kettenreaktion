@@ -176,7 +176,7 @@ export const LEVEL_TEMPLATES_6: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 700, y: 555, points: 100 },
     ],
     seed_variations: { ramp_angle_offset: { min: -2, max: 2 } },
   },
@@ -340,7 +340,7 @@ export const LEVEL_TEMPLATES_6: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 80, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 400, y: 555, points: 100 },
       { id: 't3', type: 'star', x: 720, y: 555, points: 100 },
     ],
   },
@@ -535,7 +535,7 @@ export const LEVEL_TEMPLATES_6: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 150, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 450, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 450, y: 555, points: 100 },
       { id: 't3', type: 'star', x: 730, y: 555, points: 100 },
     ],
   },

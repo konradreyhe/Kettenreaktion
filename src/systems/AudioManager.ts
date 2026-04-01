@@ -331,6 +331,112 @@ export class AudioManager {
     }
   }
 
+  /** Bomb explosion — deep thud with crackle. Pans based on x. */
+  static playBombExplosion(x?: number): void {
+    const ctx = AudioManager.getCtx();
+    if (!ctx) return;
+
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(x !== undefined ? AudioManager.xToPan(x) : 0, ctx.currentTime);
+    panner.connect(ctx.destination);
+
+    // Deep thud
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(panner);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(60, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.4);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+
+    // Noise burst (crackle)
+    const bufferSize = ctx.sampleRate * 0.15;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+    const noiseGain = ctx.createGain();
+    noise.connect(noiseGain);
+    noiseGain.connect(panner);
+    noiseGain.gain.setValueAtTime(0.25, ctx.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    noise.start(ctx.currentTime);
+    noise.stop(ctx.currentTime + 0.15);
+  }
+
+  /** Portal whoosh — rising sweep with shimmer. Pans based on x. */
+  static playPortalWhoosh(x?: number): void {
+    const ctx = AudioManager.getCtx();
+    if (!ctx) return;
+
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(x !== undefined ? AudioManager.xToPan(x) : 0, ctx.currentTime);
+    panner.connect(ctx.destination);
+
+    // Rising sweep
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(panner);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+
+    // Shimmer overtone
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(panner);
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(600, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.12);
+    gain2.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc2.start(ctx.currentTime);
+    osc2.stop(ctx.currentTime + 0.15);
+  }
+
+  /** Bell target chime — resonant metallic ring with harmonics. Pans based on x. */
+  static playBellChime(targetIndex: number, x?: number): void {
+    const ctx = AudioManager.getCtx();
+    if (!ctx) return;
+
+    const baseFreq = 440 + targetIndex * 120; // A4 and up
+
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(x !== undefined ? AudioManager.xToPan(x) : 0, ctx.currentTime);
+    panner.connect(ctx.destination);
+
+    // Three harmonics for a rich bell sound
+    const harmonics = [1, 2.76, 5.4]; // Bell-like harmonic series
+    for (const h of harmonics) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(panner);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(baseFreq * h, ctx.currentTime);
+      const vol = h === 1 ? 0.15 : 0.06; // Fundamental louder
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.8);
+    }
+  }
+
   /** Success jingle — ascending three-note arpeggio with reverb tail. */
   static playSuccess(): void {
     const ctx = AudioManager.getCtx();

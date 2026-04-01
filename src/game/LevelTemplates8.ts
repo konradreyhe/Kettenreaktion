@@ -56,7 +56,7 @@ export const LEVEL_TEMPLATES_8: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 400, y: 555, points: 100 },
       { id: 't3', type: 'star', x: 700, y: 555, points: 100 },
     ],
     constraints: [
@@ -82,7 +82,7 @@ export const LEVEL_TEMPLATES_8: Level[] = [
     ],
     targets: [
       { id: 't1', type: 'star', x: 80, y: 555, points: 100 },
-      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 400, y: 555, points: 100 },
       { id: 't3', type: 'star', x: 720, y: 555, points: 100 },
     ],
     constraints: [
@@ -274,6 +274,241 @@ export const LEVEL_TEMPLATES_8: Level[] = [
       { type: 'rope', bodyA: 'd1', anchorB: { x: 100, y: 60 }, segments: 5, stiffness: 0.9 },
       { type: 'rope', bodyA: 'd4', anchorB: { x: 650, y: 60 }, segments: 5, stiffness: 0.9 },
       { type: 'spring', bodyA: 'd2', bodyB: 'd3', stiffness: 0.05 },
+    ],
+  },
+
+  // ===== BOMB LEVELS (4 levels) =====
+  { id: 't211', name: 'Sprengmeister', difficulty: 3, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 30, width: 100, height: 120, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 200, y: 350, width: 200, angle: 20 },
+      { type: 'platform', x: 500, y: 300, width: 100, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'bomb', x: 540, y: 280 },
+      { id: 'd2', type: 'domino', x: 600, y: 555 },
+      { id: 'd3', type: 'domino', x: 640, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+  },
+  { id: 't212', name: 'Kettensprengung', difficulty: 4, theme: 'stone',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 30, y: 200, width: 80, height: 150, allowedObjects: ['ball', 'weight'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 200, y: 400, width: 150, height: 10 },
+      { type: 'platform', x: 500, y: 300, width: 150, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'bomb', x: 260, y: 380 },
+      { id: 'd2', type: 'crate', x: 350, y: 555 },
+      { id: 'd3', type: 'bomb', x: 560, y: 280 },
+      { id: 'd4', type: 'domino', x: 680, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 750, y: 555, points: 100 },
+    ],
+  },
+  { id: 't213', name: 'Bombenregen', difficulty: 4, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 350, y: 30, width: 100, height: 60, allowedObjects: ['weight'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 300, y: 200, width: 200, height: 10 },
+      { type: 'platform', x: 150, y: 400, width: 120, height: 10 },
+      { type: 'platform', x: 530, y: 400, width: 120, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'bomb', x: 380, y: 180 },
+      { id: 'd2', type: 'ball', x: 200, y: 380 },
+      { id: 'd3', type: 'ball', x: 580, y: 380 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+  },
+  { id: 't214', name: 'Finale Explosion', difficulty: 5, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 30, width: 80, height: 80, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 150, y: 300, width: 200, angle: 25 },
+      { type: 'platform', x: 450, y: 250, width: 150, height: 10 },
+      { type: 'platform', x: 300, y: 450, width: 100, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'bomb', x: 510, y: 230 },
+      { id: 'd2', type: 'bomb', x: 340, y: 430 },
+      { id: 'd3', type: 'crate', x: 200, y: 555 },
+      { id: 'd4', type: 'domino', x: 600, y: 555 },
+      { id: 'd5', type: 'domino', x: 650, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'bell', x: 100, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't3', type: 'star', x: 720, y: 555, points: 100 },
+    ],
+  },
+
+  // ===== PORTAL LEVELS (4 levels) =====
+  { id: 't215', name: 'Portaldurchgang', difficulty: 3, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 30, width: 100, height: 120, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 200, y: 350, width: 100, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 600, y: 555 },
+      { id: 'd2', type: 'domino', x: 640, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+    portals: [
+      { a: { x: 250, y: 320 }, b: { x: 550, y: 450 } },
+    ],
+  },
+  { id: 't216', name: 'Doppelportal', difficulty: 4, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 350, y: 30, width: 100, height: 60, allowedObjects: ['ball', 'weight'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 300, y: 200, width: 200, angle: 15 },
+      { type: 'platform', x: 600, y: 350, width: 100, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 150, y: 555 },
+      { id: 'd2', type: 'crate', x: 650, y: 330 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 80, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 700, y: 555, points: 100 },
+    ],
+    portals: [
+      { a: { x: 500, y: 250 }, b: { x: 100, y: 450 } },
+      { a: { x: 700, y: 300 }, b: { x: 300, y: 500 } },
+    ],
+  },
+  { id: 't217', name: 'Portal-Bombe', difficulty: 5, theme: 'stone',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 30, y: 250, width: 80, height: 120, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 400, y: 300, width: 120, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'bomb', x: 450, y: 280 },
+      { id: 'd2', type: 'domino', x: 600, y: 555 },
+      { id: 'd3', type: 'domino', x: 200, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+    portals: [
+      { a: { x: 150, y: 350 }, b: { x: 550, y: 200 } },
+    ],
+  },
+  { id: 't218', name: 'Raumfalte', difficulty: 5, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 30, width: 80, height: 80, allowedObjects: ['weight'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 150, y: 250, width: 150, height: 10 },
+      { type: 'platform', x: 500, y: 400, width: 150, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'ball', x: 200, y: 230 },
+      { id: 'd2', type: 'bomb', x: 560, y: 380 },
+      { id: 'd3', type: 'domino', x: 350, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'bell', x: 150, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 400, y: 555, points: 100 },
+      { id: 't3', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+    portals: [
+      { a: { x: 350, y: 200 }, b: { x: 650, y: 300 } },
+      { a: { x: 200, y: 450 }, b: { x: 500, y: 150 } },
+    ],
+  },
+
+  // ===== MAGNET LEVELS (4 levels) =====
+  { id: 't219', name: 'Anziehungskraft', difficulty: 3, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 30, width: 100, height: 120, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 200, y: 300, width: 200, angle: 15 },
+      { type: 'magnet', x: 600, y: 400, width: 32 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 650, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 720, y: 555, points: 100 },
+    ],
+  },
+  { id: 't220', name: 'Magnetfalle', difficulty: 4, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 350, y: 30, width: 100, height: 60, allowedObjects: ['ball', 'weight'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 300, y: 250, width: 200, height: 10 },
+      { type: 'magnet', x: 200, y: 450, width: 32 },
+      { type: 'magnet', x: 600, y: 350, width: 32 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'ball', x: 380, y: 230 },
+      { id: 'd2', type: 'crate', x: 550, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 700, y: 555, points: 100 },
+    ],
+  },
+  { id: 't221', name: 'Magnetbombe', difficulty: 5, theme: 'stone',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 200, width: 80, height: 150, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 350, y: 350, width: 100, height: 10 },
+      { type: 'magnet', x: 400, y: 250, width: 32, strength: 0.0008, radius: 150 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'bomb', x: 390, y: 330 },
+      { id: 'd2', type: 'domino', x: 200, y: 555 },
+      { id: 'd3', type: 'domino', x: 600, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 100, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+  },
+  { id: 't222', name: 'Magnetkurve', difficulty: 5, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 30, y: 30, width: 80, height: 80, allowedObjects: ['ball'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 100, y: 250, width: 150, angle: 20 },
+      { type: 'magnet', x: 400, y: 300, width: 32, strength: 0.001, radius: 180 },
+      { type: 'magnet', x: 650, y: 200, width: 32 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'crate', x: 500, y: 555 },
+      { id: 'd2', type: 'domino', x: 700, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'bell', x: 300, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 550, y: 555, points: 100 },
+      { id: 't3', type: 'star', x: 750, y: 555, points: 100 },
     ],
   },
 ];

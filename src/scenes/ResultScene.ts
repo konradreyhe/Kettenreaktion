@@ -447,6 +447,32 @@ export class ResultScene extends Phaser.Scene {
       });
     }
 
+    // Butterfly Effect — compare current replay with yesterday's
+    if (data.replay && data.replay.length > 0 && data.levelId) {
+      const yesterdayNum = puzzleNum - 1;
+      const yesterdayResult = StorageManager.load().puzzleHistory[yesterdayNum];
+      if (yesterdayResult?.replay && yesterdayResult.replay.length > 0) {
+        new Button(this, {
+          x: cx, y: isPractice ? 490 : 460, text: 'Vergleichen',
+          width: 160, height: 30, fontSize: '11px',
+          color: 0x443366, hoverColor: 0x554477, textColor: '#aa88dd',
+          delay: 300,
+          onClick: () => {
+            SceneTransition.wipeOut(this, 'ButterflyScene', {
+              replayA: data.replay,
+              placementA: data.placement,
+              labelA: 'Heute',
+              replayB: yesterdayResult.replay,
+              placementB: yesterdayResult.placement,
+              labelB: 'Gestern',
+              levelId: data.levelId,
+              returnScene: 'MenuScene',
+            });
+          },
+        });
+      }
+    }
+
     if (isPractice) {
       // Practice mode: Replay + Next Level
       new Button(this, {

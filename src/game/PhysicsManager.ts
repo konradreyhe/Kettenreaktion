@@ -73,7 +73,7 @@ export class PhysicsManager {
       restitution: props.restitution,
       density: props.density,
       label: type,
-      shape: type === 'ball' || type === 'weight'
+      shape: type === 'ball' || type === 'weight' || type === 'bomb'
         ? { type: 'circle', radius: size.width / 2 }
         : undefined,
     });
@@ -123,6 +123,17 @@ export class PhysicsManager {
 
   /** Create a static body with tiled texture visual. */
   private createStaticBody(obj: StaticObject): void {
+    // Magnets are visual-only (force applied in GameScene update loop)
+    if (obj.type === 'magnet') {
+      this.scene.add.sprite(obj.x, obj.y, 'magnet')
+        .setDisplaySize(32, 32).setDepth(12);
+      // Static sensor for visual reference (no physics collision)
+      this.scene.matter.add.circle(obj.x, obj.y, 16, {
+        isStatic: true, isSensor: true, label: 'magnet',
+      });
+      return;
+    }
+
     const height = obj.height ?? 20;
     const cx = obj.x + obj.width / 2;
     const cy = obj.y + height / 2;
@@ -556,6 +567,7 @@ export class PhysicsManager {
       case 'domino': return { width: 16, height: 48 };
       case 'crate': return { width: 40, height: 40 };
       case 'weight': return { width: 34, height: 34 };
+      case 'bomb': return { width: 30, height: 30 };
       default: return { width: 40, height: 20 };
     }
   }

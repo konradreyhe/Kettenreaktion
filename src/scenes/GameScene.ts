@@ -9,8 +9,9 @@ import { SceneTransition } from '../game/SceneTransition';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
 import { EventManager } from '../systems/EventManager';
-import { getTodaysMutation, hasMutation } from '../systems/DailyMutation';
+import { getTodaysMutation } from '../systems/DailyMutation';
 import { MusicEngine } from '../systems/MusicEngine';
+import { StorageManager } from '../systems/StorageManager';
 import { HUD } from '../ui/HUD';
 import { AccessibilityManager } from '../systems/AccessibilityManager';
 import { FONT_TITLE, FONT_UI, COLOR, TEXT_SHADOW } from '../constants/Style';
@@ -23,11 +24,12 @@ import {
   NEAR_MISS_PX,
 } from '../constants/Game';
 import { MAX_BODIES_MOBILE, MAX_BODIES_DESKTOP } from '../constants/Physics';
-import type { Level } from '../types/Level';
+import type { Level, PortalPair } from '../types/Level';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface TargetEntry {
   id: string;
+  type: 'star' | 'bell';
   sprite: Phaser.GameObjects.Sprite;
   glow: Phaser.GameObjects.Arc;
   body: MatterJS.BodyType;
@@ -95,6 +97,13 @@ export class GameScene extends Phaser.Scene {
   private lastChainMilestone = 0;
   private allTargetsCleared = false;
 
+  // Portal pairs: sensor bodies + cooldown tracking
+  private portalPairs: { bodyA: MatterJS.BodyType; bodyB: MatterJS.BodyType; cooldowns: Map<number, number> }[] = [];
+  private portalVisuals: Phaser.GameObjects.GameObject[] = [];
+
+  // Magnets: position + config for force application
+  private magnets: { x: number; y: number; strength: number; radius: number }[] = [];
+
   // PostFX references
   private cameraVignette: Phaser.FX.Vignette | null = null;
   private cameraBokeh: Phaser.FX.Bokeh | null = null;
@@ -151,8 +160,9 @@ export class GameScene extends Phaser.Scene {
         ? LevelLoader.loadByIndex(this.practiceIndex)
         : LevelLoader.loadToday();
 
-    // Weekly physics mutations (daily puzzle only)
-    const mutation = !this.isPractice ? getTodaysMutation() : null;
+    // Weekly physics mutations (daily puzzle only, exempt first 7 games for new players)
+    const isNewPlayer = StorageManager.load().gamesPlayed < 7;
+    const mutation = !this.isPractice && !isNewPlayer ? getTodaysMutation() : null;
     this.isGravityFlipped = mutation?.flipY ?? false;
     if (mutation && mutation.name !== '') {
       if (mutation.gravityScale !== 1) {
@@ -192,9 +202,8 @@ export class GameScene extends Phaser.Scene {
     if (this.isPractice) {
       this.hud.updateLabel(`Uebung: ${this.level.name}`);
     } else {
-      const mutationForLabel = getTodaysMutation();
-      if (mutationForLabel.name !== '') {
-        this.hud.updateLabel(`${mutationForLabel.icon} ${mutationForLabel.name} #${DailySystem.getPuzzleNumber()}`);
+      if (mutation && mutation.name !== '') {
+        this.hud.updateLabel(`${mutation.icon} ${mutation.name} #${DailySystem.getPuzzleNumber()}`);
       } else {
         this.hud.updatePuzzleNumber(DailySystem.getPuzzleNumber());
       }
@@ -322,10 +331,10 @@ export class GameScene extends Phaser.Scene {
 
     // Mutation badge (if today has a physics twist)
     const introElements: Phaser.GameObjects.GameObject[] = [overlay, introPanel, levelName, diffText, info, hint];
-    const mutation = !this.isPractice ? getTodaysMutation() : null;
-    if (mutation && mutation.name !== '') {
+    const introMutation = !this.isPractice && StorageManager.load().gamesPlayed >= 7 ? getTodaysMutation() : null;
+    if (introMutation && introMutation.name !== '') {
       const mutBadge = this.add
-        .text(cx, cy + 100, `${mutation.icon} ${mutation.name}`, {
+        .text(cx, cy + 100, `${introMutation.icon} ${introMutation.name}`, {
           fontFamily: FONT_TITLE,
           fontSize: '14px',
           color: '#ff8844',
@@ -338,7 +347,7 @@ export class GameScene extends Phaser.Scene {
         .setAlpha(0);
 
       const mutDesc = this.add
-        .text(cx, cy + 120, mutation.description, {
+        .text(cx, cy + 120, introMutation.description, {
           fontSize: '11px',
           color: '#aa6633',
         })
@@ -378,7 +387,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Fade out after 2.5s (slightly longer if mutation shown)
-    const introDuration = mutation && mutation.name !== '' ? 2800 : 2200;
+    const introDuration = introMutation && introMutation.name !== '' ? 2800 : 2200;
     this.time.delayedCall(introDuration, () => {
       this.tweens.add({
         targets: introElements,
@@ -436,14 +445,23 @@ export class GameScene extends Phaser.Scene {
     // Fade in
     this.tweens.add({ targets: elements, alpha: 1, duration: 300 });
 
-    // Auto-dismiss after 4 seconds
-    this.time.delayedCall(4000, () => {
+    // Dismiss helper
+    let dismissed = false;
+    const dismissBet = () => {
+      if (dismissed) return;
+      dismissed = true;
       this.predictionMade = true;
       this.tweens.add({
         targets: elements, alpha: 0, duration: 300,
         onComplete: () => elements.forEach(el => el.destroy()),
       });
-    });
+    };
+
+    // Auto-dismiss after 6 seconds (was 4s — too fast for slow readers)
+    this.time.delayedCall(6000, dismissBet);
+
+    // Tap anywhere outside toggles to dismiss early
+    panel.setInteractive().on('pointerdown', dismissBet);
   }
 
   update(): void {
@@ -451,6 +469,16 @@ export class GameScene extends Phaser.Scene {
     this.trailRenderer.update();
 
     if (!this.isSimulating) return;
+
+    // Magnet force application
+    if (this.magnets.length > 0) {
+      this.applyMagnetForces();
+    }
+
+    // Portal teleportation check
+    if (this.portalPairs.length > 0) {
+      this.checkPortals();
+    }
 
     // Animate phantom replay of previous attempt
     if (this.phantomDots.length > 0 && this.previousAttemptFrames.length > 0) {
@@ -578,6 +606,44 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Material-specific particle palettes — visual differentiation per theme. */
+  private static readonly MATERIAL_PARTICLES: Record<string, {
+    hit: number[]; spark: number[]; dust: number[]; ripple: number;
+  }> = {
+    wood: {
+      hit: [0xffcc44, 0xdd9922, 0xeeaa33, 0xffe088],     // warm amber/gold splinters
+      spark: [0xffdd88, 0xeecc66, 0xddbb55],               // warm wood sparks
+      dust: [0x998866, 0x776644, 0xaa9977],                 // brown sawdust
+      ripple: 0xccaa66,                                      // warm amber ring
+    },
+    stone: {
+      hit: [0xaaaacc, 0x8888aa, 0xbbbbdd, 0xccccee],       // grey-blue stone chips
+      spark: [0xccccdd, 0xaaaacc, 0x9999bb],                // cool grey sparks
+      dust: [0x777788, 0x555566, 0x888899],                 // grey stone dust
+      ripple: 0x8888aa,                                      // cool grey ring
+    },
+    metal: {
+      hit: [0x88ccff, 0x66aaee, 0xaaddff, 0xffffff],       // bright cyan/white sparks
+      spark: [0xffffff, 0xaaddff, 0x88ccff],                // electric white-blue
+      dust: [0x667788, 0x556677, 0x778899],                 // dark metallic grey
+      ripple: 0x88ccff,                                      // electric cyan ring
+    },
+  };
+
+  /** Get particle palette for current level, respecting monthly event overrides. */
+  private getParticlePalette(): { hit: number[]; spark: number[]; dust: number[]; ripple: number } {
+    const event = EventManager.getCurrentEvent();
+    if (event) {
+      return {
+        hit: event.theme.particleTints,
+        spark: event.theme.particleTints.slice(0, 3),
+        dust: [0x888899, 0x666677, 0x99aabb],
+        ripple: Phaser.Display.Color.HexStringToColor(event.theme.accentColor).color,
+      };
+    }
+    return GameScene.MATERIAL_PARTICLES[this.level.theme] ?? GameScene.MATERIAL_PARTICLES['stone'];
+  }
+
   private applyThemeTint(): void {
     const theme = this.level.theme;
     let tintColor = 0x1a1a2e; // default
@@ -675,6 +741,25 @@ export class GameScene extends Phaser.Scene {
     // Mirror targets
     for (const target of this.level.targets) {
       target.y = flipY(target.y);
+    }
+
+    // Mirror magnet positions (magnets are static objects, already mirrored above)
+    // No extra work needed — staticObjects loop already handles magnet y-flip
+
+    // Mirror portals
+    for (const pair of this.level.portals ?? []) {
+      pair.a.y = flipY(pair.a.y);
+      pair.b.y = flipY(pair.b.y);
+    }
+
+    // Mirror constraint anchors
+    for (const constraint of this.level.constraints ?? []) {
+      if (constraint.anchorA) {
+        constraint.anchorA.y = flipY(constraint.anchorA.y);
+      }
+      if (constraint.anchorB) {
+        constraint.anchorB.y = flipY(constraint.anchorB.y);
+      }
     }
   }
 
@@ -823,11 +908,36 @@ export class GameScene extends Phaser.Scene {
     // Theme-based background tint
     this.applyThemeTint();
 
-    // Targets with star texture and glow halo
+    // Magnets
+    this.magnets = [];
+    for (const obj of this.level.staticObjects) {
+      if (obj.type === 'magnet') {
+        this.magnets.push({
+          x: obj.x, y: obj.y,
+          strength: obj.strength ?? 0.0005,
+          radius: obj.radius ?? 120,
+        });
+      }
+    }
+
+    // Portal pairs
+    this.portalPairs = [];
+    this.portalVisuals.forEach((v) => v.destroy());
+    this.portalVisuals = [];
+    for (const pair of this.level.portals ?? []) {
+      this.createPortalPair(pair);
+    }
+
+    // Targets with type-specific texture and glow halo
     for (const target of this.level.targets) {
+      const isBell = target.type === 'bell';
+      const glowColor = isBell ? 0xdd8844 : 0xffdd00;
+      const bloomColor = isBell ? 0xdd8844 : 0xffdd00;
+      const tex = isBell ? 'bell' : 'star';
+
       // Outer glow
       const glow = this.add
-        .circle(target.x, target.y, 18, 0xffdd00, 0.15)
+        .circle(target.x, target.y, 18, glowColor, 0.15)
         .setDepth(14);
 
       this.tweens.add({
@@ -835,22 +945,22 @@ export class GameScene extends Phaser.Scene {
         scaleX: 1.4,
         scaleY: 1.4,
         alpha: 0.05,
-        duration: 700,
+        duration: isBell ? 900 : 700,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
       });
 
-      // Star sprite
+      // Target sprite
       const sprite = this.add
-        .sprite(target.x, target.y, 'star')
+        .sprite(target.x, target.y, tex)
         .setDisplaySize(26, 26)
         .setDepth(15);
 
       // Add bloom PostFX for pulsing glow (WebGL only)
       let bloom: Phaser.FX.Bloom | undefined;
       if (this.isWebGL) {
-        bloom = sprite.postFX.addBloom(0xffdd00, 0, 0, 1, 1.2, 4);
+        bloom = sprite.postFX.addBloom(bloomColor, 0, 0, 1, 1.2, 4);
         if (!AccessibilityManager.prefersReducedMotion()) {
           this.tweens.add({
             targets: bloom,
@@ -863,20 +973,33 @@ export class GameScene extends Phaser.Scene {
         }
       }
 
-      this.tweens.add({
-        targets: sprite,
-        scaleX: 1.1,
-        scaleY: 1.1,
-        duration: 500,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-        delay: 200,
-      });
+      // Bell sways side-to-side; star pulses scale
+      if (isBell) {
+        this.tweens.add({
+          targets: sprite,
+          angle: { from: -8, to: 8 },
+          duration: 600,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      } else {
+        this.tweens.add({
+          targets: sprite,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 500,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+          delay: 200,
+        });
+      }
 
-      // Sparkle shimmer orbiting the star
+      // Sparkle shimmer orbiting the target
+      const sparkleColor = isBell ? 0xffcc88 : 0xffffff;
       const sparkle = this.add
-        .circle(target.x + 10, target.y - 10, 2, 0xffffff, 0.7)
+        .circle(target.x + 10, target.y - 10, 2, sparkleColor, 0.7)
         .setDepth(16);
       const sparkleRadius = 14;
       this.tweens.addCounter({
@@ -901,6 +1024,7 @@ export class GameScene extends Phaser.Scene {
 
       this.targets.push({
         id: target.id,
+        type: target.type,
         sprite,
         glow,
         body,
@@ -959,12 +1083,14 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // Particle emitters
+    // Particle emitters — tinted per material theme
+    const palette = this.getParticlePalette();
+
     this.hitEmitter = this.add.particles(0, 0, 'particle', {
       speed: { min: 80, max: 250 },
       scale: { start: 1.2, end: 0 },
       lifespan: 700,
-      tint: [0xffdd00, 0xff8800, 0xffff44, 0xffffff],
+      tint: palette.hit,
       emitting: false,
       quantity: 16,
     }).setDepth(50);
@@ -973,7 +1099,7 @@ export class GameScene extends Phaser.Scene {
       speed: { min: 30, max: 120 },
       scale: { start: 1, end: 0 },
       lifespan: 300,
-      tint: [0xffffff, 0xccccff, 0xaaaadd],
+      tint: palette.spark,
       emitting: false,
       quantity: 6,
     }).setDepth(45);
@@ -982,7 +1108,7 @@ export class GameScene extends Phaser.Scene {
       speed: { min: 15, max: 60 },
       scale: { start: 1, end: 0 },
       lifespan: 600,
-      tint: [0x888899, 0x666677, 0x99aabb],
+      tint: palette.dust,
       emitting: false,
       quantity: 6,
       alpha: { start: 0.5, end: 0 },
@@ -1085,11 +1211,12 @@ export class GameScene extends Phaser.Scene {
           if (impactSpeed > 1.5) {
             this.sparkEmitter?.emitParticleAt(cx, cy);
 
-            // Impact ripple ring — scales with speed
+            // Impact ripple ring — scales with speed, tinted per material
             if (impactSpeed > 3) {
               const rippleSize = Math.min(40, 15 + impactSpeed * 2);
+              const rippleColor = this.getParticlePalette().ripple;
               const ripple = this.add.circle(cx, cy, rippleSize, 0x000000, 0)
-                .setStrokeStyle(1.5, 0x88aacc, 0.4).setDepth(9).setScale(0.2);
+                .setStrokeStyle(1.5, rippleColor, 0.4).setDepth(9).setScale(0.2);
               this.tweens.add({
                 targets: ripple, scaleX: 1.5, scaleY: 1.5, alpha: 0,
                 duration: 300, ease: 'Quad.easeOut',
@@ -1098,9 +1225,13 @@ export class GameScene extends Phaser.Scene {
             }
           }
 
-          // Background brightness pulse on heavy hits
+          // Background brightness pulse on heavy hits — tinted per material
           if (impactSpeed > 5) {
-            this.cameras.main.flash(60, 40, 40, 60);
+            const theme = this.level.theme;
+            const flashRGB = theme === 'wood' ? [60, 45, 20]
+              : theme === 'metal' ? [30, 50, 70]
+              : [40, 40, 60]; // stone
+            this.cameras.main.flash(60, flashRGB[0], flashRGB[1], flashRGB[2]);
           }
 
           // Screen shake proportional to impact + chain length
@@ -1158,6 +1289,15 @@ export class GameScene extends Phaser.Scene {
           }
         }
 
+        // Bomb explosion — detonate on any collision with enough force
+        if (bodyA.label === 'bomb' || bodyB.label === 'bomb') {
+          const bombBody = bodyA.label === 'bomb' ? bodyA : bodyB;
+          if (!(bombBody as any).__exploded) {
+            (bombBody as any).__exploded = true;
+            this.detonateBomb(bombBody);
+          }
+        }
+
         // Dust on floor impacts
         if (bodyA.label === 'floor' || bodyB.label === 'floor') {
           const other = bodyA.label === 'floor' ? bodyB : bodyA;
@@ -1181,6 +1321,193 @@ export class GameScene extends Phaser.Scene {
       yoyo: true,
       ease: 'Quad.easeOut',
     });
+  }
+
+  /** Detonate a bomb — apply explosive outward force to all nearby dynamic bodies. */
+  private detonateBomb(bombBody: MatterJS.BodyType): void {
+    const bx = bombBody.position.x;
+    const by = bombBody.position.y;
+    const BLAST_RADIUS = 150;
+    const BLAST_FORCE = 0.08;
+
+    // Apply outward force to all dynamic bodies in radius
+    const allBodies = this.matter.world.getAllBodies();
+    for (const body of allBodies) {
+      if (body === bombBody || body.isStatic) continue;
+      const dx = body.position.x - bx;
+      const dy = body.position.y - by;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > BLAST_RADIUS || dist < 1) continue;
+      const falloff = 1 - dist / BLAST_RADIUS;
+      const fx = (dx / dist) * BLAST_FORCE * falloff;
+      const fy = (dy / dist) * BLAST_FORCE * falloff;
+      this.matter.body.applyForce(body, body.position, { x: fx, y: fy });
+    }
+
+    // Visual explosion
+    this.cameras.main.flash(100, 255, 140, 40);
+    this.cameraFX.addTrauma(0.6);
+
+    // Orange-red particle burst
+    for (let i = 0; i < 3; i++) {
+      this.hitEmitter?.emitParticleAt(
+        bx + (Math.random() - 0.5) * 20,
+        by + (Math.random() - 0.5) * 20,
+      );
+    }
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      this.sparkEmitter?.emitParticleAt(
+        bx + Math.cos(angle) * 25,
+        by + Math.sin(angle) * 25,
+      );
+    }
+
+    // Expanding blast ring
+    const blastRing = this.add.circle(bx, by, 30, 0x000000, 0)
+      .setStrokeStyle(3, 0xff6622, 0.8).setDepth(54).setScale(0.3);
+    this.tweens.add({
+      targets: blastRing, scaleX: 5, scaleY: 5, alpha: 0,
+      duration: 400, ease: 'Quad.easeOut',
+      onComplete: () => blastRing.destroy(),
+    });
+
+    // Audio — deep explosion
+    AudioManager.playBombExplosion(bx);
+
+    // Remove the bomb sprite and body
+    const sprite = (bombBody as any).gameObject;
+    if (sprite && sprite.destroy) {
+      this.tweens.add({
+        targets: sprite, alpha: 0, scaleX: 2, scaleY: 2,
+        duration: 200, onComplete: () => sprite.destroy(),
+      });
+    }
+    this.matter.world.remove(bombBody);
+  }
+
+  /** Apply attractive force from magnets to all dynamic bodies in range. */
+  private applyMagnetForces(): void {
+    const allBodies = this.matter.world.getAllBodies();
+    for (const magnet of this.magnets) {
+      for (const body of allBodies) {
+        if (body.isStatic || body.isSensor) continue;
+        const dx = magnet.x - body.position.x;
+        const dy = magnet.y - body.position.y;
+        const distSq = dx * dx + dy * dy;
+        const dist = Math.sqrt(distSq);
+        if (dist > magnet.radius || dist < 5) continue;
+
+        // Inverse-distance falloff (stronger closer)
+        const forceMag = magnet.strength * (1 - dist / magnet.radius);
+        const fx = (dx / dist) * forceMag;
+        const fy = (dy / dist) * forceMag;
+        this.matter.body.applyForce(body, body.position, { x: fx, y: fy });
+      }
+    }
+  }
+
+  /** Create a portal pair (sensor bodies + visuals). */
+  private createPortalPair(pair: PortalPair): void {
+    const portalRadius = 18;
+
+    // Create sensor bodies
+    const bodyA = this.matter.add.circle(pair.a.x, pair.a.y, portalRadius, {
+      isSensor: true, isStatic: true, label: `portal_a_${this.portalPairs.length}`,
+    });
+    const bodyB = this.matter.add.circle(pair.b.x, pair.b.y, portalRadius, {
+      isSensor: true, isStatic: true, label: `portal_b_${this.portalPairs.length}`,
+    });
+
+    this.portalPairs.push({ bodyA, bodyB, cooldowns: new Map() });
+
+    // Visual sprites
+    const spriteA = this.add.sprite(pair.a.x, pair.a.y, 'portal_a')
+      .setDisplaySize(36, 36).setDepth(12);
+    const spriteB = this.add.sprite(pair.b.x, pair.b.y, 'portal_b')
+      .setDisplaySize(36, 36).setDepth(12);
+
+    // Pulsing animation
+    for (const s of [spriteA, spriteB]) {
+      this.tweens.add({
+        targets: s, scaleX: 1.1, scaleY: 1.1,
+        duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
+
+    // Rotating glow rings
+    const glowA = this.add.circle(pair.a.x, pair.a.y, 22, 0x000000, 0)
+      .setStrokeStyle(1, 0x4488ff, 0.3).setDepth(11);
+    const glowB = this.add.circle(pair.b.x, pair.b.y, 22, 0x000000, 0)
+      .setStrokeStyle(1, 0xff8844, 0.3).setDepth(11);
+
+    this.tweens.add({
+      targets: glowA, scaleX: 1.5, scaleY: 1.5, alpha: 0,
+      duration: 1200, repeat: -1, ease: 'Quad.easeOut',
+    });
+    this.tweens.add({
+      targets: glowB, scaleX: 1.5, scaleY: 1.5, alpha: 0,
+      duration: 1200, repeat: -1, ease: 'Quad.easeOut', delay: 600,
+    });
+
+    this.portalVisuals.push(spriteA, spriteB, glowA, glowB);
+  }
+
+  /** Check and apply portal teleportation. Called every physics frame during simulation. */
+  private checkPortals(): void {
+    const now = Date.now();
+    const COOLDOWN_MS = 500; // prevent re-teleport loops
+
+    for (const portal of this.portalPairs) {
+      const allBodies = this.matter.world.getAllBodies();
+      for (const body of allBodies) {
+        if (body.isStatic || body.isSensor) continue;
+        const bodyId = body.id;
+
+        // Check cooldown
+        const lastTeleport = portal.cooldowns.get(bodyId) ?? 0;
+        if (now - lastTeleport < COOLDOWN_MS) continue;
+
+        const bx = body.position.x;
+        const by = body.position.y;
+        const ax = portal.bodyA.position.x;
+        const ay = portal.bodyA.position.y;
+        const bpx = portal.bodyB.position.x;
+        const bpy = portal.bodyB.position.y;
+
+        const distA = Math.sqrt((bx - ax) ** 2 + (by - ay) ** 2);
+        const distB = Math.sqrt((bx - bpx) ** 2 + (by - bpy) ** 2);
+
+        if (distA < 16) {
+          // Teleport to B
+          this.matter.body.setPosition(body, { x: bpx, y: bpy });
+          portal.cooldowns.set(bodyId, now);
+          this.playPortalEffect(ax, ay, bpx, bpy);
+        } else if (distB < 16) {
+          // Teleport to A
+          this.matter.body.setPosition(body, { x: ax, y: ay });
+          portal.cooldowns.set(bodyId, now);
+          this.playPortalEffect(bpx, bpy, ax, ay);
+        }
+      }
+    }
+  }
+
+  /** Visual + audio effect for portal teleportation. */
+  private playPortalEffect(fromX: number, fromY: number, toX: number, toY: number): void {
+    // Flash at source
+    const flash = this.add.circle(fromX, fromY, 20, 0xffffff, 0.5).setDepth(55);
+    this.tweens.add({
+      targets: flash, alpha: 0, scaleX: 2, scaleY: 2,
+      duration: 200, onComplete: () => flash.destroy(),
+    });
+
+    // Burst at destination
+    this.sparkEmitter?.emitParticleAt(toX, toY);
+    this.hitEmitter?.emitParticleAt(toX, toY);
+
+    // Audio
+    AudioManager.playPortalWhoosh(fromX);
   }
 
   /** Show chain milestone celebration with expanding ring + text. */
@@ -1406,14 +1733,18 @@ export class GameScene extends Phaser.Scene {
         this.targetsHit++;
         this.hud.updateScore(this.targetsHit, this.level.targets.length);
 
-        // Audio (spatially panned at target x position)
-        AudioManager.playTargetHit(this.targetsHit - 1, target.x);
+        // Audio — bell uses distinct chime, star uses ascending tone
+        if (target.type === 'bell') {
+          AudioManager.playBellChime(this.targetsHit - 1, target.x);
+        } else {
+          AudioManager.playTargetHit(this.targetsHit - 1, target.x);
+        }
 
         // BIG screen shake + slow-mo for target hit
         this.cameraFX.addTrauma(0.4);
         this.cameraFX.slowMotion(0.25, 500);
 
-        // Particle burst — gold explosion
+        // Particle burst
         this.hitEmitter?.emitParticleAt(target.x, target.y);
         // Extra spark ring around target
         for (let i = 0; i < 6; i++) {
@@ -1423,17 +1754,22 @@ export class GameScene extends Phaser.Scene {
           this.sparkEmitter?.emitParticleAt(sx, sy);
         }
 
-        // Expanding golden ring at target position
+        // Expanding ring — copper for bell, gold for star
+        const ringColor = target.type === 'bell' ? 0xdd8844 : 0xffdd00;
         const hitRing = this.add.circle(target.x, target.y, 20, 0x000000, 0)
-          .setStrokeStyle(3, 0xffdd00, 0.9).setDepth(54).setScale(0.3);
+          .setStrokeStyle(3, ringColor, 0.9).setDepth(54).setScale(0.3);
         this.tweens.add({
           targets: hitRing, scaleX: 3, scaleY: 3, alpha: 0,
           duration: 500, ease: 'Quad.easeOut',
           onComplete: () => hitRing.destroy(),
         });
 
-        // Flash the whole screen briefly (gold tint for targets)
-        this.cameras.main.flash(150, 255, 220, 50);
+        // Flash — copper tint for bell, gold for star
+        if (target.type === 'bell') {
+          this.cameras.main.flash(150, 220, 140, 50);
+        } else {
+          this.cameras.main.flash(150, 255, 220, 50);
+        }
 
         // Target hit animation
         this.tweens.killTweensOf(target.sprite);

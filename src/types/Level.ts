@@ -3,18 +3,23 @@ export type ObjectType =
   | 'domino'
   | 'crate'
   | 'weight'
+  | 'bomb'
   | 'platform'
   | 'ramp_30'
   | 'ramp_45'
   | 'ramp_60';
 
 export interface StaticObject {
-  type: 'platform' | 'ramp';
+  type: 'platform' | 'ramp' | 'magnet';
   x: number;
   y: number;
   width: number;
   height?: number;
   angle?: number;
+  /** Magnet pull strength (default 0.0005). */
+  strength?: number;
+  /** Magnet pull radius in pixels (default 120). */
+  radius?: number;
 }
 
 export interface DynamicObject {
@@ -63,6 +68,12 @@ export interface LevelConstraint {
   length?: number;
 }
 
+/** A linked portal pair — bodies entering one exit the other. */
+export interface PortalPair {
+  a: { x: number; y: number };
+  b: { x: number; y: number };
+}
+
 export interface Level {
   id: string;
   name: string;
@@ -74,5 +85,6 @@ export interface Level {
   dynamicObjects: DynamicObject[];
   targets: Target[];
   constraints?: LevelConstraint[];
+  portals?: PortalPair[];
   seed_variations?: Record<string, SeedVariation>;
 }

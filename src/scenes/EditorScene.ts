@@ -3,14 +3,20 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
 import { FONT_TITLE, FONT_UI, COLOR } from '../constants/Style';
 import { AudioManager } from '../systems/AudioManager';
 import { SceneTransition } from '../game/SceneTransition';
-import type { Level, StaticObject, DynamicObject, Target, ObjectType } from '../types/Level';
+import type { Level, StaticObject, DynamicObject, Target, ObjectType, LevelConstraint, PortalPair } from '../types/Level';
 
-type EditorTool = 'platform' | 'ramp' | 'ball' | 'domino' | 'crate' | 'weight' | 'star' | 'zone' | 'select';
+type EditorTool = 'platform' | 'ramp' | 'magnet' | 'ball' | 'domino' | 'crate' | 'weight' | 'bomb' | 'star' | 'bell' | 'zone' | 'select'
+  | 'seesaw' | 'spring' | 'rope' | 'portal';
 
 interface EditorEntry {
   kind: 'static' | 'dynamic' | 'target' | 'zone';
   gfx: Phaser.GameObjects.GameObject;
   data: StaticObject | DynamicObject | Target | { x: number; y: number; width: number; height: number };
+}
+
+interface ConstraintVisual {
+  constraint: LevelConstraint;
+  gfx: Phaser.GameObjects.Graphics;
 }
 
 const GRID = 20;
@@ -22,9 +28,16 @@ const TOOL_COLORS: Record<EditorTool, number> = {
   domino: 0x88aa66,
   crate: 0x998866,
   weight: 0xccaa44,
+  bomb: 0xff6622,
   star: 0xffdd00,
+  bell: 0xdd8844,
   zone: 0x44aa66,
   select: 0xffffff,
+  seesaw: 0xff8844,
+  spring: 0x44cc88,
+  rope: 0xccaa66,
+  magnet: 0xcc44cc,
+  portal: 0x8844ff,
 };
 
 /** Level Editor — visual click-to-place editor behind ?editor=1 feature flag. */
@@ -40,6 +53,11 @@ export class EditorScene extends Phaser.Scene {
   private zoneGfx!: Phaser.GameObjects.Graphics;
   private dragging = false;
   private undoStack: string[] = [];
+  private constraintVisuals: ConstraintVisual[] = [];
+  /** First body selected when creating a spring/rope (waiting for second click). */
+  private constraintFirstBody: string | null = null;
+  /** First position for portal pair creation. */
+  private portalFirstPos: { x: number; y: number } | null = null;
 
   constructor() {
     super({ key: 'EditorScene' });
@@ -50,6 +68,9 @@ export class EditorScene extends Phaser.Scene {
     this.selectedEntry = null;
     this.dynamicCounter = 0;
     this.targetCounter = 0;
+    this.constraintVisuals = [];
+    this.constraintFirstBody = null;
+    this.portalFirstPos = null;
 
     // Initialize empty level
     this.level = {
@@ -65,6 +86,7 @@ export class EditorScene extends Phaser.Scene {
       ],
       dynamicObjects: [],
       targets: [],
+      constraints: [],
     };
 
     // Draw grid
@@ -111,6 +133,7 @@ export class EditorScene extends Phaser.Scene {
     this.input.on('pointerup', () => {
       if (this.dragging) {
         this.dragging = false;
+        this.redrawConstraints();
         this.updatePropertiesPanel();
         this.refreshPanel();
       }
@@ -177,17 +200,34 @@ export class EditorScene extends Phaser.Scene {
       case 'ramp':
         this.addRamp(sx, sy);
         break;
+      case 'magnet':
+        this.addMagnet(sx, sy);
+        break;
       case 'ball':
       case 'domino':
       case 'crate':
       case 'weight':
+      case 'bomb':
         this.addDynamic(this.selectedTool, sx, sy);
         break;
       case 'star':
-        this.addTarget(sx, sy);
+        this.addTarget(sx, sy, 'star');
+        break;
+      case 'bell':
+        this.addTarget(sx, sy, 'bell');
         break;
       case 'zone':
         this.moveZone(sx, sy);
+        break;
+      case 'seesaw':
+        this.handleSeesawClick(x, y);
+        break;
+      case 'spring':
+      case 'rope':
+        this.handleSpringRopeClick(this.selectedTool, x, y);
+        break;
+      case 'portal':
+        this.handlePortalClick(sx, sy);
         break;
     }
 
@@ -235,6 +275,27 @@ export class EditorScene extends Phaser.Scene {
     this.entries.push({ kind: 'static', gfx, data: obj });
   }
 
+  private addMagnet(x: number, y: number): void {
+    const obj: StaticObject = { type: 'magnet', x, y, width: 32, height: 32 };
+    this.level.staticObjects.push(obj);
+
+    const gfx = this.add.graphics().setDepth(10);
+    gfx.fillStyle(TOOL_COLORS.magnet, 0.4);
+    gfx.fillCircle(x, y, 14);
+    gfx.lineStyle(2, TOOL_COLORS.magnet, 0.7);
+    gfx.strokeCircle(x, y, 14);
+
+    // Radius indicator
+    gfx.lineStyle(0.5, TOOL_COLORS.magnet, 0.15);
+    gfx.strokeCircle(x, y, 120);
+
+    this.add.text(x, y, '\u{1F9F2}', {
+      fontSize: '14px',
+    }).setOrigin(0.5).setDepth(11);
+
+    this.entries.push({ kind: 'static', gfx, data: obj });
+  }
+
   private addDynamic(type: ObjectType, x: number, y: number): void {
     this.dynamicCounter++;
     const obj: DynamicObject = { id: `d${this.dynamicCounter}`, type, x, y };
@@ -242,13 +303,13 @@ export class EditorScene extends Phaser.Scene {
 
     const sizes: Record<string, { w: number; h: number }> = {
       ball: { w: 28, h: 28 }, domino: { w: 16, h: 48 },
-      crate: { w: 40, h: 40 }, weight: { w: 34, h: 34 },
+      crate: { w: 40, h: 40 }, weight: { w: 34, h: 34 }, bomb: { w: 30, h: 30 },
     };
     const size = sizes[type] ?? { w: 30, h: 30 };
     const color = TOOL_COLORS[type as EditorTool] ?? 0x888888;
 
     const gfx = this.add.graphics().setDepth(10);
-    if (type === 'ball' || type === 'weight') {
+    if (type === 'ball' || type === 'weight' || type === 'bomb') {
       gfx.fillStyle(color, 0.8);
       gfx.fillCircle(x, y, size.w / 2);
       gfx.lineStyle(1, 0xffffff, 0.3);
@@ -268,18 +329,20 @@ export class EditorScene extends Phaser.Scene {
     this.entries.push({ kind: 'dynamic', gfx, data: obj });
   }
 
-  private addTarget(x: number, y: number): void {
+  private addTarget(x: number, y: number, targetType: 'star' | 'bell' = 'star'): void {
     this.targetCounter++;
-    const obj: Target = { id: `t${this.targetCounter}`, type: 'star', x, y, points: 100 };
+    const obj: Target = { id: `t${this.targetCounter}`, type: targetType, x, y, points: 100 };
     this.level.targets.push(obj);
 
+    const color = targetType === 'bell' ? TOOL_COLORS.bell : TOOL_COLORS.star;
+    const icon = targetType === 'bell' ? '\u{1F514}' : '\u2605';
     const gfx = this.add.graphics().setDepth(10);
-    gfx.fillStyle(TOOL_COLORS.star, 0.9);
+    gfx.fillStyle(color, 0.9);
     gfx.fillCircle(x, y, 12);
-    gfx.lineStyle(2, 0xffaa00, 0.8);
+    gfx.lineStyle(2, targetType === 'bell' ? 0xaa6633 : 0xffaa00, 0.8);
     gfx.strokeCircle(x, y, 12);
 
-    this.add.text(x, y, '\u2605', {
+    this.add.text(x, y, icon, {
       fontSize: '16px', color: '#000',
     }).setOrigin(0.5).setDepth(11);
 
@@ -370,12 +433,12 @@ export class EditorScene extends Phaser.Scene {
       const obj = data as DynamicObject;
       const sizes: Record<string, { w: number; h: number }> = {
         ball: { w: 28, h: 28 }, domino: { w: 16, h: 48 },
-        crate: { w: 40, h: 40 }, weight: { w: 34, h: 34 },
+        crate: { w: 40, h: 40 }, weight: { w: 34, h: 34 }, bomb: { w: 30, h: 30 },
       };
       const size = sizes[obj.type] ?? { w: 30, h: 30 };
       const color = TOOL_COLORS[obj.type as EditorTool] ?? 0x888888;
       const gfx = this.add.graphics().setDepth(10);
-      if (obj.type === 'ball' || obj.type === 'weight') {
+      if (obj.type === 'ball' || obj.type === 'weight' || obj.type === 'bomb') {
         gfx.fillStyle(color, 0.8);
         gfx.fillCircle(obj.x, obj.y, size.w / 2);
         gfx.lineStyle(1, 0xffffff, 0.3);
@@ -404,6 +467,8 @@ export class EditorScene extends Phaser.Scene {
       staticObjects: this.level.staticObjects,
       dynamicObjects: this.level.dynamicObjects,
       targets: this.level.targets,
+      constraints: this.level.constraints ?? [],
+      portals: this.level.portals ?? [],
       placementZone: this.level.placementZone,
     });
     this.undoStack.push(snapshot);
@@ -433,11 +498,15 @@ export class EditorScene extends Phaser.Scene {
       staticObjects: StaticObject[];
       dynamicObjects: DynamicObject[];
       targets: Target[];
+      constraints: LevelConstraint[];
+      portals: PortalPair[];
       placementZone: Level['placementZone'];
     };
     this.level.staticObjects = data.staticObjects;
     this.level.dynamicObjects = data.dynamicObjects;
     this.level.targets = data.targets;
+    this.level.constraints = data.constraints;
+    this.level.portals = data.portals;
     this.level.placementZone = data.placementZone;
 
     // Rebuild visuals (skip floor at index 0)
@@ -463,6 +532,11 @@ export class EditorScene extends Phaser.Scene {
     this.targetCounter = this.level.targets.length;
 
     this.drawZone();
+    this.redrawConstraints();
+    // Redraw portal visuals
+    for (const pair of this.level.portals ?? []) {
+      this.drawPortalVisual(pair);
+    }
     this.refreshPanel();
     this.showToast('Rueckgaengig');
   }
@@ -496,8 +570,201 @@ export class EditorScene extends Phaser.Scene {
     this.updatePropertiesPanel();
   }
 
+  /** Seesaw: click on a static platform to make it a pivot. */
+  private handleSeesawClick(x: number, y: number): void {
+    // Find nearest static platform (skip floor at index 0)
+    let bestIdx = -1;
+    let bestDist = 50;
+    for (let i = 1; i < this.level.staticObjects.length; i++) {
+      const obj = this.level.staticObjects[i];
+      if (obj.type !== 'platform') continue;
+      const cx = obj.x + obj.width / 2;
+      const cy = obj.y + (obj.height ?? 12) / 2;
+      const dist = Math.sqrt((cx - x) ** 2 + (cy - y) ** 2);
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+    }
+
+    if (bestIdx < 0) {
+      this.showToast('Klicke auf eine Plattform!');
+      return;
+    }
+
+    // Check if seesaw already exists for this platform
+    const existing = (this.level.constraints ?? []).find(
+      (c) => c.type === 'seesaw' && c.staticIndex === bestIdx
+    );
+    if (existing) {
+      this.showToast('Bereits eine Wippe!');
+      return;
+    }
+
+    const constraint: LevelConstraint = { type: 'seesaw', staticIndex: bestIdx };
+    if (!this.level.constraints) this.level.constraints = [];
+    this.level.constraints.push(constraint);
+    this.drawConstraintVisual(constraint);
+    this.refreshPanel();
+    this.showToast('Wippe erstellt');
+  }
+
+  /** Spring/Rope: click on first dynamic, then second dynamic to connect. */
+  private handleSpringRopeClick(type: 'spring' | 'rope', x: number, y: number): void {
+    // Find nearest dynamic object
+    let bestId: string | null = null;
+    let bestDist = 40;
+    for (const obj of this.level.dynamicObjects) {
+      const dist = Math.sqrt((obj.x - x) ** 2 + (obj.y - y) ** 2);
+      if (dist < bestDist) { bestDist = dist; bestId = obj.id; }
+    }
+
+    if (!bestId) {
+      this.showToast('Klicke auf ein dynamisches Objekt!');
+      this.constraintFirstBody = null;
+      return;
+    }
+
+    if (!this.constraintFirstBody) {
+      this.constraintFirstBody = bestId;
+      this.showToast(`${bestId} gewaehlt — jetzt zweites Objekt klicken`);
+      return;
+    }
+
+    if (this.constraintFirstBody === bestId) {
+      this.showToast('Waehle ein anderes Objekt!');
+      return;
+    }
+
+    const constraint: LevelConstraint = {
+      type,
+      bodyA: this.constraintFirstBody,
+      bodyB: bestId,
+      stiffness: type === 'spring' ? 0.05 : undefined,
+    };
+    if (!this.level.constraints) this.level.constraints = [];
+    this.level.constraints.push(constraint);
+    this.drawConstraintVisual(constraint);
+    this.constraintFirstBody = null;
+    this.refreshPanel();
+    this.showToast(`${type === 'spring' ? 'Feder' : 'Seil'} erstellt: ${constraint.bodyA} <-> ${constraint.bodyB}`);
+  }
+
+  /** Portal: click twice to place a linked pair. */
+  private handlePortalClick(x: number, y: number): void {
+    if (!this.portalFirstPos) {
+      this.portalFirstPos = { x, y };
+      // Draw temporary marker
+      const marker = this.add.circle(x, y, 12, 0x4488ff, 0.4).setDepth(20);
+      this.add.text(x, y - 18, 'A', {
+        fontFamily: FONT_UI, fontSize: '9px', color: '#4488ff',
+      }).setOrigin(0.5).setDepth(21);
+      this.portalVisuals_editor.push(marker);
+      this.showToast('Portal A gesetzt — jetzt B klicken');
+      return;
+    }
+
+    const pair: PortalPair = {
+      a: this.portalFirstPos,
+      b: { x, y },
+    };
+    if (!this.level.portals) this.level.portals = [];
+    this.level.portals.push(pair);
+    this.portalFirstPos = null;
+
+    this.drawPortalVisual(pair);
+    this.refreshPanel();
+    this.showToast('Portal-Paar erstellt');
+  }
+
+  /** Temporary visuals for portal editor markers. */
+  private portalVisuals_editor: Phaser.GameObjects.GameObject[] = [];
+
+  /** Draw visuals for a portal pair in the editor. */
+  private drawPortalVisual(pair: PortalPair): void {
+    // Clear temp markers
+    this.portalVisuals_editor.forEach((v) => v.destroy());
+    this.portalVisuals_editor = [];
+
+    const gfx = this.add.graphics().setDepth(15);
+
+    // Portal A (blue)
+    gfx.fillStyle(0x4488ff, 0.3);
+    gfx.fillCircle(pair.a.x, pair.a.y, 14);
+    gfx.lineStyle(2, 0x4488ff, 0.7);
+    gfx.strokeCircle(pair.a.x, pair.a.y, 14);
+
+    // Portal B (orange)
+    gfx.fillStyle(0xff8844, 0.3);
+    gfx.fillCircle(pair.b.x, pair.b.y, 14);
+    gfx.lineStyle(2, 0xff8844, 0.7);
+    gfx.strokeCircle(pair.b.x, pair.b.y, 14);
+
+    // Connecting line
+    gfx.lineStyle(1, 0x8844ff, 0.3);
+    gfx.lineBetween(pair.a.x, pair.a.y, pair.b.x, pair.b.y);
+
+    this.constraintVisuals.push({ constraint: {} as LevelConstraint, gfx });
+  }
+
+  /** Draw a visual line/icon for a constraint. */
+  private drawConstraintVisual(constraint: LevelConstraint): void {
+    const gfx = this.add.graphics().setDepth(15);
+
+    if (constraint.type === 'seesaw' && constraint.staticIndex !== undefined) {
+      const platform = this.level.staticObjects[constraint.staticIndex];
+      if (platform) {
+        const cx = platform.x + platform.width / 2;
+        const cy = platform.y + (platform.height ?? 12) / 2;
+        // Triangle pivot symbol
+        gfx.fillStyle(TOOL_COLORS.seesaw, 0.6);
+        gfx.fillTriangle(cx - 8, cy + 8, cx + 8, cy + 8, cx, cy - 4);
+        gfx.lineStyle(2, TOOL_COLORS.seesaw, 0.8);
+        gfx.strokeCircle(cx, cy - 4, 3);
+      }
+    } else if ((constraint.type === 'spring' || constraint.type === 'rope') && constraint.bodyA && constraint.bodyB) {
+      const objA = this.level.dynamicObjects.find((d) => d.id === constraint.bodyA);
+      const objB = this.level.dynamicObjects.find((d) => d.id === constraint.bodyB);
+      if (objA && objB) {
+        const color = constraint.type === 'spring' ? TOOL_COLORS.spring : TOOL_COLORS.rope;
+        gfx.lineStyle(2, color, 0.7);
+        if (constraint.type === 'spring') {
+          // Zigzag line for spring
+          const dx = objB.x - objA.x;
+          const dy = objB.y - objA.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const nx = -dy / len;
+          const ny = dx / len;
+          const segs = 8;
+          gfx.beginPath();
+          gfx.moveTo(objA.x, objA.y);
+          for (let i = 1; i < segs; i++) {
+            const t = i / segs;
+            const mx = objA.x + dx * t + nx * ((i % 2 === 0 ? 1 : -1) * 6);
+            const my = objA.y + dy * t + ny * ((i % 2 === 0 ? 1 : -1) * 6);
+            gfx.lineTo(mx, my);
+          }
+          gfx.lineTo(objB.x, objB.y);
+          gfx.strokePath();
+        } else {
+          // Straight dashed line for rope
+          gfx.lineBetween(objA.x, objA.y, objB.x, objB.y);
+        }
+      }
+    }
+
+    this.constraintVisuals.push({ constraint, gfx });
+  }
+
+  /** Redraw all constraint visuals (after undo, object move, etc). */
+  private redrawConstraints(): void {
+    for (const cv of this.constraintVisuals) cv.gfx.destroy();
+    this.constraintVisuals = [];
+    for (const c of this.level.constraints ?? []) {
+      this.drawConstraintVisual(c);
+    }
+  }
+
   private rebuildLevel(): void {
     // Level data is already updated in-place via references
+    this.redrawConstraints();
   }
 
   // ---- HTML Panel ----
@@ -526,12 +793,19 @@ export class EditorScene extends Phaser.Scene {
       { key: 'select', label: 'Auswahl', icon: '\u25B6' },
       { key: 'platform', label: 'Plattform', icon: '\u25AC' },
       { key: 'ramp', label: 'Rampe', icon: '\u2571' },
+      { key: 'magnet', label: 'Magnet', icon: '\u{1F9F2}' },
       { key: 'ball', label: 'Kugel', icon: '\u25CF' },
       { key: 'domino', label: 'Domino', icon: '\u25AE' },
       { key: 'crate', label: 'Kiste', icon: '\u25A0' },
       { key: 'weight', label: 'Gewicht', icon: '\u25C9' },
+      { key: 'bomb', label: 'Bombe', icon: '\u{1F4A3}' },
       { key: 'star', label: 'Stern', icon: '\u2605' },
+      { key: 'bell', label: 'Glocke', icon: '\u{1F514}' },
       { key: 'zone', label: 'Zone', icon: '\u25A1' },
+      { key: 'seesaw', label: 'Wippe', icon: '\u2194' },
+      { key: 'spring', label: 'Feder', icon: '\u223F' },
+      { key: 'rope', label: 'Seil', icon: '\u2500' },
+      { key: 'portal', label: 'Portal', icon: '\u{1F300}' },
     ];
 
     const toolButtons = tools.map((t) => {
@@ -568,7 +842,7 @@ export class EditorScene extends Phaser.Scene {
 
       <div style="margin-top:16px;border-top:1px solid #333;padding-top:8px">
         <div style="color:#667788;font-size:9px;margin-bottom:6px">
-          Objekte: ${this.level.staticObjects.length - 1} Plattformen, ${this.level.dynamicObjects.length} Dynamisch, ${this.level.targets.length} Sterne
+          Objekte: ${this.level.staticObjects.length - 1} Plattformen, ${this.level.dynamicObjects.length} Dynamisch, ${this.level.targets.length} Ziele, ${(this.level.constraints ?? []).length} Verbindungen
         </div>
       </div>
 
@@ -638,10 +912,48 @@ export class EditorScene extends Phaser.Scene {
       return;
     }
 
-    const d = this.selectedEntry.data;
+    const entry = this.selectedEntry;
+    const d = entry.data;
+    const inputStyle = 'width:60px;background:#1a1a2e;color:#ccc;border:1px solid #444;padding:2px 4px;font-size:9px;box-sizing:border-box';
+
+    let fieldsHTML = '';
+
+    if (entry.kind === 'static') {
+      const s = d as StaticObject;
+      fieldsHTML = `
+        <label style="display:block;margin:3px 0;font-size:9px">Breite:
+          <input id="ed-prop-w" type="number" value="${s.width}" min="20" max="800" step="10" style="${inputStyle}">
+        </label>
+        <label style="display:block;margin:3px 0;font-size:9px">Hoehe:
+          <input id="ed-prop-h" type="number" value="${s.height ?? 12}" min="4" max="100" step="2" style="${inputStyle}">
+        </label>
+      `;
+      if (s.type === 'ramp') {
+        fieldsHTML += `
+          <label style="display:block;margin:3px 0;font-size:9px">Winkel:
+            <input id="ed-prop-angle" type="number" value="${s.angle ?? -15}" min="-60" max="60" step="5" style="${inputStyle}">
+          </label>
+        `;
+      }
+    } else if (entry.kind === 'target') {
+      const t = d as Target;
+      fieldsHTML = `
+        <label style="display:block;margin:3px 0;font-size:9px">Typ:
+          <select id="ed-prop-ttype" style="${inputStyle}">
+            <option value="star" ${t.type === 'star' ? 'selected' : ''}>Stern</option>
+            <option value="bell" ${t.type === 'bell' ? 'selected' : ''}>Glocke</option>
+          </select>
+        </label>
+        <label style="display:block;margin:3px 0;font-size:9px">Punkte:
+          <input id="ed-prop-pts" type="number" value="${t.points}" min="50" max="500" step="50" style="${inputStyle}">
+        </label>
+      `;
+    }
+
     propsDiv.innerHTML = `
-      <div style="color:#88ccff;font-size:9px;margin-bottom:4px">Ausgewaehlt: ${this.selectedEntry.kind}</div>
+      <div style="color:#88ccff;font-size:9px;margin-bottom:4px">Ausgewaehlt: ${entry.kind}</div>
       <div style="color:#aaa;font-size:9px">x: ${(d as { x: number }).x}, y: ${(d as { y: number }).y}</div>
+      ${fieldsHTML}
       <div style="color:#556;font-size:8px;margin-top:2px">Ziehen zum Verschieben</div>
       <button id="ed-delete" style="margin-top:6px;background:#442222;color:#ff8888;border:1px solid #664444;padding:4px 8px;cursor:pointer;font-size:9px;border-radius:2px">
         Loeschen (Entf)
@@ -649,6 +961,33 @@ export class EditorScene extends Phaser.Scene {
     `;
 
     propsDiv.querySelector('#ed-delete')?.addEventListener('click', () => this.deleteSelected());
+
+    // Bind property inputs
+    propsDiv.querySelector('#ed-prop-w')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as StaticObject).width = parseInt((e.target as HTMLInputElement).value, 10);
+      this.redrawEntry(entry);
+      this.redrawConstraints();
+    });
+    propsDiv.querySelector('#ed-prop-h')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as StaticObject).height = parseInt((e.target as HTMLInputElement).value, 10);
+      this.redrawEntry(entry);
+      this.redrawConstraints();
+    });
+    propsDiv.querySelector('#ed-prop-angle')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as StaticObject).angle = parseInt((e.target as HTMLInputElement).value, 10);
+      this.redrawEntry(entry);
+    });
+    propsDiv.querySelector('#ed-prop-ttype')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as Target).type = (e.target as HTMLSelectElement).value as 'star' | 'bell';
+    });
+    propsDiv.querySelector('#ed-prop-pts')?.addEventListener('change', (e) => {
+      this.pushUndo();
+      (entry.data as Target).points = parseInt((e.target as HTMLInputElement).value, 10);
+    });
   }
 
   private testLevel(): void {
@@ -692,7 +1031,12 @@ export class EditorScene extends Phaser.Scene {
     ];
     this.level.dynamicObjects = [];
     this.level.targets = [];
+    this.level.constraints = [];
+    this.level.portals = [];
     this.level.placementZone = { x: 50, y: 50, width: 150, height: 150, allowedObjects: ['ball'] };
+
+    for (const cv of this.constraintVisuals) cv.gfx.destroy();
+    this.constraintVisuals = [];
 
     this.drawZone();
     this.refreshPanel();

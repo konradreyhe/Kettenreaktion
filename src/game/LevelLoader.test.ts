@@ -12,8 +12,8 @@ import type { Level } from '../types/Level';
 const ALL_LEVELS: Level[] = [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7, ...BATCH_8];
 
 describe('Level Templates', () => {
-  it('should have exactly 198 levels', () => {
-    expect(ALL_LEVELS.length).toBe(210);
+  it('should have exactly 222 levels', () => {
+    expect(ALL_LEVELS.length).toBe(222);
   });
 
   it('should have unique IDs', () => {

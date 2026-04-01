@@ -79,7 +79,11 @@ export class BootScene extends Phaser.Scene {
     this.genDomino();
     this.genCrate();
     this.genWeight();
+    this.genBomb();
+    this.genMagnet();
+    this.genPortal();
     this.genStar();
+    this.genBell();
     this.genPlatform();
     this.genPlatformWood();
     this.genPlatformStone();
@@ -284,6 +288,132 @@ export class BootScene extends Phaser.Scene {
     gfx.destroy();
   }
 
+  /** Bomb — dark sphere with fuse and spark. */
+  private genBomb(): void {
+    const s = 30;
+    const cx = s / 2;
+    const cy = s / 2 + 2;
+    const r = 11;
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+
+    // Shadow
+    gfx.fillStyle(0x000000, 0.25);
+    gfx.fillCircle(cx + 1, cy + 1, r);
+
+    // Body — dark charcoal
+    gfx.fillStyle(0x333344);
+    gfx.fillCircle(cx, cy, r);
+
+    // Rim highlight
+    gfx.lineStyle(1.5, 0x555566, 0.6);
+    gfx.strokeCircle(cx, cy, r);
+
+    // Specular
+    gfx.fillStyle(0x666677, 0.5);
+    gfx.fillCircle(cx - 3, cy - 3, 4);
+
+    // Fuse neck
+    gfx.fillStyle(0x666655);
+    gfx.fillRect(cx - 2, cy - r - 3, 4, 5);
+
+    // Fuse line
+    gfx.lineStyle(1.5, 0x887744, 0.8);
+    gfx.beginPath();
+    gfx.moveTo(cx, cy - r - 3);
+    gfx.lineTo(cx + 3, cy - r - 6);
+    gfx.lineTo(cx + 1, cy - r - 9);
+    gfx.strokePath();
+
+    // Spark at tip
+    gfx.fillStyle(0xffaa22, 0.9);
+    gfx.fillCircle(cx + 1, cy - r - 9, 2);
+    gfx.fillStyle(0xffdd66, 0.6);
+    gfx.fillCircle(cx + 1, cy - r - 9, 1);
+
+    gfx.generateTexture('bomb', s, s);
+    gfx.destroy();
+  }
+
+  /** Magnet — horseshoe shape with red/blue poles. */
+  private genMagnet(): void {
+    const s = 32;
+    const cx = s / 2;
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+
+    // Horseshoe body (U shape)
+    gfx.fillStyle(0x888899);
+    // Left arm
+    gfx.fillRect(cx - 10, 4, 6, 22);
+    // Right arm
+    gfx.fillRect(cx + 4, 4, 6, 22);
+    // Top bridge
+    gfx.fillRect(cx - 10, 4, 20, 6);
+
+    // Red pole (left bottom)
+    gfx.fillStyle(0xcc3333);
+    gfx.fillRect(cx - 11, 20, 8, 8);
+
+    // Blue pole (right bottom)
+    gfx.fillStyle(0x3344cc);
+    gfx.fillRect(cx + 3, 20, 8, 8);
+
+    // Highlight on bridge
+    gfx.fillStyle(0xaaaabb, 0.4);
+    gfx.fillRect(cx - 8, 5, 16, 3);
+
+    // Outline
+    gfx.lineStyle(1, 0x666677, 0.5);
+    gfx.strokeRect(cx - 11, 4, 22, 24);
+
+    // Force field lines (subtle arcs)
+    gfx.lineStyle(0.5, 0xcc44cc, 0.3);
+    gfx.beginPath();
+    gfx.arc(cx, 26, 8, Math.PI, 0, false);
+    gfx.strokePath();
+    gfx.beginPath();
+    gfx.arc(cx, 26, 12, Math.PI, 0, false);
+    gfx.strokePath();
+
+    gfx.generateTexture('magnet', s, s);
+    gfx.destroy();
+  }
+
+  /** Portal — glowing oval. Two variants: blue (A) and orange (B). */
+  private genPortal(): void {
+    for (const variant of ['portal_a', 'portal_b'] as const) {
+      const s = 36;
+      const cx = s / 2;
+      const cy = s / 2;
+      const gfx = this.make.graphics({ x: 0, y: 0 });
+      const isA = variant === 'portal_a';
+      const color = isA ? 0x4488ff : 0xff8844;
+      const innerColor = isA ? 0x88bbff : 0xffbb88;
+
+      // Outer glow
+      gfx.fillStyle(color, 0.15);
+      gfx.fillEllipse(cx, cy, 30, 36);
+
+      // Main ring
+      gfx.lineStyle(3, color, 0.7);
+      gfx.strokeEllipse(cx, cy, 22, 30);
+
+      // Inner glow
+      gfx.fillStyle(innerColor, 0.2);
+      gfx.fillEllipse(cx, cy, 16, 24);
+
+      // Center void
+      gfx.fillStyle(0x000011, 0.6);
+      gfx.fillEllipse(cx, cy, 10, 16);
+
+      // Specular highlight
+      gfx.fillStyle(0xffffff, 0.3);
+      gfx.fillEllipse(cx - 3, cy - 6, 4, 3);
+
+      gfx.generateTexture(variant, s, s);
+      gfx.destroy();
+    }
+  }
+
   /** Star target — actual 5-pointed star shape. */
   private genStar(): void {
     const s = 28;
@@ -341,6 +471,66 @@ export class BootScene extends Phaser.Scene {
     gfx.strokePath();
 
     gfx.generateTexture('star', s, s);
+    gfx.destroy();
+  }
+
+  /** Bell target — copper bell shape with clapper. */
+  private genBell(): void {
+    const s = 28;
+    const cx = s / 2;
+    const gfx = this.make.graphics({ x: 0, y: 0 });
+
+    // Shadow
+    gfx.fillStyle(0x000000, 0.2);
+    gfx.beginPath();
+    gfx.moveTo(cx - 8 + 1, 7 + 1);
+    gfx.lineTo(cx + 8 + 1, 7 + 1);
+    gfx.lineTo(cx + 10 + 1, 20 + 1);
+    gfx.lineTo(cx - 10 + 1, 20 + 1);
+    gfx.closePath();
+    gfx.fillPath();
+
+    // Bell body — copper
+    gfx.fillStyle(0xdd8844);
+    gfx.beginPath();
+    gfx.moveTo(cx - 8, 7);
+    gfx.lineTo(cx + 8, 7);
+    gfx.lineTo(cx + 10, 20);
+    gfx.lineTo(cx - 10, 20);
+    gfx.closePath();
+    gfx.fillPath();
+
+    // Bell dome (top)
+    gfx.fillStyle(0xcc7733);
+    gfx.fillCircle(cx, 8, 6);
+
+    // Bell lip (bottom rim)
+    gfx.fillStyle(0xbb6622);
+    gfx.fillRect(cx - 11, 19, 22, 3);
+
+    // Highlight
+    gfx.fillStyle(0xffcc88, 0.5);
+    gfx.fillCircle(cx - 2, 10, 3);
+
+    // Clapper (small circle at bottom center)
+    gfx.fillStyle(0x554433);
+    gfx.fillCircle(cx, 23, 2);
+
+    // Top knob
+    gfx.fillStyle(0xaa6633);
+    gfx.fillCircle(cx, 4, 2);
+
+    // Outline
+    gfx.lineStyle(1, 0x885522, 0.7);
+    gfx.beginPath();
+    gfx.moveTo(cx - 8, 7);
+    gfx.lineTo(cx + 8, 7);
+    gfx.lineTo(cx + 10, 20);
+    gfx.lineTo(cx - 10, 20);
+    gfx.closePath();
+    gfx.strokePath();
+
+    gfx.generateTexture('bell', s, s);
     gfx.destroy();
   }
 
