@@ -193,7 +193,12 @@ export class HUD {
         this.chainText.setColor('#ff6644');
       } else if (length >= 5) {
         this.chainText.setColor('#44ddff');
+      } else {
+        this.chainText.setColor(COLOR.chain);
       }
+    } else {
+      this.chainText.setText('');
+      this.chainText.setColor(COLOR.chain);
     }
   }
 

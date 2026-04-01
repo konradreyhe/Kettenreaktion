@@ -277,4 +277,20 @@ export class HowToScene extends Phaser.Scene {
   private goToMenu(): void {
     SceneTransition.wipeOut(this, 'MenuScene');
   }
+
+  shutdown(): void {
+    // Clean up physics bodies created in create()
+    if (this.placedBall) {
+      this.placedBall.destroy();
+      this.placedBall = null;
+    }
+    if (this.targetBody) {
+      this.matter.world.remove(this.targetBody);
+      this.targetBody = null;
+    }
+    // Matter world cleanup — remove all remaining bodies
+    this.matter.world.getAllBodies().forEach((body) => {
+      this.matter.world.remove(body);
+    });
+  }
 }

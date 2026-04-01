@@ -227,10 +227,14 @@ export class ButterflyScene extends Phaser.Scene {
     // Update replay A sprites
     if (idx < this.replayA.length) {
       const frame = this.replayA[idx];
-      for (let i = 0; i < Math.min(frame.length, this.dotsA.length); i++) {
-        this.dotsA[i].setPosition(frame[i][0], frame[i][1]);
-        if (frame[i][2] !== undefined) this.dotsA[i].setRotation(frame[i][2]);
-        this.dotsA[i].setVisible(true);
+      for (let i = 0; i < this.dotsA.length; i++) {
+        if (i < frame.length) {
+          this.dotsA[i].setPosition(frame[i][0], frame[i][1]);
+          if (frame[i][2] !== undefined) this.dotsA[i].setRotation(frame[i][2]);
+          this.dotsA[i].setVisible(true);
+        } else {
+          this.dotsA[i].setVisible(false);
+        }
       }
     } else {
       // Replay A ended — fade out
@@ -240,10 +244,14 @@ export class ButterflyScene extends Phaser.Scene {
     // Update replay B sprites
     if (idx < this.replayB.length) {
       const frame = this.replayB[idx];
-      for (let i = 0; i < Math.min(frame.length, this.dotsB.length); i++) {
-        this.dotsB[i].setPosition(frame[i][0], frame[i][1]);
-        if (frame[i][2] !== undefined) this.dotsB[i].setRotation(frame[i][2]);
-        this.dotsB[i].setVisible(true);
+      for (let i = 0; i < this.dotsB.length; i++) {
+        if (i < frame.length) {
+          this.dotsB[i].setPosition(frame[i][0], frame[i][1]);
+          if (frame[i][2] !== undefined) this.dotsB[i].setRotation(frame[i][2]);
+          this.dotsB[i].setVisible(true);
+        } else {
+          this.dotsB[i].setVisible(false);
+        }
       }
     } else {
       for (const d of this.dotsB) d.setVisible(false);
@@ -338,5 +346,8 @@ export class ButterflyScene extends Phaser.Scene {
     this.dotsB = [];
     this.replayA = [];
     this.replayB = [];
+
+    // Remove keyboard listeners to prevent accumulation on re-entry
+    this.input.keyboard?.removeAllListeners();
   }
 }

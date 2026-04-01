@@ -163,6 +163,7 @@ export class PracticeScene extends Phaser.Scene {
   }
 
   private navigate(dir: number): void {
+    if (this.filteredIndices.length === 0) return;
     // Find current position in filtered list
     const currentFilterIdx = this.filteredIndices.indexOf(this.currentIndex);
     const nextFilterIdx = (currentFilterIdx + dir + this.filteredIndices.length) % this.filteredIndices.length;

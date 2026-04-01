@@ -307,11 +307,17 @@ export class ReplayScene extends Phaser.Scene {
   ): void {
     if (idx < 0 || idx >= this.replayFrames.length) return;
     const frame = this.replayFrames[idx];
-    for (let i = 0; i < Math.min(frame.length, this.dots.length); i++) {
+    for (let i = 0; i < this.dots.length; i++) {
       const d = this.dots[i] as unknown as Phaser.GameObjects.Sprite;
-      d.setPosition(frame[i][0], frame[i][1]);
-      if (frame[i][2] !== undefined) {
-        d.setRotation(frame[i][2]);
+      if (i < frame.length) {
+        d.setPosition(frame[i][0], frame[i][1]);
+        if (frame[i][2] !== undefined) {
+          d.setRotation(frame[i][2]);
+        }
+        d.setVisible(true);
+      } else {
+        // Hide sprites for bodies that no longer exist (e.g., detonated bombs)
+        d.setVisible(false);
       }
     }
     const progress = idx / Math.max(1, this.replayFrames.length - 1);
@@ -392,6 +398,9 @@ export class ReplayScene extends Phaser.Scene {
     this.replayFrames = [];
     this.cameraModeButtons.clear();
     this.cameraMode = 'overview';
+
+    // Remove keyboard listeners to prevent accumulation on re-entry
+    this.input.keyboard?.removeAllListeners();
 
     // Reset camera to default
     const cam = this.cameras.main;
