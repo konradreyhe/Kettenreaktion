@@ -511,4 +511,63 @@ export const LEVEL_TEMPLATES_8: Level[] = [
       { id: 't3', type: 'star', x: 750, y: 555, points: 100 },
     ],
   },
+
+  // ===== PLAYER BOMB CHOICE (3 levels) =====
+  { id: 't223', name: 'Bombe oder Kugel?', difficulty: 3, theme: 'stone',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 350, y: 30, width: 100, height: 80, allowedObjects: ['ball', 'bomb'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 300, y: 300, width: 200, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 150, y: 555 },
+      { id: 'd2', type: 'domino', x: 200, y: 555 },
+      { id: 'd3', type: 'crate', x: 600, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 80, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+  },
+  { id: 't224', name: 'Sprengstrategie', difficulty: 4, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 50, y: 30, width: 80, height: 100, allowedObjects: ['ball', 'bomb', 'weight'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'ramp', x: 200, y: 350, width: 200, angle: 20 },
+      { type: 'platform', x: 500, y: 250, width: 150, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'domino', x: 550, y: 230 },
+      { id: 'd2', type: 'domino', x: 580, y: 230 },
+      { id: 'd3', type: 'domino', x: 610, y: 230 },
+      { id: 'd4', type: 'crate', x: 300, y: 555 },
+    ],
+    targets: [
+      { id: 't1', type: 'bell', x: 200, y: 555, points: 100 },
+      { id: 't2', type: 'star', x: 700, y: 555, points: 100 },
+    ],
+  },
+  { id: 't225', name: 'Alles oder nichts', difficulty: 5, theme: 'metal',
+    world: { width: 800, height: 600 },
+    placementZone: { x: 370, y: 30, width: 60, height: 60, allowedObjects: ['bomb'] },
+    staticObjects: [
+      { type: 'platform', x: 0, y: 580, width: 800, height: 20 },
+      { type: 'platform', x: 300, y: 300, width: 200, height: 10 },
+      { type: 'platform', x: 100, y: 450, width: 120, height: 10 },
+      { type: 'platform', x: 580, y: 400, width: 120, height: 10 },
+    ],
+    dynamicObjects: [
+      { id: 'd1', type: 'ball', x: 380, y: 280 },
+      { id: 'd2', type: 'ball', x: 420, y: 280 },
+      { id: 'd3', type: 'domino', x: 150, y: 430 },
+      { id: 'd4', type: 'domino', x: 630, y: 380 },
+    ],
+    targets: [
+      { id: 't1', type: 'star', x: 80, y: 555, points: 100 },
+      { id: 't2', type: 'bell', x: 400, y: 555, points: 100 },
+      { id: 't3', type: 'star', x: 720, y: 555, points: 100 },
+    ],
+  },
 ];

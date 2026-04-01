@@ -2303,6 +2303,7 @@ export class GameScene extends Phaser.Scene {
       case 'weight': return 0xccaa55;
       case 'crate': return 0xcc8844;
       case 'domino': return 0xddcc88;
+      case 'bomb': return 0xff6622;
       default: return 0xaaaaaa;
     }
   }
