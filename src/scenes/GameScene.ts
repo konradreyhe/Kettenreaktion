@@ -562,8 +562,7 @@ export class GameScene extends Phaser.Scene {
 
     // Sample kinetic energy for seismograph (skip on mobile — too visually busy)
     if (!this.isTouchDevice()) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const allBods = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
+        const allBods = this.getAllMatterBodies();
       let energy = 0;
       for (const b of allBods) {
         if (!b.isStatic) {
@@ -581,8 +580,7 @@ export class GameScene extends Phaser.Scene {
 
     // Progressive zoom camera — follow the action (skip on mobile + reduced motion)
     if (!AccessibilityManager.prefersReducedMotion() && !this.isTouchDevice()) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const activeBodies = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
+        const activeBodies = this.getAllMatterBodies();
       this.cameraFX.followAction(activeBodies, GAME_WIDTH, GAME_HEIGHT);
     }
     // Apply trauma shake AFTER followAction (re-run to add offset on top of follow position)
@@ -591,8 +589,7 @@ export class GameScene extends Phaser.Scene {
     // Minimum 1.5s before checking sleep
     if (elapsed < 1500) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const matterBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const matterBodies = this.getAllMatterBodies();
     const allSleeping = matterBodies.every(
       (b) => b.isStatic || b.isSleeping
     );
@@ -779,8 +776,7 @@ export class GameScene extends Phaser.Scene {
 
   /** Apply mutation physics multipliers to all bodies in the world. */
   private applyMutationToPhysics(mutation: import('../systems/DailyMutation').PhysicsMutation): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const bodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const bodies = this.getAllMatterBodies();
     for (const body of bodies) {
       if (mutation.bounceMult !== 1) {
         body.restitution *= mutation.bounceMult;
@@ -1349,6 +1345,12 @@ export class GameScene extends Phaser.Scene {
       yoyo: true,
       ease: 'Quad.easeOut',
     });
+  }
+
+  /** Get all Matter.js bodies from the world (typed wrapper around internal API). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getAllMatterBodies(): MatterJS.BodyType[] {
+    return (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
   }
 
   /** Detonate a bomb — apply explosive outward force to all nearby dynamic bodies. */
@@ -1959,8 +1961,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     // Also track all dynamic objects
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const allBodies = this.getAllMatterBodies();
     for (const body of allBodies) {
       if (!body.isStatic && body !== this.placedSprite.body) {
         this.trailRenderer.track(body, 0x8888aa);
@@ -2215,8 +2216,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private checkNearMisses(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const allBodies = this.getAllMatterBodies();
     const dynamicBodies = allBodies.filter((b) => !b.isStatic);
 
     for (const target of this.targets) {
@@ -2311,8 +2311,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private recordReplayFrame(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
+    const allBodies = this.getAllMatterBodies();
     const frame: ReplayFrame = [];
     for (const body of allBodies) {
       if (body.isStatic) continue;

@@ -126,7 +126,7 @@ export class ZenScene extends Phaser.Scene {
   private clearObjects(): void {
     // Remove all dynamic bodies
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allBodies = ((this.matter.world.localWorld as any).bodies as MatterJS.BodyType[]);
+    const allBodies = (this.matter.world.localWorld as any).bodies as MatterJS.BodyType[];
     const dynamicBodies = allBodies.filter(b => !b.isStatic);
 
     for (const body of dynamicBodies) {
