@@ -125,12 +125,13 @@ export class PhysicsManager {
   private createStaticBody(obj: StaticObject): void {
     // Magnets are visual-only (force applied in GameScene update loop)
     if (obj.type === 'magnet') {
-      this.scene.add.sprite(obj.x, obj.y, 'magnet')
+      const sprite = this.scene.add.sprite(obj.x, obj.y, 'magnet')
         .setDisplaySize(32, 32).setDepth(12);
       // Static sensor for visual reference (no physics collision)
-      this.scene.matter.add.circle(obj.x, obj.y, 16, {
+      const body = this.scene.matter.add.circle(obj.x, obj.y, 16, {
         isStatic: true, isSensor: true, label: 'magnet',
       });
+      this.tracked.push({ sprite, body });
       return;
     }
 

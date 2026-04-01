@@ -103,6 +103,7 @@ export class GameScene extends Phaser.Scene {
 
   // Magnets: position + config for force application + visual field
   private magnets: { x: number; y: number; strength: number; radius: number; fieldRing?: Phaser.GameObjects.Arc }[] = [];
+  private explodedBombs: Set<MatterJS.BodyType> = new Set();
 
   // PostFX references
   private cameraVignette: Phaser.FX.Vignette | null = null;
@@ -171,7 +172,6 @@ export class GameScene extends Phaser.Scene {
       if (mutation.flipY) {
         this.mirrorLevelY();
       }
-      this.applyMutationToPhysics(mutation);
     }
 
     this.createTextures();
@@ -181,6 +181,11 @@ export class GameScene extends Phaser.Scene {
     this.setupLevel();
     this.setupInput();
     this.setupCollisionListener();
+
+    // Apply mutation physics AFTER bodies exist (bounce/friction multipliers)
+    if (mutation && mutation.name !== '') {
+      this.applyMutationToPhysics(mutation);
+    }
 
     // Chain counter (hidden until chain starts)
     this.chainDisplay = this.add
@@ -786,6 +791,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.targets = [];
     this.targetsHit = 0;
+    this.explodedBombs.clear();
     this.lastChainMilestone = 0;
     this.allTargetsCleared = false;
     this.chainDetector.reset();
@@ -1301,8 +1307,8 @@ export class GameScene extends Phaser.Scene {
         // Bomb explosion — detonate on any collision with enough force
         if (bodyA.label === 'bomb' || bodyB.label === 'bomb') {
           const bombBody = bodyA.label === 'bomb' ? bodyA : bodyB;
-          if (!(bombBody as any).__exploded) {
-            (bombBody as any).__exploded = true;
+          if (!this.explodedBombs.has(bombBody)) {
+            this.explodedBombs.add(bombBody);
             this.detonateBomb(bombBody);
           }
         }
@@ -1392,7 +1398,9 @@ export class GameScene extends Phaser.Scene {
         duration: 200, onComplete: () => sprite.destroy(),
       });
     }
-    this.matter.world.remove(bombBody);
+    // Move off-world instead of removing — preserves body array indices for replay recording
+    this.matter.body.setStatic(bombBody, true);
+    this.matter.body.setPosition(bombBody, { x: -200, y: -200 });
   }
 
   /** Apply attractive force from magnets to all dynamic bodies in range. */
@@ -1409,7 +1417,7 @@ export class GameScene extends Phaser.Scene {
         if (dist > magnet.radius || dist < 5) continue;
 
         pulling = true;
-        // Inverse-distance falloff (stronger closer)
+        // Linear falloff (stronger closer, zero at radius edge)
         const forceMag = magnet.strength * (1 - dist / magnet.radius);
         const fx = (dx / dist) * forceMag;
         const fy = (dy / dist) * forceMag;
@@ -1497,13 +1505,19 @@ export class GameScene extends Phaser.Scene {
         const distB = Math.sqrt((bx - bpx) ** 2 + (by - bpy) ** 2);
 
         if (distA < 16) {
-          // Teleport to B
+          // Teleport to B — preserve velocity
+          const vx = body.velocity.x;
+          const vy = body.velocity.y;
           this.matter.body.setPosition(body, { x: bpx, y: bpy });
+          this.matter.body.setVelocity(body, { x: vx, y: vy });
           portal.cooldowns.set(bodyId, now);
           this.playPortalEffect(ax, ay, bpx, bpy);
         } else if (distB < 16) {
-          // Teleport to A
+          // Teleport to A — preserve velocity
+          const vx = body.velocity.x;
+          const vy = body.velocity.y;
           this.matter.body.setPosition(body, { x: ax, y: ay });
+          this.matter.body.setVelocity(body, { x: vx, y: vy });
           portal.cooldowns.set(bodyId, now);
           this.playPortalEffect(bpx, bpy, ax, ay);
         }
@@ -2099,7 +2113,7 @@ export class GameScene extends Phaser.Scene {
             score: this.bestScore!,
             chainLength: this.bestChainLength,
             attempts: this.attempts,
-            solved: this.totalTargetsHitBest > 0,
+            solved: this.totalTargetsHitBest >= this.level.targets.length,
             targetsHit: this.totalTargetsHitBest,
             totalTargets: this.level.targets.length,
             isPractice: this.isPractice,

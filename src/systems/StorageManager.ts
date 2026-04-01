@@ -27,7 +27,11 @@ export class StorageManager {
   static save(data: Partial<GameStorage>): void {
     const current = StorageManager.load();
     const merged = { ...current, ...data };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    } catch {
+      // QuotaExceededError or disabled localStorage — game continues without persistence
+    }
   }
 
   static getStreak(): number {
@@ -82,12 +86,17 @@ export class StorageManager {
     // Update puzzle history (keep best score)
     const existing = data.puzzleHistory[puzzleNumber];
     if (!existing || result.score > existing.score) {
+      // Adjust totalScore: add new score, subtract old if replacing
+      if (existing) {
+        data.totalScore += result.score - existing.score;
+      } else {
+        data.totalScore += result.score;
+        data.gamesPlayed += 1;
+      }
       data.puzzleHistory[puzzleNumber] = result;
     }
 
     data.lastPlayedDate = todayISO;
-    data.gamesPlayed += 1;
-    data.totalScore += result.score;
 
     if (result.score > data.bestScore) {
       data.bestScore = result.score;

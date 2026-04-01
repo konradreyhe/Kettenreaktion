@@ -47,7 +47,8 @@ export class DailySystem {
       now.getUTCDate()
     );
     const daysSinceLaunch = Math.floor((today - LAUNCH_DATE) / 86400000) + 1;
-    return Math.abs(daysSinceLaunch);
+    // Pre-launch: offset into negative range to avoid collision with post-launch numbers
+    return daysSinceLaunch > 0 ? daysSinceLaunch : 10000 + daysSinceLaunch;
   }
 
   /** Returns milliseconds until next UTC midnight. */
