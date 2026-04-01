@@ -157,21 +157,28 @@ export class ShareManager {
     return arrows.join('');
   }
 
-  static async share(text: string): Promise<void> {
+  /** Returns true if text was shared/copied, false if no method available. */
+  static async share(text: string): Promise<boolean> {
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({
           text,
           url: 'https://kettenreaktion.crelvo.dev/',
         });
-        return;
+        return true;
       } catch {
         // Share cancelled or failed — fall through to clipboard
       }
     }
     if (navigator.clipboard) {
-      await navigator.clipboard.writeText(text);
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Clipboard write failed (e.g., permissions denied)
+      }
     }
+    return false;
   }
 
   /** Share directly via WhatsApp (DACH market primary messenger). */

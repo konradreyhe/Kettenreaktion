@@ -312,9 +312,12 @@ export class ResultScene extends Phaser.Scene {
       this.tweens.add({ targets: betText, alpha: 1, delay: 1500, duration: 500 });
     }
 
+    // Dynamic Y tracker for stacking buttons without overlap
+    let buttonY = 420;
+
     // Share button
     const shareButton = new Button(this, {
-      x: cx, y: 420, text: 'Ergebnis teilen',
+      x: cx, y: buttonY, text: 'Ergebnis teilen',
       width: 220, height: 44, fontSize: '16px',
       color: 0x338833, hoverColor: 0x44aa44,
       onClick: async () => {
@@ -334,8 +337,8 @@ export class ResultScene extends Phaser.Scene {
         });
 
         try {
-          await ShareManager.share(text);
-          shareButton.setText('Kopiert!');
+          const shared = await ShareManager.share(text);
+          shareButton.setText(shared ? 'Kopiert!' : 'Teilen fehlgeschlagen');
           this.time.delayedCall(2000, () => {
             shareButton.setText('Ergebnis teilen');
           });
@@ -349,8 +352,9 @@ export class ResultScene extends Phaser.Scene {
     if (data.replay && data.replay.length > 0 && data.levelId) {
       const level = LevelLoader.loadById(data.levelId);
       if (level && data.placement) {
+        buttonY += 40;
         const gifBtn = new Button(this, {
-          x: cx, y: 460, text: 'Replay als GIF',
+          x: cx, y: buttonY, text: 'Replay als GIF',
           width: 220, height: 38, fontSize: '13px',
           color: 0x2a3355, hoverColor: 0x3a4466, textColor: '#8899cc',
           onClick: async () => {
@@ -390,8 +394,9 @@ export class ResultScene extends Phaser.Scene {
 
     // Trail art share button (Photon Gallery)
     if (data.trailArtUrl) {
+      buttonY += 34;
       const artBtn = new Button(this, {
-        x: cx, y: 490, text: '\u{1F3A8} Kunstwerk teilen',
+        x: cx, y: buttonY, text: '\u{1F3A8} Kunstwerk teilen',
         width: 180, height: 34, fontSize: '12px',
         color: 0x2a2a55, hoverColor: 0x3a3a66, textColor: '#aa88dd',
         delay: 200,
@@ -426,8 +431,9 @@ export class ResultScene extends Phaser.Scene {
 
     // WhatsApp share button (DACH market)
     if (typeof navigator.share !== 'function') {
+      buttonY += 34;
       new Button(this, {
-        x: cx, y: 490, text: 'WhatsApp teilen',
+        x: cx, y: buttonY, text: 'WhatsApp teilen',
         width: 180, height: 34, fontSize: '12px',
         color: 0x25d366, hoverColor: 0x2ee67a, textColor: '#ffffff',
         onClick: () => {
@@ -452,8 +458,9 @@ export class ResultScene extends Phaser.Scene {
       const yesterdayNum = puzzleNum - 1;
       const yesterdayResult = StorageManager.load().puzzleHistory[yesterdayNum];
       if (yesterdayResult?.replay && yesterdayResult.replay.length > 0) {
+        buttonY += 34;
         new Button(this, {
-          x: cx, y: isPractice ? 490 : 460, text: 'Vergleichen',
+          x: cx, y: buttonY, text: 'Vergleichen',
           width: 160, height: 30, fontSize: '11px',
           color: 0x443366, hoverColor: 0x554477, textColor: '#aa88dd',
           delay: 300,
@@ -473,10 +480,13 @@ export class ResultScene extends Phaser.Scene {
       }
     }
 
+    // Navigation buttons below all share/export buttons
+    const navY = Math.max(buttonY + 40, 510);
+
     if (isPractice) {
       // Practice mode: Replay + Next Level
       new Button(this, {
-        x: cx - 110, y: 510, text: 'Nochmal',
+        x: cx - 110, y: navY, text: 'Nochmal',
         width: 130, height: 34, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
@@ -485,7 +495,7 @@ export class ResultScene extends Phaser.Scene {
       });
 
       new Button(this, {
-        x: cx + 110, y: 510, text: 'Naechstes',
+        x: cx + 110, y: navY, text: 'Naechstes',
         width: 130, height: 34, fontSize: '13px',
         color: 0x334455, hoverColor: 0x445566, textColor: '#88aacc',
         onClick: () => {
@@ -496,7 +506,7 @@ export class ResultScene extends Phaser.Scene {
 
       // Challenge + Back row
       const challengeBtn = new Button(this, {
-        x: cx - 80, y: 548, text: 'Herausfordern',
+        x: cx - 80, y: navY + 38, text: 'Herausfordern',
         width: 140, height: 28, fontSize: '10px',
         color: 0x443355, hoverColor: 0x554466, textColor: '#bb88dd',
         onClick: async () => {
@@ -513,7 +523,7 @@ export class ResultScene extends Phaser.Scene {
       });
 
       new Button(this, {
-        x: cx + 80, y: 548, text: 'Zurueck',
+        x: cx + 80, y: navY + 38, text: 'Zurueck',
         width: 100, height: 28, fontSize: '10px',
         color: 0x222233, hoverColor: 0x2a2a44, textColor: '#777799',
         onClick: () => {
@@ -523,7 +533,7 @@ export class ResultScene extends Phaser.Scene {
     } else {
       // Daily mode: Menu
       new Button(this, {
-        x: cx, y: 510, text: 'Zum Menue',
+        x: cx, y: navY, text: 'Zum Menue',
         width: 180, height: 38, fontSize: '14px',
         color: 0x2a2a44, hoverColor: 0x333355,
         textColor: '#9999bb',
