@@ -87,6 +87,7 @@ export class GameScene extends Phaser.Scene {
   private hitEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private sparkEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
   private dustEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
+  private trailEmitter: Phaser.GameObjects.Particles.ParticleEmitter | null = null;
 
   // Vignette
   private vignette: Phaser.GameObjects.Graphics | null = null;
@@ -514,6 +515,15 @@ export class GameScene extends Phaser.Scene {
     this.replayFrameCounter++;
     if (this.replayFrameCounter % 3 === 0) {
       this.recordReplayFrame();
+    }
+
+    // Ball motion trail — emit at player object position every other frame
+    if (this.trailEmitter && this.placedSprite?.body && this.replayFrameCounter % 2 === 0) {
+      const body = this.placedSprite.body as MatterJS.BodyType;
+      const speed = Math.sqrt(body.velocity.x ** 2 + body.velocity.y ** 2);
+      if (speed > 0.5) {
+        this.trailEmitter.emitParticleAt(body.position.x, body.position.y);
+      }
     }
 
     const elapsed = this.simulationElapsedMs;
@@ -1138,6 +1148,17 @@ export class GameScene extends Phaser.Scene {
       alpha: { start: 0.5, end: 0 },
       angle: { min: 230, max: 310 },
     }).setDepth(40);
+
+    // Ball motion trail — fading circles behind player object during simulation
+    this.trailEmitter = this.add.particles(0, 0, 'particle', {
+      speed: { min: 2, max: 8 },
+      scale: { start: 0.6, end: 0 },
+      lifespan: 250,
+      tint: [0x88ccff, 0x66aadd],
+      emitting: false,
+      quantity: 1,
+      alpha: { start: 0.3, end: 0 },
+    }).setDepth(14);
 
     this.isSimulating = false;
   }
@@ -1996,6 +2017,15 @@ export class GameScene extends Phaser.Scene {
       }).explode(12, x, y);
     }
 
+    // Expanding placement ring — visual shockwave
+    const ring = this.add.circle(x, y, 15, 0x000000, 0)
+      .setStrokeStyle(2, 0x88ccff, 0.6).setDepth(16).setScale(0.3);
+    this.tweens.add({
+      targets: ring, scaleX: 2.5, scaleY: 2.5, alpha: 0,
+      duration: 400, ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
+
     this.hud.updateAttempts(this.attempts, MAX_ATTEMPTS);
   }
 
@@ -2035,6 +2065,20 @@ export class GameScene extends Phaser.Scene {
     const chainLength = this.chainDetector.getChainLength();
 
     this.checkNearMisses();
+
+    // Failure drama — when attempt ends without hitting all targets
+    if (this.targetsHit < this.level.targets.length && !AccessibilityManager.prefersReducedMotion()) {
+      // Brief dark flash to signal failure
+      this.cameras.main.flash(300, 10, 10, 30);
+      // Subtle camera sag (downward drift)
+      this.tweens.add({
+        targets: this.cameras.main,
+        scrollY: this.cameras.main.scrollY + 3,
+        duration: 400,
+        ease: 'Sine.easeInOut',
+        yoyo: true,
+      });
+    }
 
     const result = ScoreCalculator.calculate({
       targetsHit: this.targetsHit,
