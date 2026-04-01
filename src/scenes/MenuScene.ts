@@ -219,7 +219,7 @@ export class MenuScene extends Phaser.Scene {
     } else {
       // Play button with glow pulse
       const hasResult = todayResult !== null;
-      const playColor = hasResult ? 0x2a3a55 : 0x3355aa;
+      const playColor = hasResult ? 0x2a3a55 : 0x3366bb;
 
       // Glow behind play button
       const glow = this.add
@@ -227,10 +227,10 @@ export class MenuScene extends Phaser.Scene {
         .setDepth(9);
       this.tweens.add({
         targets: glow,
-        alpha: { from: 0, to: 0.15 },
-        scaleX: { from: 1, to: 1.08 },
-        scaleY: { from: 1, to: 1.12 },
-        duration: 1200,
+        alpha: { from: 0.05, to: 0.25 },
+        scaleX: { from: 1, to: 1.1 },
+        scaleY: { from: 1, to: 1.15 },
+        duration: 1400,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut',
@@ -240,7 +240,7 @@ export class MenuScene extends Phaser.Scene {
         x: cx, y: 320, text: hasResult ? 'WEITER SPIELEN' : 'SPIELEN',
         width: 220, height: 52, fontSize: hasResult ? '16px' : '20px',
         color: playColor,
-        hoverColor: hasResult ? 0x334466 : 0x4466cc,
+        hoverColor: hasResult ? 0x334466 : 0x4477dd,
         onClick: () => {
           SceneTransition.wipeOut(this, 'GameScene', ghostPlacement ? { ghostPlacement } : undefined);
         },

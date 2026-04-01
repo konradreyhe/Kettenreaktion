@@ -698,8 +698,8 @@ export class GameScene extends Phaser.Scene {
           Math.pow(x - GAME_WIDTH / 2, 2) + Math.pow(y - GAME_HEIGHT / 2, 2)
         );
         const fade = Math.max(0, 1 - distFromCenter / 450);
-        gfx.fillStyle(0x4466bb, 0.06 + fade * 0.08);
-        gfx.fillCircle(x, y, 1.2);
+        gfx.fillStyle(0x4466bb, 0.08 + fade * 0.1);
+        gfx.fillCircle(x, y, 1.4);
       }
     }
   }
@@ -957,13 +957,13 @@ export class GameScene extends Phaser.Scene {
 
       // Outer glow
       const glow = this.add
-        .circle(target.x, target.y, 18, glowColor, 0.15)
+        .circle(target.x, target.y, 22, glowColor, 0.18)
         .setDepth(14);
 
       this.tweens.add({
         targets: glow,
-        scaleX: 1.4,
-        scaleY: 1.4,
+        scaleX: 1.5,
+        scaleY: 1.5,
         alpha: 0.05,
         duration: isBell ? 900 : 700,
         yoyo: true,

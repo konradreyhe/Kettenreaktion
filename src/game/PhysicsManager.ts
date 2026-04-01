@@ -156,6 +156,12 @@ export class PhysicsManager {
     };
     const borderColor = borderColors[this.theme] ?? (obj.type === 'ramp' ? 0x6666aa : 0x77aaaa);
 
+    // Drop shadow for depth
+    this.scene.add
+      .rectangle(cx + 3, cy + 3, obj.width, height, 0x000000, 0.15)
+      .setAngle(angleDeg)
+      .setDepth(4);
+
     // Tiled sprite for textured look
     const tileSprite = this.scene.add
       .tileSprite(cx, cy, obj.width, height, tileKey)
