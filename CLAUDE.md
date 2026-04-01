@@ -3,7 +3,7 @@
 ## Project Identity
 Daily physics puzzle browser game. One new puzzle per day. Player places ONE object, chain reaction starts. All players worldwide solve the same puzzle. Share results as emoji text + GIF replay.
 
-**Status:** Beta-ready (222 levels, feature-complete, deployed)
+**Status:** Beta-ready (225 levels, feature-complete, deployed)
 **Maintainer:** Crelvo
 **Launch Target:** August 2026
 

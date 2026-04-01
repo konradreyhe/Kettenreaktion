@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 12 was a massive feature session. Implemented 17 features spanning new object types (bell, bomb, portal, magnet), replay enhancements (Director camera modes, Butterfly Effect comparison), editor improvements (constraints, portals, magnets, property editing), and gameplay polish (material particles, mutation exemption, daily bet timing, gravity flip fixes). Added 12 new levels (4 bomb, 4 portal, 4 magnet). Spread bell targets across all level batches. Updated CLAUDE.md, ROADMAP.md. Deleted stale manifest.json. 222 levels total, 1,829 tests pass. Git is dirty — needs commit.
+Session 12 was a massive feature session. Implemented 20+ features spanning 4 new object types (bell, bomb, portal, magnet), replay enhancements (Director camera modes, Butterfly Effect comparison), editor improvements (constraints, portals, magnets, property editing), gameplay polish (material particles, mutation exemption, daily bet timing, gravity flip fixes), and 3 bomb-choice strategy levels. Added 15 new levels total. Spread bell targets across all batches. Updated CLAUDE.md, ROADMAP.md. Deleted stale manifest.json. 225 levels total, 1,853 tests pass. 4 commits on master, needs push.
 
 ## Completed This Session
 - [x] Material-specific particle themes (wood/stone/metal tinted hit/spark/dust/ripple)
@@ -54,7 +54,7 @@ Session 12 was a massive feature session. Implemented 17 features spanning new o
 
 ## In Progress
 - [ ] Beta testing — game is feature-complete and deployed. BETA-POSTS.md has ready-to-post drafts.
-- [ ] **Needs commit** — all session 12 changes are uncommitted.
+- [ ] **Needs push** — 4 commits on master, not yet pushed to origin.
 
 ## Decisions Made
 | Decision | Why | Alternatives Rejected | Why Rejected |
@@ -84,8 +84,8 @@ Session 12 was a massive feature session. Implemented 17 features spanning new o
 8. **Supabase leaderboard** — Top 10 + own rank on ResultScene
 
 ## Rollback Info
-- Last known good: `65c44bb` (HEAD before session 12) — 1,733 tests pass
-- All session 12 changes are uncommitted — `git checkout .` would revert everything
+- Last known good: `916c181` (HEAD) — 1,853 tests pass, 225 levels
+- Pre-session 12: `65c44bb` — 1,733 tests pass, 210 levels
 
 ## Files Modified This Session
 - `CLAUDE.md` — Updated status, removed stale manifest refs, updated level info
@@ -133,4 +133,4 @@ Session 12 was a massive feature session. Implemented 17 features spanning new o
 - `docs/ROADMAP.md` — development phases and milestones (updated this session)
 
 ---
-**Last Updated:** 2026-04-01 (Session 12 — 17 features, 12 new levels, 3 new object types)
+**Last Updated:** 2026-04-01 (Session 12 — 20+ features, 15 new levels, 4 new object types)
