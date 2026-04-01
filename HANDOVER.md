@@ -1,25 +1,27 @@
 # Handover
 
 ## Summary
-Session 13 was a quality-focused session. Fixed 20+ bugs across the entire codebase found through systematic auditing — critical gameplay bugs (mutations never applied, solved flag wrong, portal velocity zeroed), resource leaks (6 separate leak sources in GameScene/HowToScene/ReplayScene), data integrity issues (gamesPlayed inflation, localStorage crashes, puzzle number collisions), and UI bugs (button overlaps, HUD chain not resetting, share silent failure). Also added a structural level validator, Lighthouse accessibility/performance improvements (viewport meta, color contrast, loading screen, dynamic imports), and 5 new tests. 9 commits on master, 1,865 tests pass, build clean. Needs push.
+Session 14 continued from Session 13's quality audit. Fixed 6 more bugs (butterfly level mismatch, sound toggle desync, tooltip leak, canvas context crash, prediction toggle, magic number). Added visual polish (play button glow, platform shadows, star glow, background grid). Built and deployed the leaderboard feature (server endpoint + ResultScene UI — top 10 + own rank). 5 commits on master, 1,865 tests pass, build clean, deployed to production.
 
 ## Completed This Session
-- [x] 20+ bug fixes across GameScene, ReplayScene, ButterflyScene, PracticeScene, HowToScene, ResultScene, StorageManager, DailySystem, ShareManager, CameraFX, HUD, PhysicsManager, LevelLoader
-- [x] Critical: applyMutationToPhysics moved after setupLevel (bounce/friction mutations now work)
-- [x] Critical: solved flag requires all targets hit (was: any single target)
-- [x] Critical: portal teleportation preserves velocity (was: zeroed momentum)
-- [x] Critical: score timer uses frame delta instead of Date.now (immune to tab backgrounding)
-- [x] Resource leaks: magnet bodies tracked, shutdown cleans portals/targets/magnets, pointermove handler stored, keyboard listeners removed in replay scenes, HowToScene shutdown added
-- [x] Data: gamesPlayed/totalScore deduplication, localStorage try-catch, puzzle number pre/post-launch offset
-- [x] UI: ResultScene dynamic button stacking, HUD chain text/color reset, ShareManager returns success boolean
-- [x] Code: 7 any-casts consolidated into getAllMatterBodies helper, bomb __exploded uses typed Set
-- [x] Level validator (structural checks for all 225 levels — constraints, portals, bounds, targets)
-- [x] Lighthouse: viewport meta (allow zoom), color contrast (#99aabb = 7.17:1), HTML loading screen, dynamic imports, scene-level code splitting
-- [x] 5 new tests for storage dedup, puzzle numbering, quota handling
+- [x] Push Session 13's 10 commits to origin
+- [x] Fix ButterflyScene level mismatch — yesterday's replay uses its own levelId
+- [x] Fix MenuScene sound toggle — reads AudioManager.isEnabled() on re-entry
+- [x] Fix StatsScene tooltip leak — shared ref, destroy before recreating
+- [x] Fix ReplayExporter canvas context — guard getContext('2d') instead of non-null assertion
+- [x] Fix prediction toggle — `!null` → `true` skipped `false` state on first tap
+- [x] Fix magic number — ResultScene uses POINTS_PER_SAVED_ATTEMPT constant
+- [x] Visual polish: brighter SPIELEN button + glow, platform drop shadows, star target glow, background dot grid
+- [x] Leaderboard API endpoint: GET /api/kr/leaderboard (top 10 + own rank)
+- [x] Leaderboard UI on ResultScene: compact ranked list with highlighted "you" row
+- [x] Deploy all changes to production (4 deploys)
 
 ## Completed in Previous Sessions (Still Working)
 - [x] 225 levels (batches 1-8) including bomb, portal, magnet levels
 - [x] All 42 enhancement plan sections complete
+- [x] 20+ bug fixes from Session 13 quality audit
+- [x] Level validator (structural checks for 225 levels)
+- [x] Lighthouse a11y/perf improvements (viewport meta, color contrast, loading screen, dynamic imports)
 - [x] Material themes (wood/stone/metal) with 9 procedural textures + themed collision audio
 - [x] PostFX bloom/glow/vignette/bokeh pipeline
 - [x] MusicEngine with drone + arpeggio + pad + percussion layers
@@ -36,7 +38,7 @@ Session 13 was a quality-focused session. Fixed 20+ bugs across the entire codeb
 - [x] Dramatic near-miss camera (slow-mo + zoom + vignette + ring + particles)
 - [x] 7/7 daily physics mutations (new player exemption for first 7 games)
 - [x] Ghost placement sharing via URL (?p=type,x,y)
-- [x] Backend API (POST result, GET stats, GET heatmap, GET streak)
+- [x] Backend API (POST result, GET stats, GET heatmap, GET streak, GET leaderboard)
 - [x] Production deployment at kettenreaktion.crelvo.dev
 - [x] GIF replay export (Web Worker + OffscreenCanvas, sync fallback)
 - [x] Server-validated streaks with grace period
@@ -46,75 +48,57 @@ Session 13 was a quality-focused session. Fixed 20+ bugs across the entire codeb
 - [x] HUD attempt pips + live timer
 - [x] Butterfly Effect (side-by-side replay comparison)
 - [x] Bell, bomb, portal, magnet object types
-- [x] Editor magnet strength/radius sliders (was listed as missing — already implemented)
+- [x] Global leaderboard (top 10 + own rank on ResultScene)
 
 ## In Progress
 - [ ] Beta testing — game is feature-complete and deployed. BETA-POSTS.md has ready-to-post drafts.
-- [ ] **Needs push** — 9 commits on master, not yet pushed to origin.
 
 ## Decisions Made
 | Decision | Why | Alternatives Rejected | Why Rejected |
 |----------|-----|-----------------------|--------------|
-| Structural level validator (not physics sim) | Headless Matter.js diverges from Phaser's integrated physics — ball trajectories differ significantly | Headless Matter.js solvability simulation | Ball never reaches targets from placement zone in standalone Matter.js; 206/225 levels "unsolvable" despite working in game. Physics integration differences are fundamental. |
-| Dynamic imports for Phaser + scenes | Allows HTML loading screen to paint before heavy JS blocks main thread | Synchronous imports | Blocks FCP/LCP for 2.9s while Phaser evaluates |
-| Frame delta for sim timer instead of Date.now() | Immune to tab backgrounding inflating score timer | Date.now() | Keeps ticking when tab hidden but physics paused |
-| Bomb setStatic + move off-world instead of world.remove | Preserves body array indices for replay recording | world.remove | Shifts array indices, corrupting all subsequent replay frames |
-| getAllMatterBodies() helper | Single point for the localWorld.bodies any-cast, removes 6 eslint-disable comments | Inline any-casts | 7 duplicate patterns across GameScene |
-| buttonY dynamic stacking in ResultScene | Prevents overlap when multiple buttons visible (GIF + trail art + WhatsApp + butterfly) | Fixed Y positions | Buttons overlap when multiple conditional buttons render |
-| ShareManager returns boolean | Caller can show appropriate feedback (success vs failure) | Void return with silent fail | User gets false "Kopiert!" even when nothing was copied |
+| Leaderboard replaces histogram in primary viz slot | Top 10 is more engaging than score distribution bars | Histogram alongside leaderboard | Not enough horizontal space for both; leaderboard + heatmap is better |
+| Platform drop shadows at 15% opacity, 3px offset | Subtle depth without distracting from gameplay | Heavier shadows / blur | Would look out of place in pixel-art-ish style |
+| Guard canvas context with throw/postMessage | GIF button already handles errors with 'Fehler' label | Keep non-null assertion | Crash instead of graceful degradation |
+| Prediction toggle: null→true→false cycle | First tap was skipping false (because !null===true) | Three-state cycle (null→true→false→null) | Two states sufficient — null means unanswered, not a third choice |
 
 ## Known Issues
-- **ButterflyScene level mismatch** — passes today's levelId for yesterday's replay backdrop. Bodies appear to float through platforms that weren't there. Needs separate levelId per replay.
-- **StatsScene tooltip leak** — rapid hover creates multiple tooltip objects before cleanup fires. Store tooltip ref and destroy at start of pointerover.
-- **MenuScene sound toggle desync** — initializes `soundOn = true` regardless of AudioManager state on re-entry.
-- **ReplayExporter canvas context** — non-null assertion on getContext('2d') could crash if browser exhausts canvas context limit.
 - **Emoji rendering in buttons** — platform-dependent, some emojis render as squares.
 - **Playwright can't interact with Phaser input** — automated gameplay testing not possible.
 - **Phaser bundle size** — 340KB gzipped, inherent to the library. Lighthouse perf score limited.
 - **Redirect in Lighthouse** — 3.3s intermittent redirect, server-side issue not fixable in code.
+- **ResultScene no shutdown()** — countdown timer event not explicitly destroyed (Phaser handles it on scene stop, but defensive shutdown would be better).
 
 ## Next Steps (Priority Order)
-1. **Push 9 commits** — `git push origin master`
-2. **Deploy to production** — `VITE_BASE_PATH=root npm run build && scp -r ./dist/* deploy@91.99.104.132:/home/deploy/kettenreaktion.crelvo.dev/`
-3. **Fix ButterflyScene level mismatch** — store yesterday's levelId in replay data, pass separately
-4. **Fix MenuScene sound toggle** — init from AudioManager.isEnabled()
-5. **Fix StatsScene tooltip leak** — store ref, destroy existing before creating new
-6. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
-7. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX
-8. **Supabase leaderboard** — Top 10 + own rank on ResultScene (API + UI)
+1. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
+2. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX
+3. **Add ResultScene shutdown()** — Store and destroy countdown timer event
+4. **Test leaderboard with real data** — Play a few games to populate the leaderboard and verify display
+5. **Consider manualChunks** — Vite warns about large chunks; could split Phaser from game code
 
 ## Rollback Info
-- Last known good: `f7d63d2` (HEAD) — 1,865 tests pass, 225 levels, all bugs fixed
-- Pre-session 13: `2e694d2` — 1,853 tests pass, session 12 handover
-- Pre-session 12: `65c44bb` — 1,733 tests pass, 210 levels
+- Last known good: `1c286ff` (HEAD) — 1,865 tests pass, 225 levels, leaderboard live
+- Pre-session 14: `bd6852a` — Session 13 handover commit
+- Pre-session 13: `2e694d2` — Session 12 handover
+- Server backup: `/home/deploy/appmanager/dashboard/routes/kettenreaktion.js.bak` (pre-leaderboard)
 
 ## Files Modified This Session
-- `index.html` — Viewport meta (allow zoom), color contrast fix, HTML loading screen
-- `src/main.ts` — Dynamic imports for Phaser + all scenes, loading screen dismiss
-- `src/game/LevelValidator.ts` — **NEW** structural level validator
-- `src/game/LevelValidator.test.ts` — **NEW** 7 tests for validator
-- `src/game/PhysicsManager.ts` — Track magnet body/sprite in this.tracked for cleanup
-- `src/game/CameraFX.ts` — Additive shake offset instead of absolute setScroll
-- `src/game/LevelLoader.ts` — Anti-repeat uses template IDs from full pool
-- `src/scenes/GameScene.ts` — 10+ fixes: mutation ordering, solved flag, portal velocity, sim timer, bomb handling, shutdown cleanup, explodedBombs Set, ghostMoveHandler, getAllMatterBodies helper
-- `src/scenes/ResultScene.ts` — Dynamic button Y stacking, share failure feedback
-- `src/scenes/ReplayScene.ts` — Keyboard cleanup in shutdown, hide sprites for missing bodies
-- `src/scenes/ButterflyScene.ts` — Keyboard cleanup in shutdown, hide sprites for missing bodies
-- `src/scenes/PracticeScene.ts` — Guard navigate() against empty filter
-- `src/scenes/HowToScene.ts` — Added shutdown() for Matter.js body cleanup
-- `src/systems/StorageManager.ts` — gamesPlayed/totalScore dedup, localStorage try-catch
-- `src/systems/DailySystem.ts` — Pre-launch puzzle number offset (10000+)
-- `src/systems/ShareManager.ts` — share() returns boolean, clipboard try-catch
-- `src/systems/DailySystem.test.ts` — Pre-launch puzzle number test
-- `src/systems/StorageManager.test.ts` — 4 tests: dedup, totalScore adjustment, quota handling
-- `src/ui/HUD.ts` — Chain text/color reset on 0 and between attempts
-- `src/constants/Physics.ts` — Added frictionAir to seesaw body properties
+- `src/scenes/ButterflyScene.ts` — Accept separate levelIdB for replay B's level
+- `src/scenes/MenuScene.ts` — Sound toggle init from AudioManager, brighter play button glow
+- `src/scenes/ResultScene.ts` — Leaderboard display, POINTS_PER_SAVED_ATTEMPT import, fetchLeaderboard
+- `src/scenes/StatsScene.ts` — Tooltip leak fix (shared ref pattern)
+- `src/scenes/GameScene.ts` — Prediction toggle fix, star glow increase, dot grid visibility
+- `src/game/PhysicsManager.ts` — Platform drop shadows
+- `src/systems/ApiClient.ts` — LeaderboardData types, fetchLeaderboard()
+- `src/systems/ReplayExporter.ts` — Canvas context null guard
+- `src/systems/ReplayExporter.worker.ts` — Canvas context null guard
+- Server: `/home/deploy/appmanager/dashboard/routes/kettenreaktion.js` — Leaderboard endpoint
 
 ## Infrastructure
 - **Production URL:** https://kettenreaktion.crelvo.dev
 - **VM:** deploy@91.99.104.132
 - **Webroot:** /home/deploy/kettenreaktion.crelvo.dev/
 - **API proxy:** /api/kr/ -> http://127.0.0.1:9091/api/kr/
+- **API source:** /home/deploy/appmanager/dashboard/routes/kettenreaktion.js
 - **Deploy process:** `VITE_BASE_PATH=root npm run build && scp -r ./dist/* deploy@91.99.104.132:/home/deploy/kettenreaktion.crelvo.dev/`
 
 ## Key Reference Docs
@@ -125,4 +109,4 @@ Session 13 was a quality-focused session. Fixed 20+ bugs across the entire codeb
 - `docs/ROADMAP.md` — development phases and milestones
 
 ---
-**Last Updated:** 2026-04-01 (Session 13 — 20+ bug fixes, quality audit, Lighthouse improvements)
+**Last Updated:** 2026-04-01 (Session 14 — 6 bug fixes, visual polish, leaderboard feature)
