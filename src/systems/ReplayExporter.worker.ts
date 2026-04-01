@@ -55,7 +55,8 @@ self.onmessage = (e: MessageEvent<WorkerMessage>) => {
   const SCALE = GIF_WIDTH / gameWidth;
 
   const canvas = new OffscreenCanvas(GIF_WIDTH, GIF_HEIGHT);
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) { self.postMessage({ error: 'Could not acquire 2d canvas context' }); return; }
 
   const gif = GIFEncoder();
 
@@ -63,7 +64,8 @@ self.onmessage = (e: MessageEvent<WorkerMessage>) => {
 
   // Pre-render static background
   const bgCanvas = new OffscreenCanvas(GIF_WIDTH, GIF_HEIGHT);
-  const bgCtx = bgCanvas.getContext('2d')!;
+  const bgCtx = bgCanvas.getContext('2d');
+  if (!bgCtx) { self.postMessage({ error: 'Could not acquire 2d canvas context' }); return; }
   drawBackground(bgCtx, level, placement, puzzleNumber, SCALE);
 
   // Encode frames

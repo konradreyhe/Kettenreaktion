@@ -436,14 +436,14 @@ export class GameScene extends Phaser.Scene {
     const elements = [panel, title, solveBtn, chainBtn];
 
     solveBtn.on('pointerdown', () => {
-      this.predictions.solve = !this.predictions.solve;
+      this.predictions.solve = this.predictions.solve === true ? false : true;
       solveBtn.setColor(this.predictions.solve ? '#44dd88' : '#667788');
       solveBtn.setText(this.predictions.solve ? '\u2705 Schaffe ich!' : '\u{1F3AF} Schaffe ich!');
       AudioManager.playClick();
     });
 
     chainBtn.on('pointerdown', () => {
-      this.predictions.chain5 = !this.predictions.chain5;
+      this.predictions.chain5 = this.predictions.chain5 === true ? false : true;
       chainBtn.setColor(this.predictions.chain5 ? '#44dd88' : '#667788');
       chainBtn.setText(this.predictions.chain5 ? '\u2705 Kette > 5' : '\u{1F517} Kette > 5');
       AudioManager.playClick();

@@ -112,7 +112,8 @@ export class ReplayExporter {
     const canvas = document.createElement('canvas');
     canvas.width = GIF_WIDTH;
     canvas.height = GIF_HEIGHT;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Could not acquire 2d canvas context');
 
     const gif = GIFEncoder();
 
@@ -122,7 +123,8 @@ export class ReplayExporter {
     const bgCanvas = document.createElement('canvas');
     bgCanvas.width = GIF_WIDTH;
     bgCanvas.height = GIF_HEIGHT;
-    const bgCtx = bgCanvas.getContext('2d')!;
+    const bgCtx = bgCanvas.getContext('2d');
+    if (!bgCtx) throw new Error('Could not acquire 2d canvas context for background');
     this.drawBackground(bgCtx, level, placement, puzzleNumber);
 
     // Encode frames

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from '../constants/Game';
+import { GAME_WIDTH, GAME_HEIGHT, POINTS_PER_SAVED_ATTEMPT } from '../constants/Game';
 import { DailySystem } from '../systems/DailySystem';
 import { StorageManager } from '../systems/StorageManager';
 import { ShareManager } from '../systems/ShareManager';
@@ -144,7 +144,7 @@ export class ResultScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x334466, 0.2);
 
     // Score breakdown — animate in sequentially
-    const savedAttempts = data.score.efficiencyBonus / 200;
+    const savedAttempts = data.score.efficiencyBonus / POINTS_PER_SAVED_ATTEMPT;
     const breakdownItems = [
       { label: 'Sterne', value: `${data.targetsHit}/${data.totalTargets}`, score: data.score.baseScore },
       { label: 'Kette', value: `${data.chainLength}`, score: data.score.chainBonus },
