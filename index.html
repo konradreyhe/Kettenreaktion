@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kettenreaktion - Taegliches Physik-Puzzle</title>
   <meta name="description" content="Kettenreaktion: Ein neues Physik-Puzzle jeden Tag. Platziere ein Objekt, loese die Kettenreaktion, teile dein Ergebnis. Kostenlos im Browser — kein Download noetig." />
   <meta name="keywords" content="Kettenreaktion, Physik Puzzle, Daily Puzzle, Chain Reaction, Browser Game, Wordle, Taegliches Raetsel" />
@@ -82,8 +82,22 @@
   <div id="rotate-overlay">
     <div class="icon">&#128241;</div>
     <div style="font-size:18px;font-weight:bold;color:#aabbdd">Bitte drehe dein Geraet</div>
-    <div style="font-size:13px;color:#667799">Kettenreaktion funktioniert am besten im Querformat</div>
+    <div style="font-size:13px;color:#99aabb">Kettenreaktion funktioniert am besten im Querformat</div>
   </div>
+  <div id="loading-screen" style="position:fixed;inset:0;z-index:1000;background:#1a1a2e;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;font-family:Orbitron,monospace">
+    <div style="font-size:28px;font-weight:bold;color:#aabbdd;letter-spacing:2px">KETTENREAKTION</div>
+    <div style="width:120px;height:3px;background:#2a2a4e;border-radius:2px;overflow:hidden">
+      <div style="width:40%;height:100%;background:#6688cc;border-radius:2px;animation:loading-bar 1.2s ease-in-out infinite"></div>
+    </div>
+    <div style="font-size:11px;color:#99aabb">Laden...</div>
+  </div>
+  <style>
+    @keyframes loading-bar {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(150%); }
+      100% { transform: translateX(300%); }
+    }
+  </style>
   <noscript>
     <div style="color:#aaa;text-align:center;padding:40px;font-family:monospace">
       <h1>Kettenreaktion</h1>
