@@ -435,6 +435,9 @@ export class EditorScene extends Phaser.Scene {
         gfx.strokeCircle(obj.x, obj.y, 14);
         gfx.lineStyle(0.5, TOOL_COLORS.magnet, 0.15);
         gfx.strokeCircle(obj.x, obj.y, obj.radius ?? 120);
+        // Re-add label (lost on undo redraw)
+        this.add.text(obj.x, obj.y, '\u{1F9F2}', { fontSize: '14px' })
+          .setOrigin(0.5).setDepth(11);
       } else {
         gfx.fillStyle(TOOL_COLORS.platform, 0.8);
         gfx.fillRect(obj.x, obj.y, obj.width, obj.height ?? 12);
@@ -465,11 +468,16 @@ export class EditorScene extends Phaser.Scene {
       entry.gfx = gfx;
     } else if (entry.kind === 'target') {
       const obj = data as Target;
+      const isBell = obj.type === 'bell';
+      const color = isBell ? TOOL_COLORS.bell : TOOL_COLORS.star;
+      const icon = isBell ? '\u{1F514}' : '\u2605';
       const gfx = this.add.graphics().setDepth(10);
-      gfx.fillStyle(TOOL_COLORS.star, 0.9);
+      gfx.fillStyle(color, 0.9);
       gfx.fillCircle(obj.x, obj.y, 12);
-      gfx.lineStyle(2, 0xffaa00, 0.8);
+      gfx.lineStyle(2, isBell ? 0xaa6633 : 0xffaa00, 0.8);
       gfx.strokeCircle(obj.x, obj.y, 12);
+      this.add.text(obj.x, obj.y, icon, { fontSize: '16px', color: '#000' })
+        .setOrigin(0.5).setDepth(11);
       entry.gfx = gfx;
     }
   }
