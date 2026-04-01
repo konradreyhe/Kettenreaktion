@@ -12,8 +12,8 @@ import { AchievementManager } from '../systems/AchievementManager';
 import { Button } from '../ui/Button';
 import { SceneTransition } from '../game/SceneTransition';
 import { getTomorrowsMutation } from '../systems/DailyMutation';
-import { submitResult, fetchDailyStats, fetchHeatmap, fetchStreak } from '../systems/ApiClient';
-import type { DailyStats, HeatmapData } from '../systems/ApiClient';
+import { submitResult, fetchDailyStats, fetchHeatmap, fetchStreak, fetchLeaderboard } from '../systems/ApiClient';
+import type { DailyStats, HeatmapData, LeaderboardData } from '../systems/ApiClient';
 import type { ScoreResult, ReplayFrame } from '../types/GameState';
 
 interface ResultData {
@@ -767,8 +767,8 @@ export class ResultScene extends Phaser.Scene {
 
   /** Fetch and display global daily stats (non-blocking). */
   private async loadGlobalStats(cx: number): Promise<void> {
-    const [stats, heatmap, serverStreak] = await Promise.all([
-      fetchDailyStats(), fetchHeatmap(), fetchStreak(),
+    const [stats, heatmap, serverStreak, leaderboard] = await Promise.all([
+      fetchDailyStats(), fetchHeatmap(), fetchStreak(), fetchLeaderboard(),
     ]);
 
     // Update streak from server (authoritative source)
@@ -803,19 +803,85 @@ export class ResultScene extends Phaser.Scene {
       this.tweens.add({ targets: pctText, alpha: 1, delay: 200, duration: 500 });
     }
 
-    // Draw histogram and heatmap side by side below stats
+    // Leaderboard + heatmap side by side below stats
     const vizY = y + 32;
-    const hasHistogram = stats.histogram && stats.histogram.length > 0;
+    const hasLeaderboard = leaderboard && leaderboard.top10.length > 0;
     const hasHeatmap = heatmap && heatmap.topSpots.length > 0;
 
-    if (hasHistogram && hasHeatmap) {
-      this.drawHistogram(stats, cx - 120, vizY, 200, 50);
-      this.drawHeatmapGrid(heatmap, cx + 120, vizY, 80, 50);
-    } else if (hasHistogram) {
-      this.drawHistogram(stats, cx, vizY, 260, 50);
+    if (hasLeaderboard && hasHeatmap) {
+      this.drawLeaderboard(leaderboard, cx - 100, vizY);
+      this.drawHeatmapGrid(heatmap, cx + 180, vizY + 10, 80, 50);
+    } else if (hasLeaderboard) {
+      this.drawLeaderboard(leaderboard, cx, vizY);
     } else if (hasHeatmap) {
       this.drawHeatmapGrid(heatmap, cx, vizY, 100, 60);
     }
+  }
+
+  /** Draw a compact leaderboard showing top scores + own rank. */
+  private drawLeaderboard(data: LeaderboardData, cx: number, y: number): void {
+    const width = 220;
+    const rowH = 12;
+    const rows = Math.min(data.top10.length, 10);
+    const panelH = 18 + rows * rowH + (data.ownRank ? 18 : 0);
+
+    const gfx = this.add.graphics().setDepth(50).setAlpha(0);
+
+    // Background panel
+    gfx.fillStyle(0x1a1a2e, 0.7);
+    gfx.fillRoundedRect(cx - width / 2 - 6, y - 4, width + 12, panelH + 8, 4);
+
+    // Title
+    const title = this.add.text(cx, y + 4, 'TOP 10', {
+      fontFamily: FONT_UI, fontSize: '8px', color: '#6688aa',
+      letterSpacing: 2,
+    }).setOrigin(0.5).setDepth(50).setAlpha(0);
+
+    const entries: Phaser.GameObjects.Text[] = [];
+    const startY = y + 18;
+
+    data.top10.forEach((entry, i) => {
+      const ey = startY + i * rowH;
+      const rankStr = `${entry.rank}.`.padEnd(4);
+      const scoreStr = entry.score.toLocaleString('de-DE').padStart(6);
+      const solvedMark = entry.solved ? '\u2605' : '\u2606';
+      const line = `${rankStr}${scoreStr} ${solvedMark}  ${entry.chainLength}x`;
+
+      const color = entry.isYou ? '#ffdd44' : (i < 3 ? '#aaddaa' : '#8888aa');
+      const text = this.add.text(cx - width / 2, ey, line, {
+        fontFamily: FONT_UI, fontSize: '10px', color,
+        fontStyle: entry.isYou ? 'bold' : 'normal',
+      }).setDepth(50).setAlpha(0);
+
+      if (entry.isYou) {
+        // Highlight row for "you"
+        gfx.fillStyle(0x4466aa, 0.15);
+        gfx.fillRect(cx - width / 2, ey - 1, width, rowH);
+      }
+
+      entries.push(text);
+    });
+
+    // Own rank (if not in top 10)
+    let ownRankText: Phaser.GameObjects.Text | undefined;
+    if (data.ownRank && !data.top10.some(e => e.isYou)) {
+      const ry = startY + rows * rowH + 4;
+      gfx.lineStyle(1, 0x4466aa, 0.3);
+      gfx.moveTo(cx - width / 2, ry - 2);
+      gfx.lineTo(cx + width / 2, ry - 2);
+      gfx.strokePath();
+
+      const r = data.ownRank;
+      const line = `${r.position}.`.padEnd(4) + `${r.score.toLocaleString('de-DE').padStart(6)}  (Platz ${r.position}/${r.total})`;
+      ownRankText = this.add.text(cx - width / 2, ry, line, {
+        fontFamily: FONT_UI, fontSize: '10px', color: '#ffdd44', fontStyle: 'bold',
+      }).setDepth(50).setAlpha(0);
+    }
+
+    // Animate in
+    const targets = [gfx, title, ...entries];
+    if (ownRankText) targets.push(ownRankText);
+    this.tweens.add({ targets, alpha: 1, delay: 500, duration: 600 });
   }
 
   /** Draw a compact score histogram bar chart. */

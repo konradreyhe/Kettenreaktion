@@ -56,6 +56,21 @@ export interface StreakData {
   totalDays: number;
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  score: number;
+  solved: boolean;
+  chainLength: number;
+  attempts: number;
+  isYou: boolean;
+}
+
+export interface LeaderboardData {
+  date: string;
+  top10: LeaderboardEntry[];
+  ownRank: { position: number; score: number; total: number } | null;
+}
+
 /** Submit daily puzzle result. Fire-and-forget — never blocks gameplay. */
 export async function submitResult(params: SubmitParams): Promise<void> {
   try {
@@ -108,6 +123,19 @@ export async function fetchHeatmap(): Promise<HeatmapData | null> {
   try {
     const date = todayUTC();
     const res = await fetch(`${API_BASE}/heatmap?date=${date}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch today's leaderboard (top 10 + own rank). */
+export async function fetchLeaderboard(): Promise<LeaderboardData | null> {
+  try {
+    const date = todayUTC();
+    const playerId = getPlayerId();
+    const res = await fetch(`${API_BASE}/leaderboard?date=${date}&playerId=${playerId}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
