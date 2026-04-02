@@ -1,24 +1,15 @@
 # Handover
 
 ## Summary
-Session 14 was a multi-focus session: bug fixes (6), visual polish (4 iterations), leaderboard feature (server + client), game design audit, and game feel improvements (3). All 6 known bugs from Session 13 handover fixed. Added global leaderboard (top 10 + own rank) to ResultScene with new server endpoint. Conducted comprehensive game design audit (7.4/10 — strong juice/polish, daily format works, but core verb is passive). Implemented 3 audit recommendations: ball motion trail, failure drama, placement shockwave ring. All work committed, pushed, and deployed to production. 6 commits on master, 1,865 tests pass, build clean.
+Session 15 picked up from a crashed session that had partially implemented trajectory prediction. Fixed the gravity bug (Matter.js Verlet `delta^2` factor was missing), verified visually, committed. Also added ResultScene/MenuScene shutdown cleanup, streak milestone celebrations (7/30/100 days), silenced Vite chunk warning, and deployed everything to production. 5 commits on master, 1,865 tests pass, build clean.
 
 ## Completed This Session
-- [x] Push Session 13's 10 commits to origin
-- [x] Fix ButterflyScene level mismatch — yesterday's replay uses its own levelId
-- [x] Fix MenuScene sound toggle — reads AudioManager.isEnabled() on re-entry
-- [x] Fix StatsScene tooltip leak — shared ref, destroy before recreating
-- [x] Fix ReplayExporter canvas context — guard getContext('2d') instead of non-null assertion
-- [x] Fix prediction toggle — `!null` was `true`, skipping `false` state on first tap
-- [x] Fix magic number — ResultScene uses POINTS_PER_SAVED_ATTEMPT constant
-- [x] Visual polish: brighter SPIELEN button + glow, platform drop shadows, star target glow, background dot grid
-- [x] Leaderboard API endpoint: GET /api/kr/leaderboard (top 10 + own rank)
-- [x] Leaderboard UI on ResultScene: compact ranked list with highlighted "you" row
-- [x] Game design audit (7.4/10) with detailed improvement roadmap
-- [x] Ball motion trail — fading blue particles behind player object during simulation
-- [x] Failure drama — dark flash + camera sag when attempt ends without hitting targets
-- [x] Placement shockwave ring — expanding blue ring at placement point
-- [x] Deploy all changes to production (5 deploys total)
+- [x] Trajectory prediction arc — fixed gravity bug (`g * scale` → `g * scale * delta^2`), verified visually via Playwright
+- [x] ResultScene shutdown() — destroy countdown timer on scene stop
+- [x] MenuScene countdown timer leak — destroy on shutdown (same pattern)
+- [x] Streak milestone celebrations — golden text + emoji badge + glow ring at 7/30/100 days
+- [x] Vite chunkSizeWarningLimit raised to 1500KB (Phaser is inherently ~1479KB)
+- [x] Deploy all changes to production (kettenreaktion.crelvo.dev)
 
 ## Completed in Previous Sessions (Still Working)
 - [x] 225 levels (batches 1-8) including bomb, portal, magnet levels
@@ -40,64 +31,46 @@ Session 14 was a multi-focus session: bug fixes (6), visual polish (4 iterations
 - [x] Combo text popups, impact ripples, celebration overhaul
 - [x] Photon Gallery, HUD attempt pips, Butterfly Effect comparison
 - [x] Global leaderboard (top 10 + own rank on ResultScene)
+- [x] Ball motion trail, failure drama, placement shockwave ring
+- [x] Trajectory prediction arc (dotted path preview during hover)
+- [x] Streak milestone celebrations (7/30/100 days)
 
 ## In Progress
 - [ ] **Beta testing** — game is feature-complete and deployed. BETA-POSTS.md has ready-to-post drafts. This is a manual task.
-- [ ] **Trajectory prediction arc** — highest-impact design improvement from game audit. Not started. Would show dotted parabolic arc during hover in placement zone.
 
 ## Decisions Made
 | Decision | Why | Alternatives Rejected | Why Rejected |
 |----------|-----|-----------------------|--------------|
-| Leaderboard replaces histogram in primary viz slot | Top 10 is more engaging than score distribution bars | Histogram alongside leaderboard | Not enough horizontal space; leaderboard + heatmap is better |
-| Platform drop shadows at 15% opacity, 3px offset | Subtle depth without distracting from gameplay | Heavier shadows / blur | Out of place in the game's clean aesthetic |
-| Guard canvas context with throw/postMessage | GIF button already handles errors with 'Fehler' label | Keep non-null assertion | Crash instead of graceful degradation |
-| Prediction toggle: null->true->false cycle | !null===true was skipping false on first tap | Three-state cycle (null->true->false->null) | Two states sufficient, null means unanswered |
-| Dark flash for failure (not desaturation) | Phaser's postFX.remove() typing doesn't accept ColorMatrix | desaturate via ColorMatrix PostFX | TypeScript error: ColorMatrix not assignable to Controller type |
-| Ball trail at speed>0.5 threshold, every other frame | Prevents trail spam when ball is stationary or barely moving | Continuous emission | Too many particles, performance concern for mobile |
-| Server leaderboard via Python patch script | Node.js not installed on host (all Docker) | sed inline edit | SQL backtick content gets mangled by shell escaping |
-| Docker image rebuild for leaderboard | Route file is baked into image, not volume-mounted | Docker restart only | Container uses stale image, route not picked up |
+| Gravity = g * scale * delta^2 | Matter.js Verlet applies acceleration * delta^2 per step. Raw g*scale=0.001 produced ~3px drop over 90 steps | Use raw gravity value | Ball barely moved — dots clustered in 3px range |
+| Graphics-based milestone ring | Phaser Arc radius can't be reliably tweened | Tween Arc.radius directly | Unreliable with Phaser's Arc game object |
+| chunkSizeWarningLimit: 1500 | Phaser is 1479KB — warning is noise, not actionable | manualChunks (already done) | Already splitting Phaser; the chunk IS Phaser |
 
 ## Known Issues
 - **Emoji rendering in buttons** — platform-dependent, some emojis render as squares
 - **Playwright can't interact with Phaser input** — automated gameplay testing not possible (canvas-based input)
 - **Phaser bundle size** — 340KB gzipped, inherent to library. Lighthouse perf limited.
-- **ResultScene no shutdown()** — countdown timer not explicitly destroyed (Phaser handles it on scene stop, but defensive cleanup is better)
 - **Leaderboard untested with real data** — endpoint works (returns empty array), needs real player data to verify display
 
 ## Next Steps (Priority Order)
-1. **Trajectory prediction arc** — Show dotted parabolic arc during hover in placement zone. Biggest design improvement from audit. Medium effort (~4hrs). Would simulate ~2 seconds of ball physics and draw the predicted path.
-2. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
-3. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX (manual task)
-4. **Add ResultScene shutdown()** — Store and destroy countdown timer event
-5. **Test leaderboard with real data** — Play a few games to populate and verify display
-6. **Consider Vite manualChunks** — Split Phaser from game code to reduce chunk size warning
-7. **Streak milestone celebrations** — Special badge animations at 7/30/100-day streaks on menu
+1. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
+2. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX (manual task)
+3. **Test leaderboard with real data** — Play a few games to populate and verify display
+4. **Consider level difficulty curve** — Audit whether 225 levels have a smooth progression
+5. **Mobile touch testing** — Verify trajectory prediction works well on touch devices
+6. **Performance profiling** — Test on low-end mobile devices (trajectory simulation adds per-frame work)
 
 ## Rollback Info
-- Last known good: `9d7555a` (HEAD) — 1,865 tests pass, 225 levels, all deployed
-- Pre-game-feel: `4d9f4bc` — before ball trail, failure drama, placement ring
-- Pre-leaderboard: `fa63ce9` — before leaderboard feature
-- Pre-session 14: `bd6852a` — Session 13 handover commit
+- Last known good: `d7a5961` (HEAD) — 1,865 tests pass, 225 levels, all deployed
+- Pre-session 15: `5915d24` — Session 14 final handover commit
+- Pre-trajectory: `5915d24` — before trajectory prediction
 - Server backup: `/home/deploy/appmanager/dashboard/routes/kettenreaktion.js.bak` (pre-leaderboard)
 
 ## Files Modified This Session
-- `src/scenes/ButterflyScene.ts` — Accept separate levelIdB for replay B's level
-- `src/scenes/MenuScene.ts` — Sound toggle init from AudioManager, brighter play button glow
-- `src/scenes/ResultScene.ts` — Leaderboard display, POINTS_PER_SAVED_ATTEMPT, fetchLeaderboard
-- `src/scenes/StatsScene.ts` — Tooltip leak fix (shared ref pattern)
-- `src/scenes/GameScene.ts` — Prediction toggle fix, star glow, dot grid, ball trail, failure drama, placement ring, trail emitter
-- `src/game/PhysicsManager.ts` — Platform drop shadows
-- `src/systems/ApiClient.ts` — LeaderboardData types, fetchLeaderboard()
-- `src/systems/ReplayExporter.ts` — Canvas context null guard
-- `src/systems/ReplayExporter.worker.ts` — Canvas context null guard
-- Server: `/home/deploy/appmanager/dashboard/routes/kettenreaktion.js` — Leaderboard endpoint added
-
-## Game Design Audit Summary (for reference)
-- **Overall: 7.4/10** — Strong polish/juice, solid daily format, passive core verb
-- **Strengths:** Celebration stack (5/6 feedback channels), daily scarcity model, 225 levels, mutation system
-- **Weaknesses:** Core verb is single click + passive watching, failure is anticlimactic (now fixed), no trajectory preview
-- **#1 improvement:** Trajectory prediction arc (transforms "guess" into "aim")
-- **Reference games:** Wordle (daily format), Angry Birds (physics placement), Amazing Alex (chain reaction)
+- `src/game/TrajectoryPredictor.ts` — Fixed gravity calculation (new file from crashed session)
+- `src/scenes/GameScene.ts` — TrajectoryPredictor integration (from crashed session)
+- `src/scenes/ResultScene.ts` — Added shutdown() with countdown timer cleanup
+- `src/scenes/MenuScene.ts` — Countdown timer cleanup in shutdown(), streak milestone celebrations
+- `vite.config.ts` — Raised chunkSizeWarningLimit to 1500KB
 
 ## Infrastructure
 - **Production URL:** https://kettenreaktion.crelvo.dev
@@ -115,4 +88,4 @@ Session 14 was a multi-focus session: bug fixes (6), visual polish (4 iterations
 - `docs/ROADMAP.md` — development phases and milestones
 
 ---
-**Last Updated:** 2026-04-01 (Session 14 — 6 bug fixes, visual polish, leaderboard, game audit, feel improvements)
+**Last Updated:** 2026-04-02 (Session 15 — trajectory prediction, timer cleanup, milestone celebrations, deploy)
