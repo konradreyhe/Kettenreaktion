@@ -36,6 +36,7 @@ interface ResultData {
 /** Displays final score, breakdown, sharing, and countdown. */
 export class ResultScene extends Phaser.Scene {
   private streakText?: Phaser.GameObjects.Text;
+  private countdownTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super({ key: 'ResultScene' });
@@ -584,7 +585,7 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.time.addEvent({
+    this.countdownTimer = this.time.addEvent({
       delay: 1000,
       loop: true,
       callback: () => {
@@ -993,5 +994,10 @@ export class ResultScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(50).setAlpha(0);
 
     this.tweens.add({ targets: [gfx, label], alpha: 1, delay: 600, duration: 600 });
+  }
+
+  shutdown(): void {
+    this.countdownTimer?.destroy();
+    this.countdownTimer = undefined;
   }
 }
