@@ -85,7 +85,7 @@ Never:
 ```
 
 ## Level Schema
-Levels are defined in `src/game/LevelTemplates*.ts` (8 batch files, 210 levels total). Schema in `src/types/Level.ts`.
+Levels are defined in `src/game/LevelTemplates*.ts` (8 batch files, 225 levels total). Schema in `src/types/Level.ts`.
 Key fields: `id`, `difficulty` (1-5), `theme`, `placementZone`, `staticObjects`, `dynamicObjects`, `targets`, `constraints`, `seed_variations`.
 
 ## Anti-Patterns to Avoid
@@ -98,7 +98,38 @@ Key fields: `id`, `difficulty` (1-5), `theme`, `placementZone`, `staticObjects`,
 - Silent error swallowing (`catch(e) {}`)
 
 ## Current Focus
-Beta-ready. 210 levels, feature-complete, deployed at kettenreaktion.crelvo.dev. Launch target: August 2026.
+
+**CORE GAME FIRST. No new extra features.**
+
+The game has accumulated many extras (Photon Gallery, Butterfly Effect, ZenScene, level editor, monthly events, daily bets) while core launch items remain unfinished. Every session must prioritize the core game experience before touching anything else.
+
+### Priority 1 — Core game quality (MUST before launch)
+- Core loop must feel great: place, watch, score, share
+- Level quality: every level must be solvable, fun, and fair
+- Trajectory prediction must feel accurate and helpful
+- Touch/mobile experience must be smooth
+- Performance on low-end devices
+- Lighthouse > 90 all categories
+- Sharing flow must be frictionless (text + GIF)
+
+### Priority 2 — Launch blockers
+- Custom domain (kettenreaktion.de)
+- Leaderboard tested with real data
+- Soft launch posts (Reddit, Discord, Twitter/X, HN)
+- Real-device testing (phones, tablets)
+
+### Priority 3 — Only if 1+2 are done
+- Polish existing extras
+- New features
+
+### DO NOT
+- Add new "nice to have" features
+- Build extra game modes or campaigns
+- Add cosmetic systems, achievement expansions, or new UI screens
+- Optimize or refactor things that work fine
+- Remove dead code or do housekeeping instead of fixing real issues
+
+**Status:** 225 levels, deployed at kettenreaktion.crelvo.dev. Launch target: August 2026.
 
 ## Reference Docs
 - `PRINCIPLES.md` — Engineering principles (source of truth for HOW we build)
@@ -111,4 +142,4 @@ Beta-ready. 210 levels, feature-complete, deployed at kettenreaktion.crelvo.dev.
 - `docs/plans/DEPLOYMENT.md` — Deployment and infrastructure
 
 ---
-**Last Updated:** 2026-04-01
+**Last Updated:** 2026-04-02

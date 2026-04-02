@@ -63,15 +63,27 @@ Session 15 picked up from a crashed session that had partially implemented traje
 - **Leaderboard untested with real data** — endpoint works (returns empty array), needs real player data to verify display
 
 ## Next Steps (Priority Order)
-1. **Post beta announcements** — Copy from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
-2. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX (manual task)
-3. **Test leaderboard with real data** — Play a few games to populate and verify display
-4. **Consider level difficulty curve** — Audit whether 225 levels have a smooth progression
-5. **Real device mobile testing** — Verify drag-to-aim feels good on actual phones (touch timing, zone size)
-6. **Performance profiling** — Test on low-end mobile devices (trajectory simulation adds per-frame work)
+
+**FOCUS: Core game quality first. No new extras. See CLAUDE.md "Current Focus".**
+
+### Core game (must do)
+1. **Real device mobile testing** — Verify drag-to-aim, touch placement, trajectory feel on actual phones
+2. **Performance profiling** — Test trajectory simulation on low-end mobile devices
+3. **Level quality pass** — Play-test levels, ensure every level is solvable and fun
+4. **Lighthouse > 90** — All categories (currently limited by Phaser bundle size)
+
+### Launch blockers (must do)
+5. **Custom domain** — Buy kettenreaktion.de, configure DNS at INWX (manual task)
+6. **Test leaderboard with real data** — Play games to populate and verify display
+7. **Soft launch** — Post from BETA-POSTS.md to Reddit/Discord/Twitter/HN (manual task)
+
+### Do NOT prioritize
+- New features, game modes, UI screens, cosmetics
+- Refactoring or cleanup of working code
+- Optimization of things that aren't measurably slow
 
 ## Rollback Info
-- Last known good: `676c075` (HEAD) — 1,865 tests pass, 225 levels, all deployed
+- Last known good: `bee59a5` (HEAD) — 1,865 tests pass, 225 levels, all deployed
 - Pre-session 15: `5915d24` — Session 14 final handover commit
 - Pre-trajectory: `5915d24` — before trajectory prediction
 - Server backup: `/home/deploy/appmanager/dashboard/routes/kettenreaktion.js.bak` (pre-leaderboard)
