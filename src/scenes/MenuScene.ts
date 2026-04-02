@@ -179,9 +179,18 @@ export class MenuScene extends Phaser.Scene {
     if (streak > 0) {
       const jokers = StorageManager.getJokers();
       const jokerLabel = jokers > 0 ? ` (+${jokers} Joker)` : '';
+
+      // Milestone check — special display at 7/30/100 days
+      const milestone = [100, 30, 7].find(m => streak >= m && streak < m + 1);
+      const milestoneLabel = milestone === 100 ? ' \u{1F3C6}' : milestone === 30 ? ' \u{1F525}' : milestone === 7 ? ' \u2B50' : '';
+      const streakColor = milestone ? '#ffcc00' : '#ffaa44';
+
       const streakText = this.add
-        .text(cx, infoY, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${jokerLabel}`, {
-          fontSize: '16px', color: '#ffaa44',
+        .text(cx, infoY, `Streak: ${streak} ${streak === 1 ? 'Tag' : 'Tage'}${jokerLabel}${milestoneLabel}`, {
+          fontSize: milestone ? '18px' : '16px', color: streakColor,
+          fontStyle: milestone ? 'bold' : 'normal',
+          stroke: milestone ? '#664400' : undefined,
+          strokeThickness: milestone ? 2 : 0,
         })
         .setOrigin(0.5).setDepth(10);
 
@@ -189,6 +198,22 @@ export class MenuScene extends Phaser.Scene {
         targets: streakText, scaleX: 1.05, scaleY: 1.05,
         duration: 1000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
       });
+
+      // Milestone celebration: expanding glow ring
+      if (milestone) {
+        const gfx = this.add.graphics().setDepth(9);
+        const anim = { radius: 10, alpha: 0.6 };
+        this.tweens.add({
+          targets: anim, radius: 80, alpha: 0,
+          duration: 1200, ease: 'Cubic.easeOut', delay: 300,
+          onUpdate: () => {
+            gfx.clear();
+            gfx.lineStyle(2, 0xffcc00, anim.alpha);
+            gfx.strokeCircle(cx, infoY, anim.radius);
+          },
+          onComplete: () => gfx.destroy(),
+        });
+      }
     }
 
     // Check if today's puzzle was already completed
