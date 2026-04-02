@@ -12,6 +12,8 @@ import { SceneTransition } from '../game/SceneTransition';
 
 /** Start screen with play button, streak, and puzzle info. */
 export class MenuScene extends Phaser.Scene {
+  private countdownTimer?: Phaser.Time.TimerEvent;
+
   constructor() {
     super({ key: 'MenuScene' });
   }
@@ -454,7 +456,7 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5).setDepth(10);
 
-    this.time.addEvent({
+    this.countdownTimer = this.time.addEvent({
       delay: 1000, loop: true,
       callback: () => {
         const ms = DailySystem.getTimeUntilReset();
@@ -603,6 +605,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    this.countdownTimer?.destroy();
+    this.countdownTimer = undefined;
     AudioManager.stopMenuAmbient();
   }
 }
