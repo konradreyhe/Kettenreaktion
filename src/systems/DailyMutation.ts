@@ -97,12 +97,6 @@ export function getTodaysMutation(): PhysicsMutation {
   return MUTATIONS[day] ?? NORMAL;
 }
 
-/** Check if today has any mutation active. */
-export function hasMutation(): boolean {
-  const m = getTodaysMutation();
-  return m.name !== '';
-}
-
 /** Get tomorrow's physics mutation (UTC day-of-week + 1). */
 export function getTomorrowsMutation(): PhysicsMutation {
   const tomorrow = (new Date().getUTCDay() + 1) % 7;

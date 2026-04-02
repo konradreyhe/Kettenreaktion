@@ -43,9 +43,3 @@ export const TEXT_SHADOW = {
   blur: 4,
   fill: true,
 };
-
-// Stroke config for outlined text
-export const TEXT_STROKE = {
-  color: '#111122',
-  thickness: 4,
-};

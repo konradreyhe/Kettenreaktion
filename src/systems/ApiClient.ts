@@ -8,6 +8,14 @@ const API_BASE = import.meta.env.DEV
   : '/api/kr';
 
 const PLAYER_ID_KEY = 'kr_player_id';
+const TIMEOUT_MS = 5000;
+
+/** Fetch with timeout — prevents hanging on unresponsive servers. */
+function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(id));
+}
 
 /** Get or create a persistent anonymous player ID. */
 function getPlayerId(): string {
@@ -74,7 +82,7 @@ export interface LeaderboardData {
 /** Submit daily puzzle result. Fire-and-forget — never blocks gameplay. */
 export async function submitResult(params: SubmitParams): Promise<void> {
   try {
-    await fetch(`${API_BASE}/result`, {
+    await fetchWithTimeout(`${API_BASE}/result`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -98,7 +106,7 @@ export async function fetchDailyStats(): Promise<DailyStats | null> {
   try {
     const date = todayUTC();
     const playerId = getPlayerId();
-    const res = await fetch(`${API_BASE}/stats?date=${date}&playerId=${playerId}`);
+    const res = await fetchWithTimeout(`${API_BASE}/stats?date=${date}&playerId=${playerId}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -110,7 +118,7 @@ export async function fetchDailyStats(): Promise<DailyStats | null> {
 export async function fetchStreak(): Promise<StreakData | null> {
   try {
     const playerId = getPlayerId();
-    const res = await fetch(`${API_BASE}/streak?playerId=${playerId}`);
+    const res = await fetchWithTimeout(`${API_BASE}/streak?playerId=${playerId}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -122,7 +130,7 @@ export async function fetchStreak(): Promise<StreakData | null> {
 export async function fetchHeatmap(): Promise<HeatmapData | null> {
   try {
     const date = todayUTC();
-    const res = await fetch(`${API_BASE}/heatmap?date=${date}`);
+    const res = await fetchWithTimeout(`${API_BASE}/heatmap?date=${date}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -135,7 +143,7 @@ export async function fetchLeaderboard(): Promise<LeaderboardData | null> {
   try {
     const date = todayUTC();
     const playerId = getPlayerId();
-    const res = await fetch(`${API_BASE}/leaderboard?date=${date}&playerId=${playerId}`);
+    const res = await fetchWithTimeout(`${API_BASE}/leaderboard?date=${date}&playerId=${playerId}`);
     if (!res.ok) return null;
     return await res.json();
   } catch {

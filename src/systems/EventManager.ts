@@ -59,5 +59,3 @@ export class EventManager {
     return EVENTS.find((e) => e.month === month) ?? null;
   }
 }
-
-export type { GameEvent };
