@@ -1216,8 +1216,14 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
+    // Touch: drag to aim (shows trajectory), release to place
+    // Desktop: hover shows trajectory, click places
+    let touchAiming = false;
+
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive || !this.previewGhost) return;
+      // On touch, only show preview while finger is down (dragging)
+      if (ptr.wasTouch && !ptr.isDown) return;
 
       const adjY = this.getAdjustedY(ptr);
       if (this.isInZone(ptr.x, adjY)) {
@@ -1236,6 +1242,30 @@ export class GameScene extends Phaser.Scene {
 
       const adjY = this.getAdjustedY(ptr);
       if (!this.isInZone(ptr.x, adjY)) return;
+
+      if (ptr.wasTouch) {
+        // Start aiming — show ghost + trajectory, place on release
+        touchAiming = true;
+        if (this.previewGhost) {
+          this.previewGhost.setPosition(ptr.x, adjY);
+          this.previewGhost.setVisible(true);
+        }
+        this.trajectoryPredictor.update(ptr.x, adjY, this.selectedObjectType);
+      } else {
+        this.placeAndSimulate(ptr.x, adjY);
+      }
+    });
+
+    this.input.on('pointerup', (ptr: Phaser.Input.Pointer) => {
+      if (!touchAiming || this.isSimulating || this.introActive) return;
+      touchAiming = false;
+
+      const adjY = this.getAdjustedY(ptr);
+      if (!this.isInZone(ptr.x, adjY)) {
+        this.previewGhost?.setVisible(false);
+        this.trajectoryPredictor.clear();
+        return;
+      }
 
       this.placeAndSimulate(ptr.x, adjY);
     });
