@@ -8,3 +8,4 @@ test-*.png
 test-*.jpg
 
 .vercel
+.playwright-mcp/
