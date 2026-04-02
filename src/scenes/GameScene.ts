@@ -5,6 +5,7 @@ import { ScoreCalculator } from '../game/ScoreCalculator';
 import { LevelLoader } from '../game/LevelLoader';
 import { CameraFX } from '../game/CameraFX';
 import { TrailRenderer } from '../game/TrailRenderer';
+import { TrajectoryPredictor } from '../game/TrajectoryPredictor';
 import { SceneTransition } from '../game/SceneTransition';
 import { DailySystem } from '../systems/DailySystem';
 import { AudioManager } from '../systems/AudioManager';
@@ -47,6 +48,7 @@ export class GameScene extends Phaser.Scene {
   private chainDetector!: ChainDetector;
   private cameraFX!: CameraFX;
   private trailRenderer!: TrailRenderer;
+  private trajectoryPredictor!: TrajectoryPredictor;
   private hud!: HUD;
 
   private attempts = 0;
@@ -148,6 +150,7 @@ export class GameScene extends Phaser.Scene {
     this.chainDetector = new ChainDetector();
     this.cameraFX = new CameraFX(this);
     this.trailRenderer = new TrailRenderer(this);
+    this.trajectoryPredictor = new TrajectoryPredictor(this);
     this.hud = new HUD(this);
 
     // Camera-level PostFX (WebGL only)
@@ -838,6 +841,7 @@ export class GameScene extends Phaser.Scene {
 
     // Build physics world (floor at top when gravity flipped)
     this.physicsManager.buildLevel(this.level, this.isGravityFlipped);
+    this.trajectoryPredictor.setLevel(this.level);
 
     // Placement zone (colorblind-aware)
     const zone = this.level.placementZone;
@@ -1214,8 +1218,10 @@ export class GameScene extends Phaser.Scene {
       if (this.isInZone(ptr.x, adjY)) {
         this.previewGhost.setPosition(ptr.x, adjY);
         this.previewGhost.setVisible(true);
+        this.trajectoryPredictor.update(ptr.x, adjY, this.selectedObjectType);
       } else {
         this.previewGhost.setVisible(false);
+        this.trajectoryPredictor.clear();
       }
     });
 
@@ -1920,6 +1926,7 @@ export class GameScene extends Phaser.Scene {
     this.events.emit('simulate');
 
     this.previewGhost?.setVisible(false);
+    this.trajectoryPredictor.clear();
     this.placementZoneBorder?.setAlpha(0.1);
     this.placementZoneRect?.setAlpha(0.02);
     if (this.placementZoneBorder) {
@@ -2570,6 +2577,7 @@ export class GameScene extends Phaser.Scene {
 
     this.physicsManager.clearLevel();
     this.trailRenderer.destroy();
+    this.trajectoryPredictor.destroy();
     for (const btn of this.selectorButtons) btn.destroy();
     this.selectorButtons = [];
     if (this.visibilityHandler) {
