@@ -900,7 +900,9 @@ export class GameScene extends Phaser.Scene {
 
       const maskGfx = this.make.graphics();
       maskGfx.fillRect(zone.x, zone.y, zone.width, zone.height);
-      shine.setMask(maskGfx.createGeometryMask());
+      const mask = maskGfx.createGeometryMask();
+      shine.setMask(mask);
+      this.events.once('shutdown', () => { shine.clearMask(true); maskGfx.destroy(); });
 
       this.tweens.add({
         targets: shine,
@@ -926,7 +928,10 @@ export class GameScene extends Phaser.Scene {
 
       // Fade out when simulation starts (cleaned up automatically on reset)
       this.time.delayedCall(5000, () => {
-        this.tweens.add({ targets: [ghost, ghostX], alpha: 0, duration: 500 });
+        this.tweens.add({
+          targets: [ghost, ghostX], alpha: 0, duration: 500,
+          onComplete: () => { ghost.destroy(); ghostX.destroy(); },
+        });
       });
     }
 
