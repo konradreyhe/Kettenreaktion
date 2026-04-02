@@ -1,7 +1,7 @@
 # Handover
 
 ## Summary
-Session 15 picked up from a crashed session that had partially implemented trajectory prediction. Fixed the gravity bug (Matter.js Verlet `delta^2` factor was missing), verified visually, committed. Also added ResultScene/MenuScene shutdown cleanup, streak milestone celebrations (7/30/100 days), silenced Vite chunk warning, touch drag-to-aim for mobile, memory leak fixes, game dev knowledge base, and deployed everything to production. 10 commits on master, 1,865 tests pass, build clean.
+Session 15 picked up from a crashed session that had partially implemented trajectory prediction. Fixed the gravity bug (Matter.js Verlet `delta^2` factor was missing), verified visually, committed. Also added ResultScene/MenuScene shutdown cleanup, streak milestone celebrations (7/30/100 days), silenced Vite chunk warning, touch drag-to-aim for mobile, memory leak fixes, dead code removal, API request timeouts, game dev knowledge base, and deployed everything to production. 12 commits on master, 1,865 tests pass, build clean.
 
 ## Completed This Session
 - [x] Trajectory prediction arc — fixed gravity bug (`g * scale` → `g * scale * delta^2`), verified visually via Playwright
@@ -15,6 +15,9 @@ Session 15 picked up from a crashed session that had partially implemented traje
 - [x] Memory leak fixes — ghost sprites self-destruct, shine mask destroyed on shutdown
 - [x] Touch drag-to-aim — mobile users can drag to aim with trajectory preview, release to place
 - [x] GameScene code audit — verified event listeners are scene-scoped (no leak)
+- [x] Dead code removal — 5 unused exports removed (hasMutation, TEXT_STROKE, GameEvent, PlacedObject, TargetState)
+- [x] API request timeouts — 5s AbortController timeout on all fetch calls
+- [x] Level difficulty audit — 225 levels verified, smooth Mon-easy→Sun-hard progression
 
 ## Completed in Previous Sessions (Still Working)
 - [x] 225 levels (batches 1-8) including bomb, portal, magnet levels
@@ -68,7 +71,7 @@ Session 15 picked up from a crashed session that had partially implemented traje
 6. **Performance profiling** — Test on low-end mobile devices (trajectory simulation adds per-frame work)
 
 ## Rollback Info
-- Last known good: `ddb1877` (HEAD) — 1,865 tests pass, 225 levels, all deployed
+- Last known good: `676c075` (HEAD) — 1,865 tests pass, 225 levels, all deployed
 - Pre-session 15: `5915d24` — Session 14 final handover commit
 - Pre-trajectory: `5915d24` — before trajectory prediction
 - Server backup: `/home/deploy/appmanager/dashboard/routes/kettenreaktion.js.bak` (pre-leaderboard)
@@ -81,6 +84,11 @@ Session 15 picked up from a crashed session that had partially implemented traje
 - `vite.config.ts` — Raised chunkSizeWarningLimit to 1500KB
 - `.gitignore` — Added .playwright-mcp/
 - `docs/research/GAME-DEV-KNOWLEDGE-BASE.md` — Game dev research (new file)
+- `src/systems/ApiClient.ts` — Added 5s fetch timeout
+- `src/systems/DailyMutation.ts` — Removed unused hasMutation()
+- `src/constants/Style.ts` — Removed unused TEXT_STROKE
+- `src/systems/EventManager.ts` — Removed unused GameEvent export
+- `src/types/GameObject.ts` — Removed unused PlacedObject, TargetState
 
 ## Infrastructure
 - **Production URL:** https://kettenreaktion.crelvo.dev
