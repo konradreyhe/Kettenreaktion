@@ -310,5 +310,5 @@ function drawBranding(
 
   ctx.textAlign = 'right';
   ctx.fillStyle = COLORS.branding;
-  ctx.fillText('kettenreaktion.de', GIF_WIDTH - 6, GIF_HEIGHT - 7);
+  ctx.fillText('kettenreaktion.crelvo.dev', GIF_WIDTH - 6, GIF_HEIGHT - 7);
 }
