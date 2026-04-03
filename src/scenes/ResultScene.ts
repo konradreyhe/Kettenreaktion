@@ -49,6 +49,14 @@ export class ResultScene extends Phaser.Scene {
     SceneTransition.wipeIn(this);
     this.createAtmosphere(data.solved);
 
+    // Tap anywhere to skip reveal animations
+    let revealSkipped = false;
+    this.input.once('pointerdown', () => {
+      if (revealSkipped) return;
+      revealSkipped = true;
+      this.tweens.each((tween: Phaser.Tweens.Tween) => { tween.complete(); });
+    });
+
     const isPractice = data.isPractice ?? false;
     const previousBest = StorageManager.load().bestScore;
     const isNewBest = !isPractice && data.score.total > previousBest;

@@ -69,6 +69,8 @@ export class GameScene extends Phaser.Scene {
   private placementZoneBorder: Phaser.GameObjects.Rectangle | null = null;
   private targets: TargetEntry[] = [];
   private targetsHit = 0;
+  private nearMissFiredTargets = new Set<string>();
+  private lastNearMissCheckMs = 0;
   private placedSprite: Phaser.Physics.Matter.Sprite | null = null;
   private selectedObjectType: import('../types/Level').ObjectType = 'ball';
   private selectorButtons: Phaser.GameObjects.Container[] = [];
@@ -599,10 +601,29 @@ export class GameScene extends Phaser.Scene {
     // Apply trauma shake AFTER followAction (re-run to add offset on top of follow position)
     this.cameraFX.update();
 
+    // Check near-misses during simulation (throttled to ~5x/sec)
+    if (elapsed - this.lastNearMissCheckMs > 200) {
+      this.lastNearMissCheckMs = elapsed;
+      this.checkNearMisses();
+    }
+
     // Minimum 1.5s before checking sleep
     if (elapsed < 1500) return;
 
     const matterBodies = this.getAllMatterBodies();
+
+    // Force-sleep bodies that escaped the game world (prevents infinite simulation
+    // from runaway physics — e.g. seesaw explosions launching objects thousands of px)
+    const boundsMargin = 500;
+    for (const b of matterBodies) {
+      if (b.isStatic || b.isSleeping) continue;
+      const { x, y } = b.position;
+      if (x < -boundsMargin || x > GAME_WIDTH + boundsMargin ||
+          y < -boundsMargin || y > GAME_HEIGHT + boundsMargin) {
+        this.matter.body.setStatic(b, true);
+      }
+    }
+
     const allSleeping = matterBodies.every(
       (b) => b.isStatic || b.isSleeping
     );
@@ -809,6 +830,8 @@ export class GameScene extends Phaser.Scene {
     });
     this.targets = [];
     this.targetsHit = 0;
+    this.nearMissFiredTargets.clear();
+    this.lastNearMissCheckMs = 0;
     this.explodedBombs.clear();
     this.lastChainMilestone = 0;
     this.allTargetsCleared = false;
@@ -2106,8 +2129,6 @@ export class GameScene extends Phaser.Scene {
     const elapsed = this.simulationElapsedMs / 1000;
     const chainLength = this.chainDetector.getChainLength();
 
-    this.checkNearMisses();
-
     // Failure drama — when attempt ends without hitting all targets
     if (this.targetsHit < this.level.targets.length && !AccessibilityManager.prefersReducedMotion()) {
       // Brief dark flash + warm tint to signal failure
@@ -2315,7 +2336,7 @@ export class GameScene extends Phaser.Scene {
     const dynamicBodies = allBodies.filter((b) => !b.isStatic);
 
     for (const target of this.targets) {
-      if (target.hit) continue;
+      if (target.hit || this.nearMissFiredTargets.has(target.id)) continue;
 
       for (const body of dynamicBodies) {
         const dx = body.position.x - target.x;
@@ -2323,6 +2344,7 @@ export class GameScene extends Phaser.Scene {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < NEAR_MISS_PX + 15) {
+          this.nearMissFiredTargets.add(target.id);
           AudioManager.playMaterialImpact(this.level.theme, 0, target.x);
 
           // Dramatic near-miss camera: slow-mo + zoom + vignette pulse
