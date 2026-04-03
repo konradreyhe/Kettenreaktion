@@ -2110,13 +2110,16 @@ export class GameScene extends Phaser.Scene {
 
     // Failure drama — when attempt ends without hitting all targets
     if (this.targetsHit < this.level.targets.length && !AccessibilityManager.prefersReducedMotion()) {
-      // Brief dark flash to signal failure
-      this.cameras.main.flash(300, 10, 10, 30);
+      // Brief dark flash + warm tint to signal failure
+      this.cameras.main.flash(400, 30, 10, 10);
+      // Subtle slow-mo so player sees what went wrong
+      this.cameraFX.slowMotion(0.5, 500);
+      this.cameraFX.addTrauma(0.15);
       // Subtle camera sag (downward drift)
       this.tweens.add({
         targets: this.cameras.main,
-        scrollY: this.cameras.main.scrollY + 3,
-        duration: 400,
+        scrollY: this.cameras.main.scrollY + 5,
+        duration: 500,
         ease: 'Sine.easeInOut',
         yoyo: true,
       });
@@ -2248,10 +2251,16 @@ export class GameScene extends Phaser.Scene {
         .setAlpha(0)
         .setScale(0.5);
 
+      const encouragement = this.targetsHit > 0
+        ? `${this.targetsHit} Stern${this.targetsHit > 1 ? 'e' : ''} getroffen!`
+        : this.attempts === 1
+          ? 'Beobachte die Physik...'
+          : this.attempts === 2
+            ? 'Fast! Noch eine Chance!'
+            : 'Versuche es nochmal!';
+
       const subText = this.add
-        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35, this.targetsHit > 0
-          ? `${this.targetsHit} Stern${this.targetsHit > 1 ? 'e' : ''} getroffen!`
-          : 'Versuche es nochmal!', {
+        .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35, encouragement, {
           fontFamily: FONT_UI,
           fontSize: '12px',
           color: this.targetsHit > 0 ? COLOR.accent : '#aa6666',

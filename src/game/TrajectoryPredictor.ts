@@ -27,9 +27,14 @@ const BALL_RADIUS = 14;
 
 /** Dot styling. */
 const DOT_COLOR = 0x88ccff;
-const DOT_ALPHA_START = 0.5;
-const DOT_ALPHA_END = 0.05;
+const DOT_ALPHA_START = 0.7;
+const DOT_ALPHA_END = 0.12;
 const DOT_RADIUS = 2.5;
+
+/** Trail line connecting dots for better readability. */
+const TRAIL_ALPHA_START = 0.35;
+const TRAIL_ALPHA_END = 0.04;
+const TRAIL_WIDTH = 1.5;
 
 /**
  * Predicts and draws a trajectory arc for the player's ball during placement hover.
@@ -249,6 +254,18 @@ export class TrajectoryPredictor {
     this.graphics.clear();
     if (points.length < 2) return;
 
+    // Draw connecting trail line (fading segments)
+    for (let i = 1; i < points.length; i++) {
+      const t = i / points.length;
+      const alpha = TRAIL_ALPHA_START + (TRAIL_ALPHA_END - TRAIL_ALPHA_START) * t;
+      this.graphics.lineStyle(TRAIL_WIDTH * (1 - t * 0.5), DOT_COLOR, alpha);
+      this.graphics.beginPath();
+      this.graphics.moveTo(points[i - 1].x, points[i - 1].y);
+      this.graphics.lineTo(points[i].x, points[i].y);
+      this.graphics.strokePath();
+    }
+
+    // Draw dots on top of trail
     for (let i = 1; i < points.length; i++) {
       const t = i / points.length;
       const alpha = DOT_ALPHA_START + (DOT_ALPHA_END - DOT_ALPHA_START) * t;
@@ -256,6 +273,10 @@ export class TrajectoryPredictor {
       this.graphics.fillStyle(DOT_COLOR, alpha);
       this.graphics.fillCircle(points[i].x, points[i].y, r);
     }
+
+    // Larger entry dot as aiming anchor
+    this.graphics.fillStyle(DOT_COLOR, DOT_ALPHA_START + 0.15);
+    this.graphics.fillCircle(points[0].x, points[0].y, DOT_RADIUS * 1.8);
   }
 
   // ---------------------------------------------------------------------------

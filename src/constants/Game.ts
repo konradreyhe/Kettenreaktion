@@ -19,8 +19,9 @@ export const TIME_LIMIT_SECONDS = 30;
 /** Maximum simulation duration in milliseconds */
 export const MAX_SIMULATION_MS = 8000;
 
-/** Chain reaction timeout — ms between collisions to still count as chain */
-export const CHAIN_TIMEOUT_MS = 2000;
+/** Chain reaction timeout — ms between collisions to still count as chain.
+ *  3s gives breathing room for physics arcs between bounces. */
+export const CHAIN_TIMEOUT_MS = 3000;
 
 /** Near-miss threshold in pixels */
 export const NEAR_MISS_PX = 5;
