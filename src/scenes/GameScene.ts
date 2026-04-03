@@ -1197,8 +1197,12 @@ export class GameScene extends Phaser.Scene {
   /** Offset touch Y upward so the finger doesn't cover the placement point. */
   private readonly TOUCH_OFFSET_Y = 30;
 
+  private _isTouch?: boolean;
   private isTouchDevice(): boolean {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (this._isTouch === undefined) {
+      this._isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    }
+    return this._isTouch;
   }
 
   /** Apply touch offset — shifts placement above finger on touch devices. */
