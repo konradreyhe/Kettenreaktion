@@ -575,11 +575,13 @@ export class GameScene extends Phaser.Scene {
       this.cameraFX.resetColorShift();
     }
 
+    // Cache bodies once per frame (used by energy graph, camera follow, sleep check)
+    const frameBodies = this.getAllMatterBodies();
+
     // Sample kinetic energy for seismograph (skip on mobile — too visually busy)
     if (!this.isTouchDevice()) {
-        const allBods = this.getAllMatterBodies();
       let energy = 0;
-      for (const b of allBods) {
+      for (const b of frameBodies) {
         if (!b.isStatic) {
           const spd = b.speed ?? 0;
           energy += spd * spd * (b.mass ?? 1);
@@ -587,16 +589,15 @@ export class GameScene extends Phaser.Scene {
       }
       this.energyHistory.push(energy);
       // Cap history to prevent unbounded growth (last 5s at 60fps)
-      if (this.energyHistory.length > 300) {
-        this.energyHistory = this.energyHistory.slice(-300);
+      while (this.energyHistory.length > 300) {
+        this.energyHistory.shift();
       }
       this.drawEnergyGraph();
     }
 
     // Progressive zoom camera — follow the action (skip on mobile + reduced motion)
     if (!AccessibilityManager.prefersReducedMotion() && !this.isTouchDevice()) {
-        const activeBodies = this.getAllMatterBodies();
-      this.cameraFX.followAction(activeBodies, GAME_WIDTH, GAME_HEIGHT);
+      this.cameraFX.followAction(frameBodies, GAME_WIDTH, GAME_HEIGHT);
     }
     // Apply trauma shake AFTER followAction (re-run to add offset on top of follow position)
     this.cameraFX.update();
@@ -610,12 +611,10 @@ export class GameScene extends Phaser.Scene {
     // Minimum 1.5s before checking sleep
     if (elapsed < 1500) return;
 
-    const matterBodies = this.getAllMatterBodies();
-
     // Force-sleep bodies that escaped the game world (prevents infinite simulation
     // from runaway physics — e.g. seesaw explosions launching objects thousands of px)
     const boundsMargin = 500;
-    for (const b of matterBodies) {
+    for (const b of frameBodies) {
       if (b.isStatic || b.isSleeping) continue;
       const { x, y } = b.position;
       if (x < -boundsMargin || x > GAME_WIDTH + boundsMargin ||
@@ -624,7 +623,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    const allSleeping = matterBodies.every(
+    const allSleeping = frameBodies.every(
       (b) => b.isStatic || b.isSleeping
     );
 
@@ -1245,6 +1244,8 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive || !this.previewGhost) return;
+      // Reject secondary touch fingers (prevents accidental multi-touch)
+      if (ptr.wasTouch && ptr.pointerId !== 1) return;
       // On touch, only show preview while finger is down (dragging)
       if (ptr.wasTouch && !ptr.isDown) return;
 
@@ -1262,6 +1263,7 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
       if (this.isSimulating || this.introActive) return;
       if (this.attempts >= MAX_ATTEMPTS) return;
+      if (ptr.wasTouch && ptr.pointerId !== 1) return;
 
       const adjY = this.getAdjustedY(ptr);
       if (!this.isInZone(ptr.x, adjY)) return;
@@ -1281,6 +1283,7 @@ export class GameScene extends Phaser.Scene {
 
     this.input.on('pointerup', (ptr: Phaser.Input.Pointer) => {
       if (!touchAiming || this.isSimulating || this.introActive) return;
+      if (ptr.wasTouch && ptr.pointerId !== 1) return;
       touchAiming = false;
 
       const adjY = this.getAdjustedY(ptr);

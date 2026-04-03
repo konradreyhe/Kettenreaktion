@@ -74,9 +74,18 @@ export class ReplayExporter {
         { type: 'module' },
       );
 
-      worker.onmessage = (e: MessageEvent<ArrayBuffer>) => {
+      worker.onmessage = (e: MessageEvent<ArrayBuffer | { error: string }>) => {
         worker.terminate();
-        resolve(new Blob([e.data], { type: 'image/gif' }));
+        if (e.data instanceof ArrayBuffer) {
+          resolve(new Blob([e.data], { type: 'image/gif' }));
+        } else {
+          // Worker sent an error message — fall back to sync export
+          try {
+            resolve(this.exportSync(options));
+          } catch (syncErr) {
+            reject(syncErr);
+          }
+        }
       };
 
       worker.onerror = (err) => {
