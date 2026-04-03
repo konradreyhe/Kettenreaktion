@@ -372,7 +372,11 @@ export class PhysicsManager {
 
     const updateFn = () => {
       gfx.clear();
-      this.drawSpringLine(gfx, bodyA.position, bodyB.position);
+      // Skip drawing if either body is way out of bounds
+      const m = 200;
+      const aOOB = bodyA.position.x < -m || bodyA.position.x > 800 + m || bodyA.position.y < -m || bodyA.position.y > 600 + m;
+      const bOOB = bodyB.position.x < -m || bodyB.position.x > 800 + m || bodyB.position.y < -m || bodyB.position.y > 600 + m;
+      if (!aOOB && !bOOB) this.drawSpringLine(gfx, bodyA.position, bodyB.position);
     };
     this.scene.events.on('update', updateFn);
     this.constraintUpdateFns.push(updateFn);
@@ -393,7 +397,10 @@ export class PhysicsManager {
 
     const updateFn = () => {
       gfx.clear();
-      this.drawSpringLine(gfx, body.position, anchor);
+      // Skip drawing if body is way out of bounds
+      const m = 200;
+      const oob = body.position.x < -m || body.position.x > 800 + m || body.position.y < -m || body.position.y > 600 + m;
+      if (!oob) this.drawSpringLine(gfx, body.position, anchor);
     };
     this.scene.events.on('update', updateFn);
     this.constraintUpdateFns.push(updateFn);
@@ -415,7 +422,7 @@ export class PhysicsManager {
     const nx = -dy / dist;
     const ny = dx / dist;
 
-    gfx.lineStyle(2, 0x66aadd, 0.7);
+    gfx.lineStyle(2, 0x66aadd, 0.5);
     gfx.beginPath();
     gfx.moveTo(from.x, from.y);
 
@@ -507,6 +514,10 @@ export class PhysicsManager {
     const gfx = this.scene.add.graphics().setDepth(4);
     this.constraintGraphics.push(gfx);
 
+    const margin = 200;
+    const isInBounds = (x: number, y: number) =>
+      x > -margin && x < 800 + margin && y > -margin && y < 600 + margin;
+
     const updateFn = () => {
       gfx.clear();
       gfx.lineStyle(3, 0x886644, 0.8);
@@ -514,15 +525,23 @@ export class PhysicsManager {
 
       const sX = bodyA ? bodyA.position.x : anchorA?.x ?? 0;
       const sY = bodyA ? bodyA.position.y : anchorA?.y ?? 0;
-      gfx.moveTo(sX, sY);
+      let penDown = isInBounds(sX, sY);
+      if (penDown) gfx.moveTo(sX, sY);
 
       for (const seg of segBodies) {
-        gfx.lineTo(seg.position.x, seg.position.y);
+        const sx = seg.position.x;
+        const sy = seg.position.y;
+        if (!isInBounds(sx, sy)) { penDown = false; continue; }
+        if (!penDown) { gfx.moveTo(sx, sy); penDown = true; }
+        else gfx.lineTo(sx, sy);
       }
 
       const eX = bodyB ? bodyB.position.x : anchorB?.x ?? 0;
       const eY = bodyB ? bodyB.position.y : anchorB?.y ?? 0;
-      gfx.lineTo(eX, eY);
+      if (isInBounds(eX, eY)) {
+        if (!penDown) gfx.moveTo(eX, eY);
+        else gfx.lineTo(eX, eY);
+      }
       gfx.strokePath();
     };
     this.scene.events.on('update', updateFn);

@@ -25,9 +25,9 @@ export const COLOR = {
 
   // Text
   textBright: '#ffffff',
-  textMuted: '#8888aa',
-  textDim: '#555577',
-  textSubtle: '#333355',
+  textMuted: '#aaaacc',
+  textDim: '#7777aa',
+  textSubtle: '#555588',
 
   // Game elements
   streak: '#ffaa44',

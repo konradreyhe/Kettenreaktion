@@ -480,6 +480,10 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     this.trailRenderer.update();
 
+    // Always catch runaway bodies (e.g. rope explosions on Flip Friday)
+    // even before simulation starts — prevents physics blowups on level load
+    this.catchRunawayBodies();
+
     if (!this.isSimulating) {
       this.cameraFX.update(); // Decay residual trauma when not simulating
       return;
@@ -608,20 +612,8 @@ export class GameScene extends Phaser.Scene {
       this.checkNearMisses();
     }
 
-    // Minimum 1.5s before checking sleep
+    // Minimum 1.5s before checking simulation end (sleep detection)
     if (elapsed < 1500) return;
-
-    // Force-sleep bodies that escaped the game world (prevents infinite simulation
-    // from runaway physics — e.g. seesaw explosions launching objects thousands of px)
-    const boundsMargin = 500;
-    for (const b of frameBodies) {
-      if (b.isStatic || b.isSleeping) continue;
-      const { x, y } = b.position;
-      if (x < -boundsMargin || x > GAME_WIDTH + boundsMargin ||
-          y < -boundsMargin || y > GAME_HEIGHT + boundsMargin) {
-        this.matter.body.setStatic(b, true);
-      }
-    }
 
     const allSleeping = frameBodies.every(
       (b) => b.isStatic || b.isSleeping
@@ -1192,6 +1184,20 @@ export class GameScene extends Phaser.Scene {
     }).setDepth(14);
 
     this.isSimulating = false;
+  }
+
+  /** Force-sleep bodies that escaped the game world (prevents runaway physics). */
+  private catchRunawayBodies(): void {
+    const boundsMargin = 500;
+    const bodies = this.getAllMatterBodies();
+    for (const b of bodies) {
+      if (b.isStatic || b.isSleeping) continue;
+      const { x, y } = b.position;
+      if (x < -boundsMargin || x > GAME_WIDTH + boundsMargin ||
+          y < -boundsMargin || y > GAME_HEIGHT + boundsMargin) {
+        this.matter.body.setStatic(b, true);
+      }
+    }
   }
 
   /** Offset touch Y upward so the finger doesn't cover the placement point. */
@@ -2070,10 +2076,14 @@ export class GameScene extends Phaser.Scene {
       ease: 'Back.easeOut',
     });
 
-    // Flash + micro shake on placement
-    this.cameras.main.flash(80, 100, 100, 180);
-    if (!AccessibilityManager.prefersReducedMotion()) {
-      this.cameraFX.addTrauma(0.1);
+    // Flash + micro shake on placement (subtler on mobile)
+    if (this.isTouchDevice()) {
+      this.cameras.main.flash(60, 80, 80, 140);
+    } else {
+      this.cameras.main.flash(80, 100, 100, 180);
+      if (!AccessibilityManager.prefersReducedMotion()) {
+        this.cameraFX.addTrauma(0.1);
+      }
     }
 
     // Placement burst particles — satisfying pop

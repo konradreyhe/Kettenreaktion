@@ -32,10 +32,13 @@ export class TrailRenderer {
   private minSpeed = 2;
   private artSegments: ArtSegment[] = [];
   private artGraphics: Phaser.GameObjects.Graphics | null = null;
+  private readonly alphaMultiplier: number;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.graphics = scene.add.graphics().setDepth(8);
+    // Subtler trails on touch devices to reduce visual noise
+    this.alphaMultiplier = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 0.2 : 0.4;
   }
 
   /** Start tracking a body for trail rendering. */
@@ -82,7 +85,7 @@ export class TrailRenderer {
         const alpha = 1 - points[i].age / this.maxPoints;
         const width = (1 - points[i].age / this.maxPoints) * 3;
 
-        this.graphics.lineStyle(width, color, alpha * 0.4);
+        this.graphics.lineStyle(width, color, alpha * this.alphaMultiplier);
         this.graphics.beginPath();
         this.graphics.moveTo(points[i - 1].x, points[i - 1].y);
         this.graphics.lineTo(points[i].x, points[i].y);

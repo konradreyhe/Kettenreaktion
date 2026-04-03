@@ -240,7 +240,7 @@ export class MenuScene extends Phaser.Scene {
         x: cx, y: 320, text: 'ABGESCHLOSSEN',
         width: 220, height: 52, fontSize: '16px',
         color: 0x222233, hoverColor: 0x222233,
-        textColor: '#555577',
+        textColor: '#7777aa',
         onClick: () => {}, // no-op
       });
     } else {
@@ -335,7 +335,7 @@ export class MenuScene extends Phaser.Scene {
     if (StorageManager.load().gamesPlayed === 0) {
       const hint = this.add.text(cx, 430,
         'Erstes Mal hier? Probiere die Anleitung!', {
-          fontSize: '11px', color: '#88aacc',
+          fontSize: '11px', color: '#aaccee',
         }).setOrigin(0.5).setDepth(10).setAlpha(0);
 
       this.tweens.add({
@@ -360,7 +360,7 @@ export class MenuScene extends Phaser.Scene {
         x: cx, y: 435, text: 'Gestern ansehen',
         width: 150, height: 30, fontSize: '11px',
         color: 0x222233, hoverColor: 0x2a2a44,
-        textColor: '#777799',
+        textColor: '#9999bb',
         onClick: () => {
           SceneTransition.wipeOut(this, 'ReplayScene', {
               puzzleNumber: yesterdayNum,
@@ -374,7 +374,7 @@ export class MenuScene extends Phaser.Scene {
     let soundOn = AudioManager.isEnabled();
     const soundBtn = this.add
       .text(GAME_WIDTH - 20, 20, soundOn ? '\u{1F50A}' : '\u{1F507}', {
-        fontSize: '20px', color: '#666688',
+        fontSize: '20px', color: '#8888aa',
       })
       .setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(10);
 
@@ -389,13 +389,13 @@ export class MenuScene extends Phaser.Scene {
     const cbOn = AccessibilityManager.isColorblind();
     const cbBtn = this.add
       .text(GAME_WIDTH - 50, 20, '\u{1F441}', {
-        fontSize: '20px', color: cbOn ? '#4488ff' : '#666688',
+        fontSize: '20px', color: cbOn ? '#4488ff' : '#8888aa',
       })
       .setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(10);
 
     cbBtn.on('pointerdown', () => {
       const enabled = AccessibilityManager.toggle();
-      cbBtn.setColor(enabled ? '#4488ff' : '#666688');
+      cbBtn.setColor(enabled ? '#4488ff' : '#8888aa');
     });
 
     // Player title
@@ -415,7 +415,7 @@ export class MenuScene extends Phaser.Scene {
     if (data.gamesPlayed > 0) {
       this.add
         .text(cx, 478, `Spiele: ${data.gamesPlayed}  |  Bester: ${data.bestScore.toLocaleString('de-DE')}`, {
-          fontFamily: FONT_UI, fontSize: '10px', color: '#6666aa', letterSpacing: 1,
+          fontFamily: FONT_UI, fontSize: '10px', color: '#8888bb', letterSpacing: 1,
         })
         .setOrigin(0.5).setDepth(10);
     }
@@ -423,35 +423,35 @@ export class MenuScene extends Phaser.Scene {
     // Legal links (German requirements)
     const impressumLink = this.add
       .text(GAME_WIDTH - 16, GAME_HEIGHT - 10, 'Impressum', {
-        fontSize: '9px', color: '#333355',
+        fontSize: '9px', color: '#555588',
       })
       .setOrigin(1, 1).setDepth(10)
       .setInteractive({ useHandCursor: true });
 
-    impressumLink.on('pointerover', () => impressumLink.setColor('#5555aa'));
-    impressumLink.on('pointerout', () => impressumLink.setColor('#333355'));
+    impressumLink.on('pointerover', () => impressumLink.setColor('#7777bb'));
+    impressumLink.on('pointerout', () => impressumLink.setColor('#555588'));
     impressumLink.on('pointerdown', () => this.showImpressum());
 
     this.add.text(GAME_WIDTH - 67, GAME_HEIGHT - 10, '|', {
-      fontSize: '9px', color: '#222244',
+      fontSize: '9px', color: '#444466',
     }).setOrigin(0.5, 1).setDepth(10);
 
     const datenschutzLink = this.add
       .text(GAME_WIDTH - 75, GAME_HEIGHT - 10, 'Datenschutz', {
-        fontSize: '9px', color: '#333355',
+        fontSize: '9px', color: '#555588',
       })
       .setOrigin(1, 1).setDepth(10)
       .setInteractive({ useHandCursor: true });
 
-    datenschutzLink.on('pointerover', () => datenschutzLink.setColor('#5555aa'));
-    datenschutzLink.on('pointerout', () => datenschutzLink.setColor('#333355'));
+    datenschutzLink.on('pointerover', () => datenschutzLink.setColor('#7777bb'));
+    datenschutzLink.on('pointerout', () => datenschutzLink.setColor('#555588'));
     datenschutzLink.on('pointerdown', () => this.showDatenschutz());
 
     // Countdown
     const countdownText = this.add
       .text(cx, GAME_HEIGHT - 30, '', {
         fontFamily: FONT_UI,
-        fontSize: '12px', color: '#6666aa',
+        fontSize: '12px', color: '#8888bb',
         letterSpacing: 1,
       })
       .setOrigin(0.5).setDepth(10);
