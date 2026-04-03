@@ -54,12 +54,11 @@ export class StorageManager {
     const data = StorageManager.load();
     const todayISO = new Date().toISOString().split('T')[0];
 
-    // Update streak
+    // Update streak — compare UTC date strings directly to avoid timezone bugs
+    // (new Date('YYYY-MM-DD') parses as local midnight, not UTC)
     if (data.lastPlayedDate) {
-      const lastDate = new Date(data.lastPlayedDate);
-      const today = new Date(todayISO);
       const diffDays = Math.floor(
-        (today.getTime() - lastDate.getTime()) / 86400000
+        (Date.parse(todayISO + 'T00:00:00Z') - Date.parse(data.lastPlayedDate + 'T00:00:00Z')) / 86400000
       );
 
       if (diffDays === 1 || diffDays === 2) {

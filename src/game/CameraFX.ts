@@ -12,6 +12,7 @@ export class CameraFX {
 
   private isSlowMo = false;
   private slowMoTarget = 1.0;
+  private slowMoTimer?: Phaser.Time.TimerEvent;
   private colorMatrix: Phaser.FX.ColorMatrix | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -23,18 +24,26 @@ export class CameraFX {
     this.trauma = Math.min(1, this.trauma + amount);
   }
 
-  /** Trigger slow-motion. Ramps down to target speed, holds, snaps back. */
+  /** Trigger slow-motion. Ramps down to target speed, holds, snaps back.
+   *  If already in slow-mo, replaces the current effect if the new speed is more dramatic. */
   slowMotion(speed: number = 0.25, durationMs: number = 800): void {
-    if (this.isSlowMo) return;
+    if (this.isSlowMo && speed >= this.slowMoTarget) return;
+
+    // Cancel previous slow-mo recovery timer if replacing
+    if (this.slowMoTimer) {
+      this.slowMoTimer.destroy();
+    }
+
     this.isSlowMo = true;
     this.slowMoTarget = speed;
 
     // Only slow visual time, not physics engine (preserves determinism)
     this.scene.time.timeScale = speed;
 
-    this.scene.time.delayedCall(durationMs * speed, () => {
+    this.slowMoTimer = this.scene.time.delayedCall(durationMs * speed, () => {
       this.scene.time.timeScale = 1;
       this.isSlowMo = false;
+      this.slowMoTimer = undefined;
     });
   }
 

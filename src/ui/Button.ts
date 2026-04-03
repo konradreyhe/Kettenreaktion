@@ -125,7 +125,7 @@ export class Button {
       });
     });
 
-    // Press
+    // Press — use pointerup so dragging off the button cancels the action
     this.bg.on('pointerdown', () => {
       AudioManager.init();
       AudioManager.playClick();
@@ -134,8 +134,11 @@ export class Button {
         scaleX: 0.96, scaleY: 0.96,
         duration: 50,
         yoyo: true,
-        onComplete: onClick,
       });
+    });
+
+    this.bg.on('pointerup', () => {
+      onClick();
     });
   }
 
