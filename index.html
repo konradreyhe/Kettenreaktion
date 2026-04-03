@@ -107,6 +107,8 @@
   <script type="module" src="/src/main.ts"></script>
   <script>
     window.addEventListener('error', function(e) {
+      // Only show error screen if canvas hasn't rendered yet (fatal startup error)
+      if (document.querySelector('canvas')) return;
       document.body.innerHTML = '<div style="color:#cc6666;text-align:center;padding:60px;font-family:monospace">' +
         '<h2>Etwas ist schiefgelaufen</h2>' +
         '<p style="color:#888;margin-top:12px">Bitte lade die Seite neu (F5)</p>' +
