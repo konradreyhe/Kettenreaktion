@@ -2343,7 +2343,7 @@ export class GameScene extends Phaser.Scene {
         const dy = body.position.y - target.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < NEAR_MISS_PX + 15) {
+        if (dist < NEAR_MISS_PX) {
           this.nearMissFiredTargets.add(target.id);
           AudioManager.playMaterialImpact(this.level.theme, 0, target.x);
 

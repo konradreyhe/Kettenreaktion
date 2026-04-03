@@ -23,8 +23,9 @@ export const MAX_SIMULATION_MS = 8000;
  *  3s gives breathing room for physics arcs between bounces. */
 export const CHAIN_TIMEOUT_MS = 3000;
 
-/** Near-miss threshold in pixels */
-export const NEAR_MISS_PX = 5;
+/** Near-miss threshold in pixels — how close a body must pass to an unhit target
+ *  to trigger the "KNAPP!" feedback. */
+export const NEAR_MISS_PX = 20;
 
 /** Game canvas dimensions */
 export const GAME_WIDTH = 800;

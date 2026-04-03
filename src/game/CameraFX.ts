@@ -84,7 +84,12 @@ export class CameraFX {
    * based on how spread out the action is.
    */
   followAction(bodies: MatterJS.BodyType[], gameWidth: number, gameHeight: number): void {
-    const active = bodies.filter((b) => !b.isStatic && !b.isSleeping);
+    const active = bodies.filter((b) => {
+      if (b.isStatic || b.isSleeping) return false;
+      // Skip bodies that escaped the game world (prevents camera chasing explosions)
+      const { x, y } = b.position;
+      return x > -200 && x < gameWidth + 200 && y > -200 && y < gameHeight + 200;
+    });
     if (active.length === 0) return;
 
     // Weighted centroid + action spread in single pass
