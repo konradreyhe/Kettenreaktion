@@ -64,14 +64,17 @@ async function boot(): Promise<void> {
   const game = new Phaser.Game(config);
 
   // Hide HTML loading screen once Phaser canvas is ready
-  game.events.once('ready', () => {
+  const removeLoadingScreen = () => {
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
       loadingScreen.style.opacity = '0';
       loadingScreen.style.transition = 'opacity 0.3s';
       setTimeout(() => loadingScreen.remove(), 300);
     }
-  });
+  };
+  game.events.once('ready', removeLoadingScreen);
+  // Safety timeout — remove loading screen after 10s even if Phaser fails silently
+  setTimeout(removeLoadingScreen, 10000);
 
   // Expose for dev tools / automated testing
   if (import.meta.env.DEV) {
